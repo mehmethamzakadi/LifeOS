@@ -86,4 +86,64 @@ public static class ResponseMessages
     }
     
     #endregion
+
+    #region Book Messages
+    
+    public static class Book
+    {
+        public const string Created = "Kitap bilgisi başarıyla eklendi.";
+        public const string Updated = "Kitap bilgisi başarıyla güncellendi.";
+        public const string Deleted = "Kitap bilgisi başarıyla silindi.";
+        public const string NotFound = "Kitap bilgisi bulunamadı!";
+    }
+    
+    #endregion
+
+    #region Game Messages
+    
+    public static class Game
+    {
+        public const string Created = "Oyun bilgisi başarıyla eklendi.";
+        public const string Updated = "Oyun bilgisi başarıyla güncellendi.";
+        public const string Deleted = "Oyun bilgisi başarıyla silindi.";
+        public const string NotFound = "Oyun bilgisi bulunamadı!";
+    }
+    
+    #endregion
+
+    #region MovieSeries Messages
+    
+    public static class MovieSeries
+    {
+        public const string Created = "Film/Dizi bilgisi başarıyla eklendi.";
+        public const string Updated = "Film/Dizi bilgisi başarıyla güncellendi.";
+        public const string Deleted = "Film/Dizi bilgisi başarıyla silindi.";
+        public const string NotFound = "Film/Dizi bilgisi bulunamadı!";
+    }
+    
+    #endregion
+
+    #region PersonalNote Messages
+    
+    public static class PersonalNote
+    {
+        public const string Created = "Kişisel not başarıyla eklendi.";
+        public const string Updated = "Kişisel not başarıyla güncellendi.";
+        public const string Deleted = "Kişisel not başarıyla silindi.";
+        public const string NotFound = "Kişisel not bulunamadı!";
+    }
+    
+    #endregion
+
+    #region WalletTransaction Messages
+    
+    public static class WalletTransaction
+    {
+        public const string Created = "Cüzdan işlemi başarıyla eklendi.";
+        public const string Updated = "Cüzdan işlemi başarıyla güncellendi.";
+        public const string Deleted = "Cüzdan işlemi başarıyla silindi.";
+        public const string NotFound = "Cüzdan işlemi bulunamadı!";
+    }
+    
+    #endregion
 }

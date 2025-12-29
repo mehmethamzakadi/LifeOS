@@ -1,0 +1,8 @@
+# Development için .dockerignore
+# node_modules container içinde install edilecek
+node_modules
+dist
+dist-node
+*.log
+.DS_Store
+

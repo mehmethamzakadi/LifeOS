@@ -1,10 +1,15 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Constants;
+using LifeOS.Domain.Events.BookEvents;
 using LifeOS.Domain.Events.CategoryEvents;
+using LifeOS.Domain.Events.GameEvents;
 using LifeOS.Domain.Events.IntegrationEvents;
+using LifeOS.Domain.Events.MovieSeriesEvents;
 using LifeOS.Domain.Events.PermissionEvents;
+using LifeOS.Domain.Events.PersonalNoteEvents;
 using LifeOS.Domain.Events.RoleEvents;
 using LifeOS.Domain.Events.UserEvents;
+using LifeOS.Domain.Events.WalletTransactionEvents;
 using System.Text.Json;
 
 namespace LifeOS.Infrastructure.Services.BackgroundServices.Outbox.Converters;
@@ -190,6 +195,236 @@ internal sealed class PermissionsAssignedToRoleIntegrationEventConverter(IExecut
         EntityId: domainEvent.RoleId,
         Title: $"Rol \"{domainEvent.RoleName}\" için yetkiler atandı",
         Details: $"{domainEvent.PermissionNames.Count} yetki atandı",
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+// Book Events
+internal sealed class BookCreatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<BookCreatedEvent>
+{
+    public override string EventType => nameof(BookCreatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(BookCreatedEvent domainEvent) => new(
+        ActivityType: "book_created",
+        EntityType: "Book",
+        EntityId: domainEvent.BookId,
+        Title: $"\"{domainEvent.Title}\" kitabı oluşturuldu",
+        Details: $"Yazar: {domainEvent.Author}",
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class BookUpdatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<BookUpdatedEvent>
+{
+    public override string EventType => nameof(BookUpdatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(BookUpdatedEvent domainEvent) => new(
+        ActivityType: "book_updated",
+        EntityType: "Book",
+        EntityId: domainEvent.BookId,
+        Title: $"\"{domainEvent.Title}\" kitabı güncellendi",
+        Details: $"Yazar: {domainEvent.Author}",
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class BookDeletedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<BookDeletedEvent>
+{
+    public override string EventType => nameof(BookDeletedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(BookDeletedEvent domainEvent) => new(
+        ActivityType: "book_deleted",
+        EntityType: "Book",
+        EntityId: domainEvent.BookId,
+        Title: $"\"{domainEvent.Title}\" kitabı silindi",
+        Details: $"Yazar: {domainEvent.Author}",
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+// Game Events
+internal sealed class GameCreatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<GameCreatedEvent>
+{
+    public override string EventType => nameof(GameCreatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(GameCreatedEvent domainEvent) => new(
+        ActivityType: "game_created",
+        EntityType: "Game",
+        EntityId: domainEvent.GameId,
+        Title: $"\"{domainEvent.Title}\" oyunu oluşturuldu",
+        Details: null,
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class GameUpdatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<GameUpdatedEvent>
+{
+    public override string EventType => nameof(GameUpdatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(GameUpdatedEvent domainEvent) => new(
+        ActivityType: "game_updated",
+        EntityType: "Game",
+        EntityId: domainEvent.GameId,
+        Title: $"\"{domainEvent.Title}\" oyunu güncellendi",
+        Details: null,
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class GameDeletedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<GameDeletedEvent>
+{
+    public override string EventType => nameof(GameDeletedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(GameDeletedEvent domainEvent) => new(
+        ActivityType: "game_deleted",
+        EntityType: "Game",
+        EntityId: domainEvent.GameId,
+        Title: $"\"{domainEvent.Title}\" oyunu silindi",
+        Details: null,
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+// MovieSeries Events
+internal sealed class MovieSeriesCreatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<MovieSeriesCreatedEvent>
+{
+    public override string EventType => nameof(MovieSeriesCreatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(MovieSeriesCreatedEvent domainEvent) => new(
+        ActivityType: "movieseries_created",
+        EntityType: "MovieSeries",
+        EntityId: domainEvent.MovieSeriesId,
+        Title: $"\"{domainEvent.Title}\" film/dizisi oluşturuldu",
+        Details: null,
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class MovieSeriesUpdatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<MovieSeriesUpdatedEvent>
+{
+    public override string EventType => nameof(MovieSeriesUpdatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(MovieSeriesUpdatedEvent domainEvent) => new(
+        ActivityType: "movieseries_updated",
+        EntityType: "MovieSeries",
+        EntityId: domainEvent.MovieSeriesId,
+        Title: $"\"{domainEvent.Title}\" film/dizisi güncellendi",
+        Details: null,
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class MovieSeriesDeletedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<MovieSeriesDeletedEvent>
+{
+    public override string EventType => nameof(MovieSeriesDeletedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(MovieSeriesDeletedEvent domainEvent) => new(
+        ActivityType: "movieseries_deleted",
+        EntityType: "MovieSeries",
+        EntityId: domainEvent.MovieSeriesId,
+        Title: $"\"{domainEvent.Title}\" film/dizisi silindi",
+        Details: null,
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+// PersonalNote Events
+internal sealed class PersonalNoteCreatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<PersonalNoteCreatedEvent>
+{
+    public override string EventType => nameof(PersonalNoteCreatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(PersonalNoteCreatedEvent domainEvent) => new(
+        ActivityType: "personalnote_created",
+        EntityType: "PersonalNote",
+        EntityId: domainEvent.PersonalNoteId,
+        Title: $"\"{domainEvent.Title}\" notu oluşturuldu",
+        Details: null,
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class PersonalNoteUpdatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<PersonalNoteUpdatedEvent>
+{
+    public override string EventType => nameof(PersonalNoteUpdatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(PersonalNoteUpdatedEvent domainEvent) => new(
+        ActivityType: "personalnote_updated",
+        EntityType: "PersonalNote",
+        EntityId: domainEvent.PersonalNoteId,
+        Title: $"\"{domainEvent.Title}\" notu güncellendi",
+        Details: null,
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class PersonalNoteDeletedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<PersonalNoteDeletedEvent>
+{
+    public override string EventType => nameof(PersonalNoteDeletedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(PersonalNoteDeletedEvent domainEvent) => new(
+        ActivityType: "personalnote_deleted",
+        EntityType: "PersonalNote",
+        EntityId: domainEvent.PersonalNoteId,
+        Title: $"\"{domainEvent.Title}\" notu silindi",
+        Details: null,
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+// WalletTransaction Events
+internal sealed class WalletTransactionCreatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<WalletTransactionCreatedEvent>
+{
+    public override string EventType => nameof(WalletTransactionCreatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(WalletTransactionCreatedEvent domainEvent) => new(
+        ActivityType: "wallettransaction_created",
+        EntityType: "WalletTransaction",
+        EntityId: domainEvent.WalletTransactionId,
+        Title: $"\"{domainEvent.Title}\" cüzdan işlemi oluşturuldu",
+        Details: $"Tutar: {domainEvent.Amount:C}",
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class WalletTransactionUpdatedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<WalletTransactionUpdatedEvent>
+{
+    public override string EventType => nameof(WalletTransactionUpdatedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(WalletTransactionUpdatedEvent domainEvent) => new(
+        ActivityType: "wallettransaction_updated",
+        EntityType: "WalletTransaction",
+        EntityId: domainEvent.WalletTransactionId,
+        Title: $"\"{domainEvent.Title}\" cüzdan işlemi güncellendi",
+        Details: $"Tutar: {domainEvent.Amount:C}",
+        UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
+        Timestamp: DateTime.UtcNow
+    );
+}
+
+internal sealed class WalletTransactionDeletedIntegrationEventConverter(IExecutionContextAccessor executionContextAccessor) : ActivityLogIntegrationEventConverter<WalletTransactionDeletedEvent>
+{
+    public override string EventType => nameof(WalletTransactionDeletedEvent);
+
+    protected override ActivityLogCreatedIntegrationEvent Convert(WalletTransactionDeletedEvent domainEvent) => new(
+        ActivityType: "wallettransaction_deleted",
+        EntityType: "WalletTransaction",
+        EntityId: domainEvent.WalletTransactionId,
+        Title: $"\"{domainEvent.Title}\" cüzdan işlemi silindi",
+        Details: $"Tutar: {domainEvent.Amount:C}",
         UserId: executionContextAccessor.GetCurrentUserId() ?? SystemUsers.SystemUserId,
         Timestamp: DateTime.UtcNow
     );

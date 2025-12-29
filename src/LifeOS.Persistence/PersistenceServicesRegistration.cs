@@ -42,6 +42,11 @@ public static class PersistenceServicesRegistration
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IRefreshSessionRepository, RefreshSessionRepository>();
+        services.AddScoped<IBookRepository, BookRepository>();
+        services.AddScoped<IGameRepository, GameRepository>();
+        services.AddScoped<IMovieSeriesRepository, MovieSeriesRepository>();
+        services.AddScoped<IPersonalNoteRepository, PersonalNoteRepository>();
+        services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
         services.AddScoped<IDbInitializer, DbInitializer>();
 
         // Unit of Work kaydı

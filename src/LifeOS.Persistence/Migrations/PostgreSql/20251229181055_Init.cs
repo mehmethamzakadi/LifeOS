@@ -12,6 +12,33 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Books",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Author = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CoverUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    TotalPages = table.Column<int>(type: "integer", nullable: false),
+                    CurrentPage = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Rating = table.Column<int>(type: "integer", nullable: true),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Books", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
                 {
@@ -40,6 +67,30 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 });
 
             migrationBuilder.CreateTable(
+                name: "Games",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    CoverUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Platform = table.Column<int>(type: "integer", nullable: false),
+                    Store = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    IsOwned = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Games", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Images",
                 columns: table => new
                 {
@@ -60,6 +111,33 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Images", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MovieSeries",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    CoverUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    Platform = table.Column<int>(type: "integer", nullable: false),
+                    CurrentSeason = table.Column<int>(type: "integer", nullable: true),
+                    CurrentEpisode = table.Column<int>(type: "integer", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Rating = table.Column<int>(type: "integer", nullable: true),
+                    PersonalNote = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MovieSeries", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -109,6 +187,29 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Permissions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PersonalNotes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    Category = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    IsPinned = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Tags = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PersonalNotes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -193,6 +294,29 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WalletTransactions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    Category = table.Column<int>(type: "integer", nullable: false),
+                    TransactionDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WalletTransactions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -293,6 +417,21 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 columns: new[] { "UserId", "Timestamp" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Books_Author",
+                table: "Books",
+                column: "Author");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Books_Status",
+                table: "Books",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Books_Title",
+                table: "Books",
+                column: "Title");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Categories_Name",
                 table: "Categories",
                 column: "Name");
@@ -308,6 +447,46 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 name: "IX_Categories_ParentId",
                 table: "Categories",
                 column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Games_IsOwned",
+                table: "Games",
+                column: "IsOwned");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Games_Platform",
+                table: "Games",
+                column: "Platform");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Games_Status",
+                table: "Games",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Games_Title",
+                table: "Games",
+                column: "Title");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovieSeries_Platform",
+                table: "MovieSeries",
+                column: "Platform");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovieSeries_Status",
+                table: "MovieSeries",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovieSeries_Title",
+                table: "MovieSeries",
+                column: "Title");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovieSeries_Type",
+                table: "MovieSeries",
+                column: "Type");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessages_CreatedAt",
@@ -341,6 +520,21 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 table: "Permissions",
                 column: "NormalizedName",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PersonalNotes_Category",
+                table: "PersonalNotes",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PersonalNotes_IsPinned",
+                table: "PersonalNotes",
+                column: "IsPinned");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PersonalNotes_Title",
+                table: "PersonalNotes",
+                column: "Title");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshSessions_Jti",
@@ -412,6 +606,26 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 table: "Users",
                 column: "PasswordResetToken",
                 filter: "\"PasswordResetToken\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletTransactions_Category",
+                table: "WalletTransactions",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletTransactions_Title",
+                table: "WalletTransactions",
+                column: "Title");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletTransactions_TransactionDate",
+                table: "WalletTransactions",
+                column: "TransactionDate");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WalletTransactions_Type",
+                table: "WalletTransactions",
+                column: "Type");
         }
 
         /// <inheritdoc />
@@ -421,13 +635,25 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 name: "ActivityLogs");
 
             migrationBuilder.DropTable(
+                name: "Books");
+
+            migrationBuilder.DropTable(
                 name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Games");
 
             migrationBuilder.DropTable(
                 name: "Images");
 
             migrationBuilder.DropTable(
+                name: "MovieSeries");
+
+            migrationBuilder.DropTable(
                 name: "OutboxMessages");
+
+            migrationBuilder.DropTable(
+                name: "PersonalNotes");
 
             migrationBuilder.DropTable(
                 name: "RefreshSessions");
@@ -437,6 +663,9 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
 
             migrationBuilder.DropTable(
                 name: "UserRoles");
+
+            migrationBuilder.DropTable(
+                name: "WalletTransactions");
 
             migrationBuilder.DropTable(
                 name: "Permissions");

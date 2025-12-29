@@ -37,6 +37,41 @@ public static class Permissions
     // Activity Logs Permissions
     public const string ActivityLogsView = "ActivityLogs.View";
 
+    // Book Management Permissions
+    public const string BooksCreate = "Books.Create";
+    public const string BooksRead = "Books.Read";
+    public const string BooksUpdate = "Books.Update";
+    public const string BooksDelete = "Books.Delete";
+    public const string BooksViewAll = "Books.ViewAll";
+
+    // Game Management Permissions
+    public const string GamesCreate = "Games.Create";
+    public const string GamesRead = "Games.Read";
+    public const string GamesUpdate = "Games.Update";
+    public const string GamesDelete = "Games.Delete";
+    public const string GamesViewAll = "Games.ViewAll";
+
+    // MovieSeries Management Permissions
+    public const string MovieSeriesCreate = "MovieSeries.Create";
+    public const string MovieSeriesRead = "MovieSeries.Read";
+    public const string MovieSeriesUpdate = "MovieSeries.Update";
+    public const string MovieSeriesDelete = "MovieSeries.Delete";
+    public const string MovieSeriesViewAll = "MovieSeries.ViewAll";
+
+    // PersonalNote Management Permissions
+    public const string PersonalNotesCreate = "PersonalNotes.Create";
+    public const string PersonalNotesRead = "PersonalNotes.Read";
+    public const string PersonalNotesUpdate = "PersonalNotes.Update";
+    public const string PersonalNotesDelete = "PersonalNotes.Delete";
+    public const string PersonalNotesViewAll = "PersonalNotes.ViewAll";
+
+    // WalletTransaction Management Permissions
+    public const string WalletTransactionsCreate = "WalletTransactions.Create";
+    public const string WalletTransactionsRead = "WalletTransactions.Read";
+    public const string WalletTransactionsUpdate = "WalletTransactions.Update";
+    public const string WalletTransactionsDelete = "WalletTransactions.Delete";
+    public const string WalletTransactionsViewAll = "WalletTransactions.ViewAll";
+
     /// <summary>
     /// Tüm permission'ları liste olarak döndürür. Seed işlemleri için kullanılır.
     /// </summary>
@@ -60,7 +95,22 @@ public static class Permissions
             MediaUpload,
 
             // Activity Logs
-            ActivityLogsView
+            ActivityLogsView,
+
+            // Books
+            BooksCreate, BooksRead, BooksUpdate, BooksDelete, BooksViewAll,
+
+            // Games
+            GamesCreate, GamesRead, GamesUpdate, GamesDelete, GamesViewAll,
+
+            // MovieSeries
+            MovieSeriesCreate, MovieSeriesRead, MovieSeriesUpdate, MovieSeriesDelete, MovieSeriesViewAll,
+
+            // PersonalNotes
+            PersonalNotesCreate, PersonalNotesRead, PersonalNotesUpdate, PersonalNotesDelete, PersonalNotesViewAll,
+
+            // WalletTransactions
+            WalletTransactionsCreate, WalletTransactionsRead, WalletTransactionsUpdate, WalletTransactionsDelete, WalletTransactionsViewAll
         };
     }
 

@@ -24,6 +24,16 @@ public static class CacheKeys
     public static string Role(Guid roleId) => $"role:{roleId}";
 
     public static string RolePermissions(Guid roleId) => $"role:{roleId}:permissions";
+
+    public static string Book(Guid bookId) => $"book:{bookId}";
+
+    public static string Game(Guid gameId) => $"game:{gameId}";
+
+    public static string MovieSeries(Guid movieSeriesId) => $"movieseries:{movieSeriesId}";
+
+    public static string PersonalNote(Guid personalNoteId) => $"personalnote:{personalNoteId}";
+
+    public static string WalletTransaction(Guid walletTransactionId) => $"wallettransaction:{walletTransactionId}";
     
     #endregion
 
@@ -48,6 +58,16 @@ public static class CacheKeys
     /// Version key for all category lists. When this changes, all category list caches become stale.
     /// </summary>
     public static string CategoryListVersion() => "version:categories:list";
+
+    public static string BookGridVersion() => "version:book:grid";
+
+    public static string GameGridVersion() => "version:game:grid";
+
+    public static string MovieSeriesGridVersion() => "version:movieseries:grid";
+
+    public static string PersonalNoteGridVersion() => "version:personalnote:grid";
+
+    public static string WalletTransactionGridVersion() => "version:wallettransaction:grid";
     
     #endregion
 
@@ -63,6 +83,51 @@ public static class CacheKeys
             : ComputeHash(dynamicQuery);
 
         return $"category:grid:{versionToken}:{pageIndex}:{pageSize}:{dynamicSegment}";
+    }
+
+    public static string BookGrid(string versionToken, int pageIndex, int pageSize, DynamicQuery? dynamicQuery)
+    {
+        string dynamicSegment = dynamicQuery is null
+            ? "none"
+            : ComputeHash(dynamicQuery);
+
+        return $"book:grid:{versionToken}:{pageIndex}:{pageSize}:{dynamicSegment}";
+    }
+
+    public static string GameGrid(string versionToken, int pageIndex, int pageSize, DynamicQuery? dynamicQuery)
+    {
+        string dynamicSegment = dynamicQuery is null
+            ? "none"
+            : ComputeHash(dynamicQuery);
+
+        return $"game:grid:{versionToken}:{pageIndex}:{pageSize}:{dynamicSegment}";
+    }
+
+    public static string MovieSeriesGrid(string versionToken, int pageIndex, int pageSize, DynamicQuery? dynamicQuery)
+    {
+        string dynamicSegment = dynamicQuery is null
+            ? "none"
+            : ComputeHash(dynamicQuery);
+
+        return $"movieseries:grid:{versionToken}:{pageIndex}:{pageSize}:{dynamicSegment}";
+    }
+
+    public static string PersonalNoteGrid(string versionToken, int pageIndex, int pageSize, DynamicQuery? dynamicQuery)
+    {
+        string dynamicSegment = dynamicQuery is null
+            ? "none"
+            : ComputeHash(dynamicQuery);
+
+        return $"personalnote:grid:{versionToken}:{pageIndex}:{pageSize}:{dynamicSegment}";
+    }
+
+    public static string WalletTransactionGrid(string versionToken, int pageIndex, int pageSize, DynamicQuery? dynamicQuery)
+    {
+        string dynamicSegment = dynamicQuery is null
+            ? "none"
+            : ComputeHash(dynamicQuery);
+
+        return $"wallettransaction:grid:{versionToken}:{pageIndex}:{pageSize}:{dynamicSegment}";
     }
     
     #endregion
@@ -93,4 +158,24 @@ public static class CacheDurations
     public static readonly TimeSpan Category = TimeSpan.FromHours(12);
 
     public static readonly TimeSpan CategoryGrid = TimeSpan.FromDays(30);
+
+    public static readonly TimeSpan Book = TimeSpan.FromHours(12);
+
+    public static readonly TimeSpan BookGrid = TimeSpan.FromDays(30);
+
+    public static readonly TimeSpan Game = TimeSpan.FromHours(12);
+
+    public static readonly TimeSpan GameGrid = TimeSpan.FromDays(30);
+
+    public static readonly TimeSpan MovieSeries = TimeSpan.FromHours(12);
+
+    public static readonly TimeSpan MovieSeriesGrid = TimeSpan.FromDays(30);
+
+    public static readonly TimeSpan PersonalNote = TimeSpan.FromHours(12);
+
+    public static readonly TimeSpan PersonalNoteGrid = TimeSpan.FromDays(30);
+
+    public static readonly TimeSpan WalletTransaction = TimeSpan.FromHours(12);
+
+    public static readonly TimeSpan WalletTransactionGrid = TimeSpan.FromDays(30);
 }

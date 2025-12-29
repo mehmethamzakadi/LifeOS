@@ -1,0 +1,480 @@
+import { useState, useEffect, useMemo } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { PlusCircle, Pencil, Trash2, Gamepad2 } from 'lucide-react';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { createGame, updateGame, deleteGame, fetchGames } from '../../features/games/api';
+import { Game, GameFormValues, GamePlatform, GameStatus, GameStore, GamePlatformLabels, GameStatusLabels, GameStoreLabels } from '../../features/games/types';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '../../components/ui/dialog';
+import { Badge } from '../../components/ui/badge';
+import { useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { handleApiError, showApiResponseError } from '../../lib/api-error';
+import { cn } from '../../lib/utils';
+
+const gameSchema = z.object({
+  title: z.string().min(2, 'Oyun adı en az 2 karakter olmalıdır').max(200, 'Oyun adı en fazla 200 karakter olabilir'),
+  coverUrl: z.string().url('Geçerli bir URL girin').optional().or(z.literal('')),
+  platform: z.nativeEnum(GamePlatform),
+  store: z.nativeEnum(GameStore),
+  status: z.nativeEnum(GameStatus),
+  isOwned: z.boolean()
+});
+
+type GameFormSchema = z.infer<typeof gameSchema>;
+
+export function GamesPage() {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize] = useState(10);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingGame, setEditingGame] = useState<Game | null>(null);
+  const [gameToDelete, setGameToDelete] = useState<Game | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<GamePlatform | 'all'>('all');
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['games', pageIndex, pageSize, searchTerm],
+    queryFn: () => fetchGames({
+      search: searchTerm || undefined,
+      pageIndex,
+      pageSize,
+      sort: { field: 'createdDate', dir: 'desc' }
+    })
+  });
+
+  const formMethods = useForm<GameFormSchema>({
+    resolver: zodResolver(gameSchema),
+    defaultValues: {
+      title: '',
+      coverUrl: '',
+      platform: GamePlatform.PC,
+      store: GameStore.Steam,
+      status: GameStatus.Backlog,
+      isOwned: false
+    }
+  });
+
+  useEffect(() => {
+    if (editingGame) {
+      formMethods.reset({
+        title: editingGame.title,
+        coverUrl: editingGame.coverUrl || '',
+        platform: editingGame.platform,
+        store: editingGame.store,
+        status: editingGame.status,
+        isOwned: editingGame.isOwned
+      });
+    } else {
+      formMethods.reset({
+        title: '',
+        coverUrl: '',
+        platform: GamePlatform.PC,
+        store: GameStore.Steam,
+        status: GameStatus.Backlog,
+        isOwned: false
+      });
+    }
+  }, [editingGame, formMethods]);
+
+  const createMutation = useMutation({
+    mutationFn: createGame,
+    onSuccess: (result) => {
+      if (!result.success) {
+        showApiResponseError(result, 'Oyun eklenemedi');
+        return;
+      }
+      toast.success(result.message || 'Oyun eklendi');
+      setIsCreateOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['games'] });
+    },
+    onError: (error) => handleApiError(error, 'Oyun eklenemedi')
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (values: GameFormValues) =>
+      editingGame ? updateGame(editingGame.id, values) : Promise.reject(),
+    onSuccess: (result) => {
+      if (!result.success) {
+        showApiResponseError(result, 'Oyun güncellenemedi');
+        return;
+      }
+      toast.success(result.message || 'Oyun güncellendi');
+      setEditingGame(null);
+      queryClient.invalidateQueries({ queryKey: ['games'] });
+    },
+    onError: (error) => handleApiError(error, 'Oyun güncellenemedi')
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (gameId: string) => deleteGame(gameId),
+    onSuccess: (result) => {
+      if (!result.success) {
+        showApiResponseError(result, 'Oyun silinemedi');
+        return;
+      }
+      toast.success(result.message || 'Oyun silindi');
+      setGameToDelete(null);
+      queryClient.invalidateQueries({ queryKey: ['games'] });
+    },
+    onError: (error) => handleApiError(error, 'Oyun silinemedi')
+  });
+
+  const onSubmit = formMethods.handleSubmit(async (values) => {
+    const formData: GameFormValues = {
+      title: values.title,
+      coverUrl: values.coverUrl || undefined,
+      platform: values.platform,
+      store: values.store,
+      status: values.status,
+      isOwned: values.isOwned
+    };
+    if (editingGame) {
+      await updateMutation.mutateAsync(formData);
+    } else {
+      await createMutation.mutateAsync(formData);
+    }
+  });
+
+  const filteredGames = useMemo(() => {
+    if (!data?.items) return [];
+    if (selectedPlatform === 'all') return data.items;
+    return data.items.filter(game => game.platform === selectedPlatform);
+  }, [data, selectedPlatform]);
+
+  const platforms = [
+    { value: 'all' as const, label: 'Tümü' },
+    ...Object.entries(GamePlatformLabels).map(([key, label]) => ({
+      value: Number(key) as GamePlatform,
+      label
+    }))
+  ];
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle>Oyun Kütüphanesi</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Oyunlarınızı platform bazında organize edin ve takip edin.
+            </p>
+          </div>
+          <Dialog
+            open={isCreateOpen}
+            onOpenChange={(open) => {
+              setIsCreateOpen(open);
+              if (!open && !editingGame) {
+                formMethods.reset();
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <PlusCircle className="h-4 w-4" /> Yeni Oyun
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Yeni Oyun</DialogTitle>
+                <DialogDescription>Oyun kütüphanenize yeni bir oyun ekleyin.</DialogDescription>
+              </DialogHeader>
+              <form id="create-game-form" onSubmit={onSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="game-title">Oyun Adı *</Label>
+                  <Input id="game-title" placeholder="Oyun adı" {...formMethods.register('title')} />
+                  {formMethods.formState.errors.title && (
+                    <p className="text-sm text-destructive">{formMethods.formState.errors.title.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="game-cover">Kapak URL</Label>
+                  <Input id="game-cover" placeholder="https://..." {...formMethods.register('coverUrl')} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="game-platform">Platform</Label>
+                    <select
+                      id="game-platform"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      {...formMethods.register('platform', { valueAsNumber: true })}
+                    >
+                      {Object.entries(GamePlatformLabels).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="game-store">Mağaza</Label>
+                    <select
+                      id="game-store"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      {...formMethods.register('store', { valueAsNumber: true })}
+                    >
+                      {Object.entries(GameStoreLabels).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="game-status">Durum</Label>
+                    <select
+                      id="game-status"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      {...formMethods.register('status', { valueAsNumber: true })}
+                    >
+                      {Object.entries(GameStatusLabels).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="game-owned">Sahip Olunan</Label>
+                    <div className="flex items-center gap-2 pt-2">
+                      <input
+                        id="game-owned"
+                        type="checkbox"
+                        {...formMethods.register('isOwned')}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor="game-owned" className="cursor-pointer">
+                        Bu oyuna sahibim
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              </form>
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)}>
+                  İptal
+                </Button>
+                <Button type="submit" form="create-game-form" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? 'Kaydediliyor...' : 'Kaydet'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {platforms.map((platform) => (
+                <Button
+                  key={platform.value}
+                  variant={selectedPlatform === platform.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedPlatform(platform.value)}
+                >
+                  {platform.label}
+                </Button>
+              ))}
+            </div>
+            <Input
+              placeholder="Oyun ara..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPageIndex(0);
+              }}
+              className="max-w-sm"
+            />
+          </div>
+          {isLoading ? (
+            <div className="text-center py-8">Yükleniyor...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredGames.map((game) => (
+                <Card key={game.id} className="relative">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{game.title}</CardTitle>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="secondary">{GamePlatformLabels[game.platform]}</Badge>
+                          <Badge variant="outline">{GameStatusLabels[game.status]}</Badge>
+                          {game.isOwned && <Badge variant="default">Sahip</Badge>}
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingGame(game)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setGameToDelete(game)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {game.coverUrl && (
+                      <img
+                        src={game.coverUrl}
+                        alt={game.title}
+                        className="w-full h-48 object-cover rounded-md mb-3"
+                      />
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Gamepad2 className="h-4 w-4" />
+                      <span>{GameStoreLabels[game.store]}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          {filteredGames.length === 0 && !isLoading && (
+            <div className="text-center py-8 text-muted-foreground">
+              Oyun bulunamadı.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingGame} onOpenChange={(open) => !open && setEditingGame(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Oyunu Düzenle</DialogTitle>
+            <DialogDescription>Oyun bilgilerini güncelleyin.</DialogDescription>
+          </DialogHeader>
+          <form id="edit-game-form" onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-game-title">Oyun Adı *</Label>
+              <Input id="edit-game-title" {...formMethods.register('title')} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-game-cover">Kapak URL</Label>
+              <Input id="edit-game-cover" {...formMethods.register('coverUrl')} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-game-platform">Platform</Label>
+                <select
+                  id="edit-game-platform"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  {...formMethods.register('platform', { valueAsNumber: true })}
+                >
+                  {Object.entries(GamePlatformLabels).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-game-store">Mağaza</Label>
+                <select
+                  id="edit-game-store"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  {...formMethods.register('store', { valueAsNumber: true })}
+                >
+                  {Object.entries(GameStoreLabels).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-game-status">Durum</Label>
+                <select
+                  id="edit-game-status"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  {...formMethods.register('status', { valueAsNumber: true })}
+                >
+                  {Object.entries(GameStatusLabels).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-game-owned">Sahip Olunan</Label>
+                <div className="flex items-center gap-2 pt-2">
+                  <input
+                    id="edit-game-owned"
+                    type="checkbox"
+                    {...formMethods.register('isOwned')}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="edit-game-owned" className="cursor-pointer">
+                    Bu oyuna sahibim
+                  </Label>
+                </div>
+              </div>
+            </div>
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setEditingGame(null)}>
+              İptal
+            </Button>
+            <Button type="submit" form="edit-game-form" disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? 'Güncelleniyor...' : 'Güncelle'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={!!gameToDelete} onOpenChange={(open) => !open && setGameToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Oyunu Sil</DialogTitle>
+            <DialogDescription>
+              Bu oyunu silmek istediğinizden emin misiniz? İşlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Silinecek oyun: <span className="font-medium">{gameToDelete?.title}</span>
+          </p>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setGameToDelete(null)}>
+              İptal
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => gameToDelete && deleteMutation.mutate(gameToDelete.id)}
+            >
+              {deleteMutation.isPending ? 'Siliniyor...' : 'Sil'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+

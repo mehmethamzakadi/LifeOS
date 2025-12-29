@@ -72,5 +72,10 @@ namespace LifeOS.Persistence.Contexts
         public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<OutboxMessage> OutboxMessages { get; set; }
         public DbSet<RefreshSession> RefreshSessions { get; set; }
+        public DbSet<Book> Books { get; set; }
+        public DbSet<Game> Games { get; set; }
+        public DbSet<MovieSeries> MovieSeries { get; set; }
+        public DbSet<PersonalNote> PersonalNotes { get; set; }
+        public DbSet<WalletTransaction> WalletTransactions { get; set; }
     }
 }

@@ -9,7 +9,17 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       port: 5173,
-      host: '0.0.0.0'
+      host: '0.0.0.0', // Docker container'dan erişim için
+      watch: {
+        // Docker volume mount için polling kullan
+        usePolling: true,
+        interval: 1000
+      },
+      hmr: {
+        // Docker container içinde HMR için client port
+        // Tarayıcı host'tan bağlanacağı için localhost kullanılır
+        clientPort: 5173
+      }
     },
     build: {
       // Production build optimizasyonları

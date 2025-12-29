@@ -15,29 +15,38 @@ x-common-healthcheck: &common-healthcheck
 
 services:
   # ===========================================
-  # Client Service - Development
+  # Client Service - Development (Hot Reload)
   # ===========================================
   lifeos.client:
     build:
       context: ./clients/lifeos-client
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=http://localhost:6060
+      dockerfile: Dockerfile.dev
     container_name: lifeos_client_dev
     restart: unless-stopped
+    environment:
+      # Vite dev server için API URL
+      VITE_API_URL: http://localhost:6060
     ports:
-      - "5173:80" # Client UI
+      - "5173:5173" # Vite Dev Server
+    volumes:
+      # Source code'u mount et - hot reload için
+      # node_modules ve dist container içinde kalacak (named volume kullanarak)
+      - lifeos_client_node_modules:/app/node_modules
+      - lifeos_client_dist:/app/dist
+      # Tüm proje klasörünü mount et (node_modules ve dist hariç - yukarıdaki named volumes override eder)
+      - ./clients/lifeos-client:/app
     depends_on:
       lifeos.api:
         condition: service_started
     networks:
       - lifeos_local_net
+    # Vite dev server healthcheck
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
-      interval: 30s
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5173/ || exit 1"]
+      interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
 
   # ===========================================
   # API Service - Development
@@ -310,6 +319,10 @@ volumes:
     name: lifeos_ollama_local
   pgadmin_local_data:
     name: lifeos_pgadmin_local
+  lifeos_client_node_modules:
+    name: lifeos_client_node_modules
+  lifeos_client_dist:
+    name: lifeos_client_dist
 
 # ===========================================
 # Networks - Local Development

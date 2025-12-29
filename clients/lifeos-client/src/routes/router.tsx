@@ -11,6 +11,11 @@ import { UsersPage } from '../pages/admin/users-page';
 import { RolesPage } from '../pages/admin/roles-page';
 import { ActivityLogsPage } from '../pages/admin/activity-logs-page';
 import { ProfilePage } from '../pages/admin/profile-page';
+import { BooksPage } from '../pages/admin/books-page';
+import { GamesPage } from '../pages/admin/games-page';
+import { MoviesPage } from '../pages/admin/movies-page';
+import { NotesPage } from '../pages/admin/notes-page';
+import { WalletPage } from '../pages/admin/wallet-page';
 import { ForbiddenPage } from '../pages/error/forbidden-page';
 import { Permissions } from '../lib/permissions';
 
@@ -88,6 +93,46 @@ export const router = createBrowserRouter([
       {
         path: 'profile',
         element: <ProfilePage />
+      },
+      {
+        path: 'books',
+        element: (
+          <ProtectedRoute requiredPermission={Permissions.BooksViewAll}>
+            <BooksPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'games',
+        element: (
+          <ProtectedRoute requiredPermission={Permissions.GamesViewAll}>
+            <GamesPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'movies',
+        element: (
+          <ProtectedRoute requiredPermission={Permissions.MovieSeriesViewAll}>
+            <MoviesPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'notes',
+        element: (
+          <ProtectedRoute requiredPermission={Permissions.PersonalNotesViewAll}>
+            <NotesPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'wallet',
+        element: (
+          <ProtectedRoute requiredPermission={Permissions.WalletTransactionsViewAll}>
+            <WalletPage />
+          </ProtectedRoute>
+        )
       }
     ]
   },
