@@ -1,0 +1,17 @@
+<Project>
+  <!--
+    Ortak Proje Özellikleri
+    Tüm projeler için geçerli olan ortak ayarlar
+  -->
+
+  <PropertyGroup>
+    <!-- .NET Framework Versiyonu -->
+    <TargetFramework>net9.0</TargetFramework>
+    
+    <!-- Ortak Proje Özellikleri -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>

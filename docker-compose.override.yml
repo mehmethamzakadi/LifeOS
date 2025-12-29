@@ -1,0 +1,24 @@
+# ============================================
+# LifeOS - Visual Studio / IDE Override
+# ============================================
+# Bu dosya Visual Studio ile debugging için kullanılır.
+# docker-compose.yml ile birlikte otomatik olarak yüklenir.
+#
+# ÖNEMLİ: Local development için docker-compose.local.yml kullanın!
+# Bu dosya sadece IDE entegrasyonu içindir.
+# ============================================
+
+services:
+  lifeos.api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+    ports:
+      - "6060:8080"
+    volumes:
+      # Windows için
+      - ${APPDATA:-/tmp}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA:-/tmp}/ASP.NET/Https:/home/app/.aspnet/https:ro
+      # macOS / Linux için alternatif (HOME değişkeni kullanılır)
+      - ${HOME:-/tmp}/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+      - ${HOME:-/tmp}/.aspnet/https:/root/.aspnet/https:ro

@@ -1,0 +1,14 @@
+node_modules
+.DS_Store
+dist
+dist-node
+
+# Environment variables
+# .env dosyası ignore edilir (manuel oluşturulan)
+.env
+# .env.local dosyası ignore edilir (local overrides)
+.env.local
+# Production secrets
+*.prod
+
+# NOT: .env.development ve .env.production dosyaları commit edilmelidir (template olarak)
