@@ -98,9 +98,6 @@ services:
       OllamaOptions__RetryDelaySeconds: 2
       # CORS Policy (Client Docker container'dan gelen istekler için)
       CorsOptions__AllowedOrigins: "http://localhost:5173,http://lifeos.client"
-      # OpenTelemetry - Jaeger
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
-      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
     depends_on:
       postgresdb:
         condition: service_healthy
@@ -226,54 +223,6 @@ services:
       retries: 1
       start_period: 120s # Ollama başlatma için daha fazla süre
 
-  # ===========================================
-  # Jaeger - Distributed Tracing UI
-  # ===========================================
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: lifeos_jaeger_dev
-    restart: unless-stopped
-    environment:
-      COLLECTOR_OTLP_ENABLED: "true"
-    ports:
-      - "16686:16686" # Jaeger UI
-      - "4317:4317" # OTLP gRPC receiver
-      - "4318:4318" # OTLP HTTP receiver
-    networks:
-      - lifeos_local_net
-    # Jaeger all-in-one hızlı başlar
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:16686/ || exit 1",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  # ===========================================
-  # pgAdmin - Database Management (Opsiyonel)
-  # ===========================================
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: lifeos_pgadmin_dev
-    restart: unless-stopped
-    profiles: ["tools"] # docker-compose --profile tools up -d
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@lifeos.local
-      PGADMIN_DEFAULT_PASSWORD: admin123
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_local_data:/var/lib/pgadmin
-    networks:
-      - lifeos_local_net
-    depends_on:
-      - postgresdb
-
 # ===========================================
 # Volumes - Local Development
 # ===========================================
@@ -286,8 +235,6 @@ volumes:
     name: lifeos_seq_local
   ollama_local_data:
     name: lifeos_ollama_local
-  pgadmin_local_data:
-    name: lifeos_pgadmin_local
   lifeos_client_node_modules:
     name: lifeos_client_node_modules
   lifeos_client_dist:

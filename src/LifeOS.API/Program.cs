@@ -76,9 +76,6 @@ builder.ConfigureSerilog();
 // ✅ CORS Policy yapılandırması
 builder.Services.AddCorsPolicy(builder.Configuration, out var corsPolicyName);
 
-// ✅ OpenTelemetry yapılandırması - Tracing ve Metrics için
-builder.Services.AddOpenTelemetryServices(builder.Configuration, builder.Environment);
-
 // ✅ Katman servisleri
 builder.Services.AddConfigurePersistenceServices(builder.Configuration);
 builder.Services.AddConfigureApplicationServices(builder.Configuration);

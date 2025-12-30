@@ -41,10 +41,6 @@ LifeOS, **Clean Architecture** ve **Domain-Driven Design (DDD)** prensiplerine d
 - 📝 **Serilog** - Yapılandırılmış loglama (Console, File, PostgreSQL, Seq)
   - Docker ve Local ortam desteği
   - Ortam bazlı log seviyesi optimizasyonu (Development: Information, Production: Warning)
-- 📊 **OpenTelemetry** - Dağıtık sistem takibi ve observability
-  - HTTP Request, EF Core, MassTransit (RabbitMQ) tracing
-  - Metrics ve Logs entegrasyonu
-  - **Jaeger Integration** - Trace görselleştirme arayüzü
 - 🤖 **AI-Powered Features** - Ollama (Qwen 2.5:7b) ile yapay zeka destekli özellikler
   - AI ile kategori açıklaması üretme
 - 🔄 **Resilience Patterns** - Polly retry policy ile dayanıklı HTTP istekleri
@@ -68,7 +64,6 @@ LifeOS, **Clean Architecture** ve **Domain-Driven Design (DDD)** prensiplerine d
 - 🐳 **Docker & Docker Compose** - Container orchestration
 - 🔄 **CI/CD Ready** - Pipeline hazır yapı
 - 📈 **Seq Integration** - Merkezi log yönetimi ve analizi
-- 🔍 **Jaeger Integration** - Distributed tracing ve görselleştirme
 - 🤖 **Ollama Integration** - Docker container'da AI model desteği
 
 ---
@@ -219,7 +214,6 @@ docker compose -f docker-compose.local.yml ps
 - **Backend API:** http://localhost:6060
 - **API Dokümantasyonu (Scalar):** http://localhost:6060/scalar/v1
 - **Seq Log Viewer:** http://localhost:5341
-- **Jaeger Tracing UI:** http://localhost:16686
 - **RabbitMQ Management:** http://localhost:15672
 - **Ollama API:** http://localhost:11434
 
@@ -322,8 +316,6 @@ cp .env.example .env.production
 | `OllamaOptions__RetryDelaySeconds`                      | Retry gecikmesi (saniye)      | `2`                                                                |
 | `Serilog__SeqUrl`                                       | Seq log server URL            | `http://seq:80` (Docker) / `http://localhost:5341` (Local)         |
 | `Serilog__SeqApiKey`                                    | Seq API key (opsiyonel)       | -                                                                  |
-| `OTEL_EXPORTER_OTLP_ENDPOINT`                           | OpenTelemetry OTLP endpoint   | `http://jaeger:4317` (Docker) / `http://localhost:4317` (Local)    |
-| `OTEL_EXPORTER_OTLP_PROTOCOL`                           | OTLP protokol (grpc/http)     | `grpc`                                                             |
 | `VITE_API_URL`                                          | Frontend API URL (build-time) | `http://localhost:6060` (Docker) / `http://localhost:5285` (Local) |
 
 ---
@@ -504,31 +496,6 @@ Varsayılan şifre: `Admin123!`
 ```bash
 docker run -d -p 5341:80 -e ACCEPT_EULA=Y datalust/seq:latest
 ```
-
-### Jaeger - Distributed Tracing UI
-
-```
-http://localhost:16686
-```
-
-OpenTelemetry trace'lerini görselleştirmek için Jaeger UI kullanılır. API'den gelen tüm HTTP istekleri, EF Core sorguları ve RabbitMQ mesajları otomatik olarak trace edilir.
-
-**Özellikler:**
-
-- HTTP Request/Response tracing
-- EF Core query tracing
-- MassTransit (RabbitMQ) message tracing
-- Trace ID correlation (loglarla bağlantılı)
-- Service map ve dependency görselleştirme
-
-**Docker Ortamında:**
-
-- Otomatik olarak `http://jaeger:4317` üzerinden trace gönderilir
-
-**Local Development:**
-
-- Jaeger'ı Docker'da çalıştırın: `docker run -d -p 16686:16686 -p 4317:4317 -p 4318:4318 -e COLLECTOR_OTLP_ENABLED=true jaegertracing/all-in-one:latest`
-- API `http://localhost:4317` üzerinden trace gönderir
 
 ### RabbitMQ Management
 

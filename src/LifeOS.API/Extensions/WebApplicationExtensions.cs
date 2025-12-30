@@ -87,15 +87,6 @@ public static class WebApplicationExtensions
                 diagnosticContext.Set("RemoteIpAddress", httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
                 diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].ToString());
 
-                // ✅ OpenTelemetry Trace ID'yi loglara ekle
-                var activity = System.Diagnostics.Activity.Current;
-                if (activity != null)
-                {
-                    diagnosticContext.Set("TraceId", activity.TraceId.ToString());
-                    diagnosticContext.Set("SpanId", activity.SpanId.ToString());
-                    diagnosticContext.Set("ParentSpanId", activity.ParentSpanId.ToString());
-                }
-
                 if (httpContext.User?.Identity?.IsAuthenticated == true)
                 {
                     diagnosticContext.Set("UserName", httpContext.User.Identity.Name ?? "unknown");

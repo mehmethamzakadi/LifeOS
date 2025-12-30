@@ -88,7 +88,6 @@ dev: dev-build dev-up
 	@echo "$(YELLOW)Backend API:$(NC) http://localhost:6060"
 	@echo "$(YELLOW)API Docs:$(NC) http://localhost:6060/scalar/v1"
 	@echo "$(YELLOW)Seq Logs:$(NC) http://localhost:5341"
-	@echo "$(YELLOW)Jaeger:$(NC) http://localhost:16686"
 
 dev-up:
 	@echo "$(YELLOW)Development ortamı başlatılıyor...$(NC)"
