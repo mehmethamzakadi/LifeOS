@@ -4,23 +4,22 @@ using LifeOS.Application.Common.Constants;
 using LifeOS.Application.Features.Books.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.Books.Commands.Update;
 
 public sealed class UpdateBookCommandHandler(
-    IBookRepository bookRepository,
+    LifeOSDbContext context,
     ICacheService cacheService,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateBookCommand, IResult>
 {
     public async Task<IResult> Handle(UpdateBookCommand request, CancellationToken cancellationToken)
     {
-        var book = await bookRepository.GetAsync(
-            predicate: x => x.Id == request.Id,
-            enableTracking: true,
-            cancellationToken: cancellationToken);
+        var book = await context.Books
+            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (book is null)
         {
@@ -38,7 +37,7 @@ public sealed class UpdateBookCommandHandler(
             request.StartDate,
             request.EndDate);
 
-        bookRepository.Update(book);
+        context.Books.Update(book);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cacheService.Add(

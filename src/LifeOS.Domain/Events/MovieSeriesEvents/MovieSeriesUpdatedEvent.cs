@@ -1,9 +1,7 @@
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
 
 namespace LifeOS.Domain.Events.MovieSeriesEvents;
 
-[StoreInOutbox]
 public class MovieSeriesUpdatedEvent : DomainEvent
 {
     public Guid MovieSeriesId { get; }

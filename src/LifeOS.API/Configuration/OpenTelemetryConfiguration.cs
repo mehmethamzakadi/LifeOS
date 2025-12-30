@@ -8,7 +8,7 @@ namespace LifeOS.API.Configuration;
 
 /// <summary>
 /// OpenTelemetry yapılandırması - Dağıtık sistem takibi için
-/// HTTP Request, EF Core sorguları ve MassTransit (RabbitMQ) aktiviteleri için otomatik tracing
+/// HTTP Request ve EF Core sorguları için otomatik tracing
 /// </summary>
 public static class OpenTelemetryConfiguration
 {
@@ -72,8 +72,6 @@ public static class OpenTelemetryConfiguration
                             activity.SetTag("http.client.request.uri", request.RequestUri?.ToString());
                         };
                     })
-                    // MassTransit (RabbitMQ) tracing
-                    .AddSource("MassTransit")
                     // Console exporter (development için)
                     .AddConsoleExporter();
 

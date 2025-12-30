@@ -1,15 +1,16 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
 using LifeOS.Domain.Services;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Users.Commands.ChangePassword;
 
 public sealed class ChangePasswordCommandHandler(
     ICurrentUserService currentUserService,
-    IUserRepository userRepository,
+    LifeOSDbContext context,
     IUserDomainService userDomainService,
     IUnitOfWork unitOfWork) : IRequestHandler<ChangePasswordCommand, IResult>
 {
@@ -21,7 +22,8 @@ public sealed class ChangePasswordCommandHandler(
             return new ErrorResult("Kullanıcı kimliği bulunamadı.");
         }
 
-        var user = await userRepository.FindByIdAsync(userId.Value);
+        var user = await context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId.Value && !u.IsDeleted, cancellationToken);
         if (user == null)
         {
             return new ErrorResult("Kullanıcı bulunamadı.");

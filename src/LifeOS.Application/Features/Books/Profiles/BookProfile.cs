@@ -5,7 +5,7 @@ using LifeOS.Application.Features.Books.Commands.Update;
 using LifeOS.Application.Features.Books.Queries.GetById;
 using LifeOS.Application.Features.Books.Queries.GetPaginatedListByDynamic;
 using LifeOS.Domain.Common.Paging;
-using LifeOS.Domain.Common.Responses;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Entities;
 
 namespace LifeOS.Application.Features.Books.Profiles;

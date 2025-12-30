@@ -156,7 +156,7 @@ LifeOS/
 │       ├── Configurations/
 │       └── Migrations/
 ├── clients/
-│   └── baseproject-client/              # React Frontend
+│   └── lifeos-client/                   # React Frontend
 │       ├── src/
 │       │   ├── components/
 │       │   ├── features/
@@ -168,6 +168,10 @@ LifeOS/
 │   ├── Domain.UnitTests/
 │   └── Application.UnitTests/
 ├── docs/                            # Documentation
+│   ├── README.md                    # Dokümantasyon indeksi
+│   ├── CHANGELOG.md                 # Değişiklik geçmişi
+│   ├── DETAILED_PROJECT_ANALYSIS.md # Teknik analiz
+│   └── ...                          # Diğer dokümantasyon dosyaları
 └── deploy/                          # Docker & Nginx configs
 ```
 
@@ -199,11 +203,11 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up --build -d
 docker compose -f docker-compose.local.yml up --build -d
 
 # Ollama modelini yükle (ilk kez - AI özellikleri için opsiyonel)
-docker exec -it baseproject_ollama_dev ollama pull qwen2.5:7b
+docker exec -it lifeos_ollama_dev ollama pull qwen2.5:7b
 
 # Logları izle
-docker compose -f docker-compose.local.yml logs -f baseproject.api
-docker compose -f docker-compose.local.yml logs -f baseproject.client
+docker compose -f docker-compose.local.yml logs -f lifeos.api
+docker compose -f docker-compose.local.yml logs -f lifeos.client
 
 # Servislerin durumunu kontrol et
 docker compose -f docker-compose.local.yml ps
@@ -228,7 +232,7 @@ docker compose -f docker-compose.local.yml ps
 docker-compose -f docker-compose.local.yml up -d postgresdb redis.cache rabbitmq seq ollama
 
 # Ollama modelini yükle (ilk kez)
-docker exec -it baseproject_ollama_dev ollama pull qwen2.5:7b
+docker exec -it lifeos_ollama_dev ollama pull qwen2.5:7b
 ```
 
 #### 2. Backend'i Çalıştır
@@ -248,13 +252,13 @@ dotnet run
 #### 3. Frontend'i Çalıştır
 
 ```bash
-cd clients/baseproject-client
+cd clients/lifeos-client
 
 # Bağımlılıkları yükle
 npm install
 
 # Environment variables otomatik yüklenir (.env.development)
-# Gerekirse clients/baseproject-client/.env.development dosyasını güncelleyin
+# Gerekirse clients/lifeos-client/.env.development dosyasını güncelleyin
 # VITE_API_URL=http://localhost:6060 (Docker API için)
 # VITE_API_URL=http://localhost:5285 (Local .NET için)
 
@@ -289,9 +293,9 @@ cp .env.example .env.production
 | Değişken                | Açıklama           | Development             | Production               |
 | ----------------------- | ------------------ | ----------------------- | ------------------------ |
 | `POSTGRES_DB`           | Veritabanı adı     | `LifeOSDb`         | `LifeOSDb`          |
-| `POSTGRES_USER`         | DB kullanıcı adı   | `postgres`              | `baseproject_user`       |
+| `POSTGRES_USER`         | DB kullanıcı adı   | `postgres`              | `lifeos_user`            |
 | `POSTGRES_PASSWORD`     | DB şifresi         | `postgres`              | **Güçlü şifre**          |
-| `RABBITMQ_DEFAULT_USER` | RabbitMQ kullanıcı | `baseproject`           | `baseproject`            |
+| `RABBITMQ_DEFAULT_USER` | RabbitMQ kullanıcı | `lifeos`                | `lifeos`                 |
 | `RABBITMQ_DEFAULT_PASS` | RabbitMQ şifre     | `supersecret`           | **Güçlü şifre**          |
 | `REDIS_PASSWORD`        | Redis şifre        | (boş)                   | **Güçlü şifre**          |
 | `SEQ_ADMIN_PASSWORD`    | Seq admin şifre    | `Admin123!`             | **Güçlü şifre**          |
@@ -309,7 +313,7 @@ cp .env.example .env.production
 | `ConnectionStrings__RedisCache`                         | Redis bağlantısı              | -                                                                  |
 | `TokenOptions__SecurityKey`                             | JWT secret key                | -                                                                  |
 | `RabbitMQOptions__HostName`                             | RabbitMQ host                 | `localhost`                                                        |
-| `RabbitMQOptions__UserName`                             | RabbitMQ kullanıcı            | `baseproject`                                                      |
+| `RabbitMQOptions__UserName`                             | RabbitMQ kullanıcı            | `lifeos`                                                          |
 | `RabbitMQOptions__Password`                             | RabbitMQ şifre                | -                                                                  |
 | `OllamaOptions__Endpoint`                               | Ollama API endpoint           | `http://localhost:11434`                                           |
 | `OllamaOptions__ModelId`                                | Ollama model ID               | `qwen2.5:7b`                                                       |
@@ -331,7 +335,7 @@ cp .env.example .env.production
 API başladığında Scalar UI üzerinden dokümantasyona erişebilirsiniz:
 
 ```
-http://localhost:5000/scalar/v1
+http://localhost:6060/scalar/v1
 ```
 
 ### Ana Endpoint'ler
@@ -353,15 +357,15 @@ http://localhost:5000/scalar/v1
 #### Login
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:6060/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "admin@baseproject.com", "password": "Admin123!"}'
+  -d '{"email": "admin@lifeos.com", "password": "Admin123!"}'
 ```
 
 #### Kategori Oluşturma
 
 ```bash
-curl -X POST http://localhost:5000/api/Category \
+curl -X POST http://localhost:6060/api/Category \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {token}" \
   -d '{
@@ -373,7 +377,7 @@ curl -X POST http://localhost:5000/api/Category \
 #### AI ile Kategori Açıklaması Üretme
 
 ```bash
-curl -X GET "http://localhost:5000/api/category/generate-description?categoryName=Teknoloji" \
+curl -X GET "http://localhost:6060/api/category/generate-description?categoryName=Teknoloji" \
   -H "Authorization: Bearer {token}"
 ```
 
@@ -405,7 +409,7 @@ make.bat stop      # Servisleri durdur (volume'lar korunur)
 
 **⚠️ Windows PowerShell'de:** Current directory'deki script'leri çalıştırmak için `.\` prefix'i gereklidir.
 
-**Detaylı kullanım için:** [QUICK_START.md](QUICK_START.md) (Windows için) | [Makefile Kullanım Rehberi](README_MAKEFILE.md)
+**Detaylı kullanım için:** [Makefile Kullanım Rehberi](docs/README_MAKEFILE.md) | [Dokümantasyon İndeksi](docs/README.md)
 
 ### Geliştirme Ortamı Kurulumu
 
@@ -532,7 +536,7 @@ OpenTelemetry trace'lerini görselleştirmek için Jaeger UI kullanılır. API'd
 http://localhost:15672
 ```
 
-Kullanıcı/Şifre: `baseproject/supersecret`
+Kullanıcı/Şifre: `lifeos/supersecret`
 
 ### Ollama AI Service (Opsiyonel)
 
@@ -540,13 +544,13 @@ Ollama servisi Docker container'ında çalışmaktadır ve AI özellikleri için
 
 ```bash
 # Model listesi
-docker exec baseproject_ollama_dev ollama list
+docker exec lifeos_ollama_dev ollama list
 
 # Yeni model yükle
-docker exec baseproject_ollama_dev ollama pull qwen2.5:7b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
 
 # Model sil
-docker exec baseproject_ollama_dev ollama rm qwen2.5:7b
+docker exec lifeos_ollama_dev ollama rm qwen2.5:7b
 ```
 
 API Endpoint: `http://localhost:11434`
@@ -558,6 +562,22 @@ docker run -d -p 8081:8081 --name redis-commander \
   -e REDIS_HOSTS=local:redis.cache:6379 \
   rediscommander/redis-commander
 ```
+
+---
+
+## 📚 Dokümantasyon
+
+Detaylı dokümantasyon için [docs/README.md](docs/README.md) dosyasına bakın.
+
+### Ana Dokümantasyon Dosyaları
+
+- **[CHANGELOG.md](docs/CHANGELOG.md)** - Değişiklik geçmişi ve tamamlanan iyileştirmeler
+- **[DETAILED_PROJECT_ANALYSIS.md](docs/DETAILED_PROJECT_ANALYSIS.md)** - Kapsamlı teknik analiz ve mimari değerlendirme
+- **[PERFORMANCE_AND_OPTIMIZATION_REPORT.md](docs/PERFORMANCE_AND_OPTIMIZATION_REPORT.md)** - Performans optimizasyon önerileri
+- **[PRODUCTION_READINESS_REPORT.md](docs/PRODUCTION_READINESS_REPORT.md)** - Production hazırlık durumu
+- **[README_MAKEFILE.md](docs/README_MAKEFILE.md)** - Makefile kullanım rehberi
+- **[SECRETS_SETUP.md](docs/SECRETS_SETUP.md)** - Güvenlik yapılandırması rehberi
+- **[OLLAMA_SETUP.md](docs/OLLAMA_SETUP.md)** - Ollama AI model kurulum rehberi
 
 ---
 
@@ -612,6 +632,6 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICE
 
 **LifeOS** ile ❤️ yapıldı
 
-[⬆ Başa Dön](#baseproject)
+[⬆ Başa Dön](#lifeos)
 
 </div>

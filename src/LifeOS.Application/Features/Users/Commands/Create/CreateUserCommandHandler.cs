@@ -3,39 +3,41 @@ using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Constants;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
 using LifeOS.Domain.Services;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.Users.Commands.Create;
 
 public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, IResult>
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IRoleRepository _roleRepository;
+    private readonly LifeOSDbContext _context;
     private readonly IUserDomainService _userDomainService;
     private readonly IUnitOfWork _unitOfWork;
 
     public CreateUserCommandHandler(
-        IUserRepository userRepository,
-        IRoleRepository roleRepository,
+        LifeOSDbContext context,
         IUserDomainService userDomainService,
         IUnitOfWork unitOfWork)
     {
-        _userRepository = userRepository;
-        _roleRepository = roleRepository;
+        _context = context;
         _userDomainService = userDomainService;
         _unitOfWork = unitOfWork;
     }
 
     public async Task<IResult> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        var existingUser = await _userRepository.FindByEmailAsync(request.Email);
+        var existingUser = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email.Value == request.Email, cancellationToken);
         if (existingUser is not null)
             return new ErrorResult("Bu e-posta adresi zaten kullanılıyor!");
 
-        var existingUserName = await _userRepository.FindByUserNameAsync(request.UserName);
+        var existingUserName = await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.UserName.Value == request.UserName, cancellationToken);
         if (existingUserName is not null)
             return new ErrorResult("Bu kullanıcı adı zaten kullanılıyor!");
 
@@ -45,13 +47,12 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
         if (!passwordResult.Success)
             return passwordResult;
 
-        await _userRepository.AddAsync(user);
+        await _context.Users.AddAsync(user, cancellationToken);
 
         // ✅ Read-only lookup - tracking'e gerek yok (performans için)
-        var userRole = await _roleRepository.GetAsync(
-            r => r.NormalizedName == UserRoles.User.ToUpperInvariant(),
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        var userRole = await _context.Roles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.NormalizedName == UserRoles.User.ToUpperInvariant(), cancellationToken);
         if (userRole != null)
         {
             var roleResult = _userDomainService.AddToRole(user, userRole);

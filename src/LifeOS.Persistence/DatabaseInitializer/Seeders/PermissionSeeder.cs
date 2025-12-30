@@ -127,7 +127,6 @@ public class PermissionSeeder : BaseSeeder
             Permissions.CategoriesDelete => "Kategori silme yetkisi",
             Permissions.CategoriesViewAll => "Tüm kategorileri görüntüleme yetkisi",
             Permissions.MediaUpload => "Medya dosyası yükleme yetkisi",
-            Permissions.ActivityLogsView => "Aktivite loglarını görüntüleme yetkisi",
             Permissions.BooksCreate => "Yeni kitap oluşturma yetkisi",
             Permissions.BooksRead => "Kitap bilgilerini görüntüleme yetkisi",
             Permissions.BooksUpdate => "Kitap bilgilerini güncelleme yetkisi",

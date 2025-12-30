@@ -6,7 +6,7 @@ namespace LifeOS.Domain.Entities;
 /// Sistemdeki rolleri temsil eder.
 /// Identity'den bağımsız, custom role entity.
 /// </summary>
-public sealed class Role : BaseEntity
+public sealed class Role : AggregateRoot
 {
     /// <summary>
     /// Rol adı (benzersiz olmalı, örn: "Admin", "User", "Moderator")
@@ -72,6 +72,8 @@ public sealed class Role : BaseEntity
         if (IsDeleted)
             throw new InvalidOperationException("Role is already deleted");
 
+        IsDeleted = true;
+        DeletedDate = DateTime.UtcNow;
         AddDomainEvent(new Domain.Events.RoleEvents.RoleDeletedEvent(Id, Name));
     }
 }

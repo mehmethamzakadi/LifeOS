@@ -7,16 +7,16 @@ namespace LifeOS.Domain.Entities;
 /// <summary>
 /// Cüzdan işlem entity'si
 /// </summary>
-public sealed class WalletTransaction : BaseEntity
+public sealed class WalletTransaction : AggregateRoot
 {
     // EF Core için parameterless constructor
     public WalletTransaction() { }
 
-    public string Title { get; set; } = default!;
-    public decimal Amount { get; set; }
-    public TransactionType Type { get; set; }
-    public TransactionCategory Category { get; set; }
-    public DateTime TransactionDate { get; set; }
+    public string Title { get; private set; } = default!;
+    public decimal Amount { get; private set; }
+    public TransactionType Type { get; private set; }
+    public TransactionCategory Category { get; private set; }
+    public DateTime TransactionDate { get; private set; }
 
     public static WalletTransaction Create(string title, decimal amount, TransactionType type, TransactionCategory category, DateTime transactionDate)
     {

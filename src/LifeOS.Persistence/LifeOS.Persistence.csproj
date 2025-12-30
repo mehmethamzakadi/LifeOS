@@ -23,7 +23,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LifeOS.Application\LifeOS.Application.csproj" />
+    <ProjectReference Include="..\LifeOS.Domain\LifeOS.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- MediatR for DomainEventNotification wrapper -->
+    <PackageReference Include="MediatR" />
   </ItemGroup>
 
 </Project>

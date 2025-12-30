@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions;
+using LifeOS.Domain.Common;
 
 namespace LifeOS.Infrastructure.Services;
 

@@ -129,11 +129,6 @@ services:
         connectRetry=3,
         keepAlive=60,
         ssl=false
-      # RabbitMQ
-      RabbitMQOptions__HostName: rabbitmq
-      RabbitMQOptions__Port: 5672
-      RabbitMQOptions__UserName: ${RABBITMQ_DEFAULT_USER}
-      RabbitMQOptions__Password: ${RABBITMQ_DEFAULT_PASS}
       # JWT Security
       TokenOptions__SecurityKey: ${TOKEN_SECURITY_KEY}
       # Seq Logging
@@ -145,8 +140,6 @@ services:
       - uploads_prod_data:/app/wwwroot/uploads
     depends_on:
       postgresdb:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
       redis.cache:
         condition: service_healthy
@@ -230,40 +223,6 @@ services:
           memory: 512M
 
   # ===========================================
-  # RabbitMQ - Production
-  # ===========================================
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: lifeos_rabbitmq_prod
-    hostname: rabbitmq
-    restart: always
-    # ÖNEMLİ: Production'da management portu dışarıya AÇILMAMALI!
-    # ports:
-    #   - "15672:15672"       # Sadece gerekirse VPN üzerinden erişim
-    expose:
-      - "5672"
-      - "15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-    volumes:
-      - rabbitmq_prod_data:/var/lib/rabbitmq
-    networks:
-      - lifeos_prod_net
-    <<: *logging
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
-      <<: *common-healthcheck
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: 512M
-        reservations:
-          cpus: "0.25"
-          memory: 128M
-
-  # ===========================================
   # Redis Cache - Production (Password Protected)
   # ===========================================
   redis.cache:
@@ -333,9 +292,6 @@ services:
 volumes:
   postgres_prod_data:
     name: lifeos_postgres_prod
-    driver: local
-  rabbitmq_prod_data:
-    name: lifeos_rabbitmq_prod
     driver: local
   redis_prod_data:
     name: lifeos_redis_prod

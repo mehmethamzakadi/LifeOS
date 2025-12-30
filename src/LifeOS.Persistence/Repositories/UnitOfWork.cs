@@ -1,12 +1,9 @@
-using LifeOS.Application.Common;
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
-using LifeOS.Domain.Entities;
+using LifeOS.Persistence.Common;
 using LifeOS.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace LifeOS.Persistence.Repositories;
 
@@ -36,31 +33,35 @@ public sealed class UnitOfWork : IUnitOfWork
     {
         var domainEvents = GetDomainEvents().ToList();
 
-        if (!domainEvents.Any())
-        {
-            return await _context.SaveChangesAsync(cancellationToken);
-        }
-
-        var existingTransaction = _context.Database.CurrentTransaction;
-        if (existingTransaction != null)
-        {
-            return await SaveWithinTransaction(domainEvents, cancellationToken);
-        }
-
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var result = await SaveWithinTransaction(domainEvents, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return result;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
+            if (!domainEvents.Any())
+            {
+                return await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            var existingTransaction = _context.Database.CurrentTransaction;
+            if (existingTransaction != null)
+            {
+                return await SaveWithinTransaction(domainEvents, cancellationToken);
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                var result = await SaveWithinTransaction(domainEvents, cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return result;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
         finally
         {
+            // Her durumda domain event'leri temizle (başarılı veya hatalı durumda)
             ClearDomainEvents();
         }
     }
@@ -102,38 +103,7 @@ public sealed class UnitOfWork : IUnitOfWork
             }
         }
 
-        // 3. Outbox'a kaydet (out-of-process integration events için)
-        // Reliable messaging: RabbitMQ'ya gidecek event'ler
-        foreach (var domainEvent in domainEvents)
-        {
-            if (ShouldStoreInOutbox(domainEvent))
-            {
-                var outboxMessage = new OutboxMessage
-                {
-                    IdempotencyKey = domainEvent.EventId.ToString(),
-                    EventType = domainEvent.GetType().Name,
-                    Payload = JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
-                    CreatedAt = DateTime.UtcNow,
-                    RetryCount = 0
-                };
-
-                await _context.OutboxMessages.AddAsync(outboxMessage, cancellationToken);
-            }
-        }
-
-        // 4. Outbox mesajlarını kaydet
-        if (domainEvents.Any(ShouldStoreInOutbox))
-        {
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-
         return result;
-    }
-
-    private static bool ShouldStoreInOutbox(IDomainEvent domainEvent)
-    {
-        var eventType = domainEvent.GetType();
-        return eventType.GetCustomAttributes(typeof(StoreInOutboxAttribute), false).Any();
     }
 
     public int SaveChanges()
@@ -221,8 +191,9 @@ public sealed class UnitOfWork : IUnitOfWork
     {
         if (!_disposed && disposing)
         {
+            // Sadece kendi transaction'ımızı dispose et
+            // DbContext DI container tarafından yönetiliyor, dispose edilmemeli
             _transaction?.Dispose();
-            _context.Dispose();
         }
         _disposed = true;
     }

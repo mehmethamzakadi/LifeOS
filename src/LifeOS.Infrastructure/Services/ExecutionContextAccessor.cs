@@ -1,4 +1,3 @@
-using LifeOS.Application.Abstractions;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
@@ -9,7 +8,8 @@ namespace LifeOS.Infrastructure.Services;
 /// HttpContext'in bulunmadığı senaryolar için AsyncLocal üzerinden geçici kullanıcı kimliği atamaya
 /// izin verir.
 /// </summary>
-public sealed class ExecutionContextAccessor(IHttpContextAccessor httpContextAccessor) : IExecutionContextAccessor
+public sealed class ExecutionContextAccessor(IHttpContextAccessor httpContextAccessor) : 
+    LifeOS.Domain.Common.IExecutionContextAccessor
 {
     private static readonly AsyncLocal<Guid?> CurrentUserOverride = new();
 

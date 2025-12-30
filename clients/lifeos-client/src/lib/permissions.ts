@@ -31,9 +31,6 @@ export const Permissions = {
   // Media Management
   MediaUpload: "Media.Upload",
 
-  // Activity Logs
-  ActivityLogsView: "ActivityLogs.View",
-
   // Book Management
   BooksCreate: "Books.Create",
   BooksRead: "Books.Read",

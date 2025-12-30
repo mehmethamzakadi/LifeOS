@@ -1,5 +1,5 @@
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,50 +7,41 @@ namespace LifeOS.Application.Features.Users.Queries.GetUserRoles;
 
 public class GetUserRolesQueryHandler : IRequestHandler<GetUserRolesQuery, IDataResult<GetUserRolesResponse>>
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IRoleRepository _roleRepository;
+    private readonly LifeOSDbContext _context;
 
-    public GetUserRolesQueryHandler(IUserRepository userRepository, IRoleRepository roleRepository)
+    public GetUserRolesQueryHandler(LifeOSDbContext context)
     {
-        _userRepository = userRepository;
-        _roleRepository = roleRepository;
+        _context = context;
     }
 
     public async Task<IDataResult<GetUserRolesResponse>> Handle(GetUserRolesQuery request, CancellationToken cancellationToken)
     {
         // ✅ Read-only sorgu - tracking'e gerek yok (performans için)
-        var user = await _userRepository.GetAsync(
-            u => u.Id == request.UserId,
-            include: q => q.Include(u => u.UserRoles).ThenInclude(ur => ur.Role),
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        var user = await _context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == request.UserId && !u.IsDeleted, cancellationToken);
 
         if (user == null)
         {
             return new ErrorDataResult<GetUserRolesResponse>("Kullanıcı bulunamadı");
         }
 
-        var roleNames = await _userRepository.GetRolesAsync(user);
-        var userRoles = new List<UserRoleDto>();
-
-        foreach (var roleName in roleNames)
-        {
-            var role = await _roleRepository.FindByNameAsync(roleName);
-            if (role != null)
+        // Rolleri user.UserRoles üzerinden direkt alıyoruz (zaten include edildi)
+        var userRoles = user.UserRoles
+            .Select(ur => new UserRoleDto
             {
-                userRoles.Add(new UserRoleDto
-                {
-                    Id = role.Id,
-                    Name = role.Name ?? string.Empty
-                });
-            }
-        }
+                Id = ur.Role.Id,
+                Name = ur.Role.Name ?? string.Empty
+            })
+            .ToList();
 
         var response = new GetUserRolesResponse
         {
             UserId = user.Id,
-            UserName = user.UserName ?? string.Empty,
-            Email = user.Email ?? string.Empty,
+            UserName = user.UserName.Value,
+            Email = user.Email.Value,
             Roles = userRoles
         };
 

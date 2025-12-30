@@ -1,9 +1,7 @@
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
 
 namespace LifeOS.Domain.Events.UserEvents;
 
-[StoreInOutbox]
 public class UserUpdatedEvent : DomainEvent
 {
     public Guid UserId { get; }

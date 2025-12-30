@@ -1,13 +1,14 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.PersonalNotes.Queries.GetById;
 
 public sealed class GetPersonalNoteByIdQueryHandler(
-    IPersonalNoteRepository personalNoteRepository,
+    LifeOSDbContext context,
     ICacheService cacheService) : IRequestHandler<GetByIdPersonalNoteQuery, IDataResult<GetByIdPersonalNoteResponse>>
 {
     public async Task<IDataResult<GetByIdPersonalNoteResponse>> Handle(GetByIdPersonalNoteQuery request, CancellationToken cancellationToken)
@@ -17,7 +18,9 @@ public sealed class GetPersonalNoteByIdQueryHandler(
         if (cacheValue is not null)
             return new SuccessDataResult<GetByIdPersonalNoteResponse>(cacheValue);
 
-        var personalNote = await personalNoteRepository.GetByIdAsync(request.Id, cancellationToken);
+        var personalNote = await context.PersonalNotes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
         if (personalNote is null)
             return new ErrorDataResult<GetByIdPersonalNoteResponse>("Kişisel not bulunamadı.");

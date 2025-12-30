@@ -2,15 +2,17 @@ using AutoMapper;
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Paging;
-using LifeOS.Domain.Common.Responses;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
+using LifeOS.Persistence.Extensions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Games.Queries.GetPaginatedListByDynamic;
 
 public sealed class GetPaginatedListByDynamicGamesQueryHandler(
-    IGameRepository gameRepository,
+    LifeOSDbContext context,
     IMapper mapper,
     ICacheService cacheService) : IRequestHandler<GetPaginatedListByDynamicGamesQuery, PaginatedListResponse<GetPaginatedListByDynamicGamesResponse>>
 {
@@ -32,14 +34,9 @@ public sealed class GetPaginatedListByDynamicGamesQueryHandler(
             return cachedResponse;
         }
 
-        Paginate<Game> gamesDynamic = await gameRepository.GetPaginatedListByDynamicAsync(
-            dynamic: request.DataGridRequest.DynamicQuery,
-            index: pagination.PageIndex,
-            size: pagination.PageSize,
-            include: null,
-            enableTracking: false,
-            cancellationToken: cancellationToken
-        );
+        var query = context.Games.AsNoTracking().AsQueryable();
+        query = query.ToDynamic(request.DataGridRequest.DynamicQuery);
+        var gamesDynamic = await query.ToPaginateAsync(pagination.PageIndex, pagination.PageSize, cancellationToken);
 
         PaginatedListResponse<GetPaginatedListByDynamicGamesResponse> response = mapper.Map<PaginatedListResponse<GetPaginatedListByDynamicGamesResponse>>(gamesDynamic);
         await cacheService.Add(

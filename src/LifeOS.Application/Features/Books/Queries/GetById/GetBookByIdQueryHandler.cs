@@ -1,13 +1,14 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Books.Queries.GetById;
 
 public sealed class GetBookByIdQueryHandler(
-    IBookRepository bookRepository,
+    LifeOSDbContext context,
     ICacheService cacheService) : IRequestHandler<GetByIdBookQuery, IDataResult<GetByIdBookResponse>>
 {
     public async Task<IDataResult<GetByIdBookResponse>> Handle(GetByIdBookQuery request, CancellationToken cancellationToken)
@@ -17,7 +18,9 @@ public sealed class GetBookByIdQueryHandler(
         if (cacheValue is not null)
             return new SuccessDataResult<GetByIdBookResponse>(cacheValue);
 
-        var book = await bookRepository.GetByIdAsync(request.Id, cancellationToken);
+        var book = await context.Books
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
         if (book is null)
             return new ErrorDataResult<GetByIdBookResponse>("Kitap bilgisi bulunamadı.");

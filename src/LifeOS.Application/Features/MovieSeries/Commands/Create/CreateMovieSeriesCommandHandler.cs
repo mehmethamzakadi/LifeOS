@@ -5,7 +5,7 @@ using LifeOS.Application.Features.MovieSeries.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 using MovieSeriesEntity = LifeOS.Domain.Entities.MovieSeries;
 using IResult = LifeOS.Domain.Common.Results.IResult;
@@ -13,7 +13,7 @@ using IResult = LifeOS.Domain.Common.Results.IResult;
 namespace LifeOS.Application.Features.MovieSeries.Commands.Create;
 
 public sealed class CreateMovieSeriesCommandHandler(
-    IMovieSeriesRepository movieSeriesRepository,
+    LifeOSDbContext context,
     ICacheService cache,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateMovieSeriesCommand, IResult>
 {
@@ -30,7 +30,7 @@ public sealed class CreateMovieSeriesCommandHandler(
             request.Rating,
             request.PersonalNote);
 
-        await movieSeriesRepository.AddAsync(movieSeries);
+        await context.MovieSeries.AddAsync(movieSeries, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cache.Add(

@@ -1,6 +1,5 @@
 using LifeOS.Application.Abstractions.Identity;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
 using LifeOS.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -15,20 +14,14 @@ namespace LifeOS.Infrastructure.Services;
 
 public sealed class JwtTokenService : ITokenService
 {
-    private readonly IUserRepository _userRepository;
     private readonly LifeOSDbContext _dbContext;
-    private readonly IPermissionRepository _permissionRepository;
     private readonly TokenOptions _tokenOptions;
 
     public JwtTokenService(
-        IUserRepository userRepository,
         LifeOSDbContext dbContext,
-        IPermissionRepository permissionRepository,
         IOptions<TokenOptions> tokenOptionsAccessor)
     {
-        _userRepository = userRepository;
         _dbContext = dbContext;
-        _permissionRepository = permissionRepository;
         _tokenOptions = tokenOptionsAccessor.Value;
     }
 
@@ -77,7 +70,15 @@ public sealed class JwtTokenService : ITokenService
 
     public async Task<List<Claim>> GetAuthClaims(User user)
     {
-        var userRoles = await _userRepository.GetRolesAsync(user);
+        // Get user roles with role names
+        var userRoles = await _dbContext.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.UserId == user.Id && !ur.IsDeleted)
+            .Include(ur => ur.Role)
+            .Where(ur => !ur.Role.IsDeleted)
+            .Select(ur => ur.Role.Name!)
+            .ToListAsync();
+
         var authClaims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -96,16 +97,26 @@ public sealed class JwtTokenService : ITokenService
         {
             // Get all role IDs
             var roleIds = await _dbContext.Roles
-                .Where(r => userRoles.Contains(r.Name))
+                .AsNoTracking()
+                .Where(r => userRoles.Contains(r.Name) && !r.IsDeleted)
                 .Select(r => r.Id)
                 .ToListAsync();
 
             if (roleIds.Any())
             {
-                var permissions = await _permissionRepository.GetPermissionsByRoleIdsAsync(roleIds);
-                foreach (var permission in permissions)
+                // Get permissions through RolePermissions (RolePermission soft delete desteklemiyor, fiziksel silme kullanılıyor)
+                var permissions = await _dbContext.RolePermissions
+                    .AsNoTracking()
+                    .Where(rp => roleIds.Contains(rp.RoleId))
+                    .Include(rp => rp.Permission)
+                    .Where(rp => !rp.Permission.IsDeleted)
+                    .Select(rp => rp.Permission.Name)
+                    .Distinct()
+                    .ToListAsync();
+
+                foreach (var permissionName in permissions)
                 {
-                    authClaims.Add(new Claim("permission", permission.Name));
+                    authClaims.Add(new Claim("permission", permissionName));
                 }
             }
         }

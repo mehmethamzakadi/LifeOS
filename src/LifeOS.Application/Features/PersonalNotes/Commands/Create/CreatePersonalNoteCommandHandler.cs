@@ -5,14 +5,14 @@ using LifeOS.Application.Features.PersonalNotes.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.PersonalNotes.Commands.Create;
 
 public sealed class CreatePersonalNoteCommandHandler(
-    IPersonalNoteRepository personalNoteRepository,
+    LifeOSDbContext context,
     ICacheService cache,
     IUnitOfWork unitOfWork) : IRequestHandler<CreatePersonalNoteCommand, IResult>
 {
@@ -25,7 +25,7 @@ public sealed class CreatePersonalNoteCommandHandler(
             request.IsPinned,
             request.Tags);
 
-        await personalNoteRepository.AddAsync(personalNote);
+        await context.PersonalNotes.AddAsync(personalNote, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cache.Add(

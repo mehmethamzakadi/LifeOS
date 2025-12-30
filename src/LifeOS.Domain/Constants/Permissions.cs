@@ -34,9 +34,6 @@ public static class Permissions
     // Media Management Permissions
     public const string MediaUpload = "Media.Upload";
 
-    // Activity Logs Permissions
-    public const string ActivityLogsView = "ActivityLogs.View";
-
     // Book Management Permissions
     public const string BooksCreate = "Books.Create";
     public const string BooksRead = "Books.Read";
@@ -93,9 +90,6 @@ public static class Permissions
 
             // Media
             MediaUpload,
-
-            // Activity Logs
-            ActivityLogsView,
 
             // Books
             BooksCreate, BooksRead, BooksUpdate, BooksDelete, BooksViewAll,

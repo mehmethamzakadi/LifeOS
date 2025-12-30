@@ -7,20 +7,20 @@ namespace LifeOS.Domain.Entities;
 /// <summary>
 /// Film/Dizi entity'si
 /// </summary>
-public sealed class MovieSeries : BaseEntity
+public sealed class MovieSeries : AggregateRoot
 {
     // EF Core için parameterless constructor
     public MovieSeries() { }
 
-    public string Title { get; set; } = default!;
-    public string? CoverUrl { get; set; }
-    public MovieSeriesType Type { get; set; }
-    public MovieSeriesPlatform Platform { get; set; }
-    public int? CurrentSeason { get; set; }
-    public int? CurrentEpisode { get; set; }
-    public MovieSeriesStatus Status { get; set; }
-    public int? Rating { get; set; }
-    public string? PersonalNote { get; set; }
+    public string Title { get; private set; } = default!;
+    public string? CoverUrl { get; private set; }
+    public MovieSeriesType Type { get; private set; }
+    public MovieSeriesPlatform Platform { get; private set; }
+    public int? CurrentSeason { get; private set; }
+    public int? CurrentEpisode { get; private set; }
+    public MovieSeriesStatus Status { get; private set; }
+    public int? Rating { get; private set; }
+    public string? PersonalNote { get; private set; }
 
     public static MovieSeries Create(string title, string? coverUrl, MovieSeriesType type, MovieSeriesPlatform platform, int? currentSeason, int? currentEpisode, MovieSeriesStatus status, int? rating, string? personalNote)
     {

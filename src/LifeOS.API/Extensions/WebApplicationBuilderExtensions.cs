@@ -1,7 +1,7 @@
 using AspNetCoreRateLimit;
+using LifeOS.API.Common;
 using LifeOS.API.Configuration;
 using LifeOS.API.Filters;
-using LifeOS.Domain.Common.Results;
 using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

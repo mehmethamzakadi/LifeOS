@@ -1,9 +1,7 @@
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
 
 namespace LifeOS.Domain.Events.PermissionEvents;
 
-[StoreInOutbox]
 public class PermissionsAssignedToRoleEvent : DomainEvent
 {
     public Guid RoleId { get; }

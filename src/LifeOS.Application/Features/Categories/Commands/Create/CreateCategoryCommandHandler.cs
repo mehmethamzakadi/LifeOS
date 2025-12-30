@@ -5,14 +5,15 @@ using LifeOS.Application.Features.Categories.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.Categories.Commands.Create;
 
 public sealed class CreateCategoryCommandHandler(
-    ICategoryRepository categoryRepository,
+    LifeOSDbContext context,
     ICacheService cache,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateCategoryCommand, IResult>
 {
@@ -20,9 +21,8 @@ public sealed class CreateCategoryCommandHandler(
     {
         // NormalizedName ile case-insensitive kontrol (database index kullanarak)
         var normalizedName = request.Name.ToUpperInvariant();
-        bool categoryExists = await categoryRepository.AnyAsync(
-            x => x.NormalizedName == normalizedName,
-            cancellationToken: cancellationToken);
+        bool categoryExists = await context.Categories
+            .AnyAsync(x => x.NormalizedName == normalizedName, cancellationToken);
 
         if (categoryExists)
         {
@@ -32,9 +32,8 @@ public sealed class CreateCategoryCommandHandler(
         // Parent kontrolü - eğer parentId verilmişse, parent'ın var olduğunu kontrol et
         if (request.ParentId.HasValue)
         {
-            var parentExists = await categoryRepository.AnyAsync(
-                x => x.Id == request.ParentId.Value && !x.IsDeleted,
-                cancellationToken: cancellationToken);
+            var parentExists = await context.Categories
+                .AnyAsync(x => x.Id == request.ParentId.Value && !x.IsDeleted, cancellationToken);
 
             if (!parentExists)
             {
@@ -43,7 +42,7 @@ public sealed class CreateCategoryCommandHandler(
         }
 
         var category = Category.Create(request.Name, request.Description, request.ParentId);
-        await categoryRepository.AddAsync(category);
+        await context.Categories.AddAsync(category, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cache.Add(

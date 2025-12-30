@@ -1,4 +1,0 @@
-1- Package Manager Console üzerinde Default Project -src\LifeOS.Persistence seçili olmal�d�r.
-2- add-migration Init -C LifeOSDbContext -O Migrations/PostgreSql
-3- dotnet ef migrations add Init -c LifeOSDbContext -o Migrations/PostgreSql
-3- update-database -C LifeOSDbContext

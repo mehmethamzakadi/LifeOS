@@ -5,14 +5,14 @@ using LifeOS.Application.Features.Games.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.Games.Commands.Create;
 
 public sealed class CreateGameCommandHandler(
-    IGameRepository gameRepository,
+    LifeOSDbContext context,
     ICacheService cache,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateGameCommand, IResult>
 {
@@ -26,7 +26,7 @@ public sealed class CreateGameCommandHandler(
             request.Status,
             request.IsOwned);
 
-        await gameRepository.AddAsync(game);
+        await context.Games.AddAsync(game, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cache.Add(

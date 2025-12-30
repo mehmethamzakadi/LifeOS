@@ -32,4 +32,22 @@ public sealed class UserRole : BaseEntity
     /// Rolün kullanıcıya atandığı tarih
     /// </summary>
     public DateTime AssignedDate { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// UserRole'ü soft delete ile siler
+    /// </summary>
+    public void Delete()
+    {
+        IsDeleted = true;
+        DeletedDate = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Silinmiş UserRole'ü geri yükler (soft delete'i kaldırır)
+    /// </summary>
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedDate = null;
+    }
 }

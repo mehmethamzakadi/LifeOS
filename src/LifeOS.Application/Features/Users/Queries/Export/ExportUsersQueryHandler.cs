@@ -1,23 +1,27 @@
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace LifeOS.Application.Features.Users.Queries.Export;
 
 public class ExportUsersQueryHandler : IRequestHandler<ExportUsersQuery, ExportUsersResponse>
 {
-    private readonly IUserRepository _userRepository;
+    private readonly LifeOSDbContext _context;
 
-    public ExportUsersQueryHandler(IUserRepository userRepository)
+    public ExportUsersQueryHandler(LifeOSDbContext context)
     {
-        _userRepository = userRepository;
+        _context = context;
     }
 
     public async Task<ExportUsersResponse> Handle(ExportUsersQuery request, CancellationToken cancellationToken)
     {
-        var usersResult = await _userRepository.GetUsersAsync(0, int.MaxValue, cancellationToken);
-        var users = usersResult.Items.OrderBy(u => u.Id).ToList();
+        var users = await _context.Users
+            .AsNoTracking()
+            .Where(u => !u.IsDeleted)
+            .OrderBy(u => u.Id)
+            .ToListAsync(cancellationToken);
 
         var csv = GenerateCsv(users);
         var bytes = Encoding.UTF8.GetBytes(csv);
@@ -40,7 +44,7 @@ public class ExportUsersQueryHandler : IRequestHandler<ExportUsersQuery, ExportU
         // Satırlar
         foreach (var user in users)
         {
-            sb.AppendLine($"{user.Id},{EscapeCsv(user.UserName!)},{EscapeCsv(user.Email!)},{EscapeCsv(user.PhoneNumber)},{user.EmailConfirmed}");
+            sb.AppendLine($"{user.Id},{EscapeCsv(user.UserName.Value)},{EscapeCsv(user.Email.Value)},{EscapeCsv(user.PhoneNumber)},{user.EmailConfirmed}");
         }
 
         return sb.ToString();

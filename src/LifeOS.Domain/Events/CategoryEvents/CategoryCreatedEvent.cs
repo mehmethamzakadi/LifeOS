@@ -1,9 +1,7 @@
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
 
 namespace LifeOS.Domain.Events.CategoryEvents;
 
-[StoreInOutbox]
 public class CategoryCreatedEvent : DomainEvent
 {
     public Guid CategoryId { get; }

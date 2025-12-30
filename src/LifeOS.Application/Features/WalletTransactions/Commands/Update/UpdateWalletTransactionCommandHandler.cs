@@ -4,23 +4,22 @@ using LifeOS.Application.Common.Constants;
 using LifeOS.Application.Features.WalletTransactions.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.WalletTransactions.Commands.Update;
 
 public sealed class UpdateWalletTransactionCommandHandler(
-    IWalletTransactionRepository walletTransactionRepository,
+    LifeOSDbContext context,
     ICacheService cacheService,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateWalletTransactionCommand, IResult>
 {
     public async Task<IResult> Handle(UpdateWalletTransactionCommand request, CancellationToken cancellationToken)
     {
-        var walletTransaction = await walletTransactionRepository.GetAsync(
-            predicate: x => x.Id == request.Id,
-            enableTracking: true,
-            cancellationToken: cancellationToken);
+        var walletTransaction = await context.WalletTransactions
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
         if (walletTransaction is null)
         {
@@ -34,7 +33,7 @@ public sealed class UpdateWalletTransactionCommandHandler(
             request.Category,
             request.TransactionDate);
 
-        walletTransactionRepository.Update(walletTransaction);
+        context.WalletTransactions.Update(walletTransaction);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cacheService.Add(

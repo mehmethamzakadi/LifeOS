@@ -8,13 +8,13 @@ namespace LifeOS.Domain.Entities;
 /// </summary>
 public sealed class User : AggregateRoot
 {
-    private string _userName = default!;
-    private string _email = default!;
+    private ValueObjects.UserName _userName = default!;
+    private ValueObjects.Email _email = default!;
 
     /// <summary>
     /// Kullanıcı adı (benzersiz olmalı)
     /// </summary>
-    public string UserName
+    public ValueObjects.UserName UserName
     {
         get => _userName;
         private set => _userName = value;
@@ -28,7 +28,7 @@ public sealed class User : AggregateRoot
     /// <summary>
     /// Email adresi (benzersiz olmalı)
     /// </summary>
-    public string Email
+    public ValueObjects.Email Email
     {
         get => _email;
         private set => _email = value;
@@ -125,10 +125,10 @@ public sealed class User : AggregateRoot
 
         var user = new User
         {
-            UserName = userNameVO.Value,
-            NormalizedUserName = userNameVO.Value.ToUpperInvariant(),
-            Email = emailVO.Value,
-            NormalizedEmail = emailVO.Value.ToUpperInvariant(),
+            UserName = userNameVO,
+            NormalizedUserName = userNameVO.NormalizedValue,
+            Email = emailVO,
+            NormalizedEmail = emailVO.NormalizedValue,
             PasswordHash = passwordHash,
             EmailConfirmed = false
         };
@@ -142,10 +142,10 @@ public sealed class User : AggregateRoot
         var userNameVO = ValueObjects.UserName.Create(userName);
         var emailVO = ValueObjects.Email.Create(email);
 
-        UserName = userNameVO.Value;
-        NormalizedUserName = userNameVO.Value.ToUpperInvariant();
-        Email = emailVO.Value;
-        NormalizedEmail = emailVO.Value.ToUpperInvariant();
+        UserName = userNameVO;
+        NormalizedUserName = userNameVO.NormalizedValue;
+        Email = emailVO;
+        NormalizedEmail = emailVO.NormalizedValue;
 
         AddDomainEvent(new Domain.Events.UserEvents.UserUpdatedEvent(Id, userName));
     }
@@ -155,7 +155,7 @@ public sealed class User : AggregateRoot
         PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
         ProfilePictureUrl = string.IsNullOrWhiteSpace(profilePictureUrl) ? null : profilePictureUrl.Trim();
 
-        AddDomainEvent(new Domain.Events.UserEvents.UserUpdatedEvent(Id, UserName));
+        AddDomainEvent(new Domain.Events.UserEvents.UserUpdatedEvent(Id, UserName.Value));
     }
 
     public void Delete()
@@ -163,7 +163,9 @@ public sealed class User : AggregateRoot
         if (IsDeleted)
             throw new InvalidOperationException("User is already deleted");
 
-        AddDomainEvent(new Domain.Events.UserEvents.UserDeletedEvent(Id, UserName));
+        IsDeleted = true;
+        DeletedDate = DateTime.UtcNow;
+        AddDomainEvent(new Domain.Events.UserEvents.UserDeletedEvent(Id, UserName.Value));
     }
 
     public void ChangePassword(string newPasswordHash)

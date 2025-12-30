@@ -5,14 +5,15 @@ using LifeOS.Application.Features.Books.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.Books.Commands.Create;
 
 public sealed class CreateBookCommandHandler(
-    IBookRepository bookRepository,
+    LifeOSDbContext context,
     ICacheService cache,
     IUnitOfWork unitOfWork) : IRequestHandler<CreateBookCommand, IResult>
 {
@@ -29,7 +30,7 @@ public sealed class CreateBookCommandHandler(
             request.StartDate,
             request.EndDate);
 
-        await bookRepository.AddAsync(book);
+        await context.Books.AddAsync(book, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cache.Add(

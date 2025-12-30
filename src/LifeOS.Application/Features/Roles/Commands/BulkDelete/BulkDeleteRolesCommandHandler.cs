@@ -1,6 +1,6 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,16 +8,16 @@ namespace LifeOS.Application.Features.Roles.Commands.BulkDelete;
 
 public class BulkDeleteRolesCommandHandler : IRequestHandler<BulkDeleteRolesCommand, BulkDeleteRolesResponse>
 {
-    private readonly IRoleRepository _roleRepository;
+    private readonly LifeOSDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
 
     public BulkDeleteRolesCommandHandler(
-        IRoleRepository roleRepository,
+        LifeOSDbContext context,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService)
     {
-        _roleRepository = roleRepository;
+        _context = context;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
     }
@@ -30,11 +30,9 @@ public class BulkDeleteRolesCommandHandler : IRequestHandler<BulkDeleteRolesComm
         {
             try
             {
-                var role = await _roleRepository.GetAsync(
-                    predicate: r => r.Id == roleId,
-                    include: r => r.Include(x => x.UserRoles),
-                    enableTracking: true,
-                    cancellationToken: cancellationToken);
+                var role = await _context.Roles
+                    .Include(r => r.UserRoles)
+                    .FirstOrDefaultAsync(r => r.Id == roleId && !r.IsDeleted, cancellationToken);
 
                 if (role == null)
                 {
@@ -58,7 +56,7 @@ public class BulkDeleteRolesCommandHandler : IRequestHandler<BulkDeleteRolesComm
                 }
 
                 role.Delete();
-                _roleRepository.Delete(role);
+                _context.Roles.Update(role);
                 response.DeletedCount++;
             }
             catch (Exception ex)

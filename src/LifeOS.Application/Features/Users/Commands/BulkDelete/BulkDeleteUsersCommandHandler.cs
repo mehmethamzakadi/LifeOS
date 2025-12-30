@@ -1,22 +1,23 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Users.Commands.BulkDelete;
 
 public class BulkDeleteUsersCommandHandler : IRequestHandler<BulkDeleteUsersCommand, BulkDeleteUsersResponse>
 {
-    private readonly IUserRepository _userRepository;
+    private readonly LifeOSDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
 
     public BulkDeleteUsersCommandHandler(
-        IUserRepository userRepository,
+        LifeOSDbContext context,
         IUnitOfWork unitOfWork,
         ICurrentUserService currentUserService)
     {
-        _userRepository = userRepository;
+        _context = context;
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
     }
@@ -29,7 +30,8 @@ public class BulkDeleteUsersCommandHandler : IRequestHandler<BulkDeleteUsersComm
         {
             try
             {
-                var user = await _userRepository.FindByIdAsync(userId);
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted, cancellationToken);
 
                 if (user == null)
                 {
@@ -39,7 +41,7 @@ public class BulkDeleteUsersCommandHandler : IRequestHandler<BulkDeleteUsersComm
                 }
 
                 user.Delete();
-                _userRepository.Delete(user);
+                _context.Users.Update(user);
                 response.DeletedCount++;
             }
             catch (Exception ex)
@@ -49,7 +51,7 @@ public class BulkDeleteUsersCommandHandler : IRequestHandler<BulkDeleteUsersComm
             }
         }
 
-        // Tüm değişiklikleri tek transaction'da kaydet (Silme işlemleri + Outbox)
+        // Tüm değişiklikleri tek transaction'da kaydet
         if (response.DeletedCount > 0)
         {
             await _unitOfWork.SaveChangesAsync(cancellationToken);

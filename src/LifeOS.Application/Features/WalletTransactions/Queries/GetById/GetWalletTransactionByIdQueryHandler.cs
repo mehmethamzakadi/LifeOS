@@ -1,13 +1,14 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.WalletTransactions.Queries.GetById;
 
 public sealed class GetWalletTransactionByIdQueryHandler(
-    IWalletTransactionRepository walletTransactionRepository,
+    LifeOSDbContext context,
     ICacheService cacheService) : IRequestHandler<GetByIdWalletTransactionQuery, IDataResult<GetByIdWalletTransactionResponse>>
 {
     public async Task<IDataResult<GetByIdWalletTransactionResponse>> Handle(GetByIdWalletTransactionQuery request, CancellationToken cancellationToken)
@@ -17,7 +18,9 @@ public sealed class GetWalletTransactionByIdQueryHandler(
         if (cacheValue is not null)
             return new SuccessDataResult<GetByIdWalletTransactionResponse>(cacheValue);
 
-        var walletTransaction = await walletTransactionRepository.GetByIdAsync(request.Id, cancellationToken);
+        var walletTransaction = await context.WalletTransactions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
         if (walletTransaction is null)
             return new ErrorDataResult<GetByIdWalletTransactionResponse>("Cüzdan işlemi bulunamadı.");

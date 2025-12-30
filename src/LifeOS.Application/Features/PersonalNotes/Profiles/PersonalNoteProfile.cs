@@ -5,7 +5,7 @@ using LifeOS.Application.Features.PersonalNotes.Commands.Update;
 using LifeOS.Application.Features.PersonalNotes.Queries.GetById;
 using LifeOS.Application.Features.PersonalNotes.Queries.GetPaginatedListByDynamic;
 using LifeOS.Domain.Common.Paging;
-using LifeOS.Domain.Common.Responses;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Entities;
 
 namespace LifeOS.Application.Features.PersonalNotes.Profiles;

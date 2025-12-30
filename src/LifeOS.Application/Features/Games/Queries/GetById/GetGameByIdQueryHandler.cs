@@ -1,13 +1,14 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Games.Queries.GetById;
 
 public sealed class GetGameByIdQueryHandler(
-    IGameRepository gameRepository,
+    LifeOSDbContext context,
     ICacheService cacheService) : IRequestHandler<GetByIdGameQuery, IDataResult<GetByIdGameResponse>>
 {
     public async Task<IDataResult<GetByIdGameResponse>> Handle(GetByIdGameQuery request, CancellationToken cancellationToken)
@@ -17,7 +18,9 @@ public sealed class GetGameByIdQueryHandler(
         if (cacheValue is not null)
             return new SuccessDataResult<GetByIdGameResponse>(cacheValue);
 
-        var game = await gameRepository.GetByIdAsync(request.Id, cancellationToken);
+        var game = await context.Games
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
         if (game is null)
             return new ErrorDataResult<GetByIdGameResponse>("Oyun bilgisi bulunamadı.");
