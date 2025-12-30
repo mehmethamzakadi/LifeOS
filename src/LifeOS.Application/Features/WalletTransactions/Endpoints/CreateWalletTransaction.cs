@@ -1,0 +1,102 @@
+using LifeOS.Application.Abstractions;
+using LifeOS.Application.Common.Caching;
+using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Security;
+using LifeOS.Domain.Entities;
+using LifeOS.Domain.Enums;
+using LifeOS.Persistence.Contexts;
+using FluentValidation;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+
+namespace LifeOS.Application.Features.WalletTransactions.Endpoints;
+
+public static class CreateWalletTransaction
+{
+    public sealed record Request(
+        string Title,
+        decimal Amount,
+        TransactionType Type,
+        TransactionCategory Category,
+        DateTime TransactionDate);
+
+    public sealed class Validator : AbstractValidator<Request>
+    {
+        public Validator()
+        {
+            RuleFor(w => w.Title)
+                .NotEmpty().WithMessage("İşlem başlığı boş olmamalıdır!")
+                .MinimumLength(2).WithMessage("İşlem başlığı en az 2 karakter olmalıdır!")
+                .MaximumLength(200).WithMessage("İşlem başlığı en fazla 200 karakter olmalıdır!")
+                .MustBePlainText("İşlem başlığı HTML veya script içeremez!");
+
+            RuleFor(w => w.Amount)
+                .NotEqual(0).WithMessage("İşlem tutarı 0 olamaz!");
+
+            RuleFor(w => w.Amount)
+                .GreaterThan(0).WithMessage("Gelir işlemleri için tutar 0'dan büyük olmalıdır!")
+                .When(w => w.Type == TransactionType.Income);
+
+            RuleFor(w => w.Amount)
+                .LessThan(0).WithMessage("Gider işlemleri için tutar negatif olmalıdır!")
+                .When(w => w.Type == TransactionType.Expense);
+        }
+    }
+
+    public sealed record Response(Guid Id);
+
+    public static void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapPost("api/wallettransactions", async (
+            Request request,
+            LifeOSDbContext context,
+            ICacheService cache,
+            IValidator<Request> validator,
+            CancellationToken cancellationToken) =>
+        {
+            var validationResult = await validator.ValidateAsync(request, cancellationToken);
+            if (!validationResult.IsValid)
+            {
+                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+            }
+
+            var walletTransaction = WalletTransaction.Create(
+                request.Title,
+                request.Amount,
+                request.Type,
+                request.Category,
+                request.TransactionDate);
+
+            await context.WalletTransactions.AddAsync(walletTransaction, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
+
+            // Cache invalidation
+            await cache.Add(
+                CacheKeys.WalletTransaction(walletTransaction.Id),
+                new GetWalletTransactionById.Response(
+                    walletTransaction.Id,
+                    walletTransaction.Title,
+                    walletTransaction.Amount,
+                    walletTransaction.Type,
+                    walletTransaction.Category,
+                    walletTransaction.TransactionDate),
+                DateTimeOffset.UtcNow.Add(CacheDurations.WalletTransaction),
+                null);
+
+            await cache.Add(
+                CacheKeys.WalletTransactionGridVersion(),
+                Guid.NewGuid().ToString("N"),
+                null,
+                null);
+
+            return Results.Created($"/api/wallettransactions/{walletTransaction.Id}", new Response(walletTransaction.Id));
+        })
+        .WithName("CreateWalletTransaction")
+        .WithTags("WalletTransactions")
+        .RequireAuthorization(Domain.Constants.Permissions.WalletTransactionsCreate)
+        .Produces<Response>(StatusCodes.Status201Created)
+        .Produces(StatusCodes.Status400BadRequest);
+    }
+}
+

@@ -1,8 +1,6 @@
-using LifeOS.Domain.Common;
 using LifeOS.Persistence.Constants;
 using LifeOS.Persistence.Contexts;
 using LifeOS.Persistence.DatabaseInitializer;
-using LifeOS.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -32,9 +30,6 @@ public static class PersistenceServicesRegistration
         #endregion
 
         services.AddScoped<IDbInitializer, DbInitializer>();
-
-        // Unit of Work kaydı
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }

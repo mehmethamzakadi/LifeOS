@@ -8,17 +8,10 @@ namespace LifeOS.Domain.Entities;
 /// </summary>
 public sealed class User : AggregateRoot
 {
-    private ValueObjects.UserName _userName = default!;
-    private ValueObjects.Email _email = default!;
-
     /// <summary>
     /// Kullanıcı adı (benzersiz olmalı)
     /// </summary>
-    public ValueObjects.UserName UserName
-    {
-        get => _userName;
-        private set => _userName = value;
-    }
+    public string UserName { get; private set; } = string.Empty;
 
     /// <summary>
     /// Normalize edilmiş kullanıcı adı (case-insensitive arama için)
@@ -28,11 +21,7 @@ public sealed class User : AggregateRoot
     /// <summary>
     /// Email adresi (benzersiz olmalı)
     /// </summary>
-    public ValueObjects.Email Email
-    {
-        get => _email;
-        private set => _email = value;
-    }
+    public string Email { get; private set; } = string.Empty;
 
     /// <summary>
     /// Normalize edilmiş email (case-insensitive arama için)
@@ -120,15 +109,12 @@ public sealed class User : AggregateRoot
 
     public static User Create(string userName, string email, string passwordHash)
     {
-        var userNameVO = ValueObjects.UserName.Create(userName);
-        var emailVO = ValueObjects.Email.Create(email);
-
         var user = new User
         {
-            UserName = userNameVO,
-            NormalizedUserName = userNameVO.NormalizedValue,
-            Email = emailVO,
-            NormalizedEmail = emailVO.NormalizedValue,
+            UserName = userName,
+            NormalizedUserName = userName.ToUpperInvariant(),
+            Email = email,
+            NormalizedEmail = email.ToUpperInvariant(),
             PasswordHash = passwordHash,
             EmailConfirmed = false
         };
@@ -139,13 +125,10 @@ public sealed class User : AggregateRoot
 
     public void Update(string userName, string email)
     {
-        var userNameVO = ValueObjects.UserName.Create(userName);
-        var emailVO = ValueObjects.Email.Create(email);
-
-        UserName = userNameVO;
-        NormalizedUserName = userNameVO.NormalizedValue;
-        Email = emailVO;
-        NormalizedEmail = emailVO.NormalizedValue;
+        UserName = userName;
+        NormalizedUserName = userName.ToUpperInvariant();
+        Email = email;
+        NormalizedEmail = email.ToUpperInvariant();
 
         AddDomainEvent(new Domain.Events.UserEvents.UserUpdatedEvent(Id, userName));
     }
@@ -155,7 +138,7 @@ public sealed class User : AggregateRoot
         PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
         ProfilePictureUrl = string.IsNullOrWhiteSpace(profilePictureUrl) ? null : profilePictureUrl.Trim();
 
-        AddDomainEvent(new Domain.Events.UserEvents.UserUpdatedEvent(Id, UserName.Value));
+        AddDomainEvent(new Domain.Events.UserEvents.UserUpdatedEvent(Id, UserName));
     }
 
     public void Delete()
@@ -165,7 +148,7 @@ public sealed class User : AggregateRoot
 
         IsDeleted = true;
         DeletedDate = DateTime.UtcNow;
-        AddDomainEvent(new Domain.Events.UserEvents.UserDeletedEvent(Id, UserName.Value));
+        AddDomainEvent(new Domain.Events.UserEvents.UserDeletedEvent(Id, UserName));
     }
 
     public void ChangePassword(string newPasswordHash)

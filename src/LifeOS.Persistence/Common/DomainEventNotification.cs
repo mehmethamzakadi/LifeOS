@@ -6,7 +6,7 @@ namespace LifeOS.Persistence.Common;
 /// <summary>
 /// Domain event'leri MediatR notification'larına dönüştüren wrapper.
 /// Bu sayede Domain katmanı MediatR implementasyon detaylarından bağımsız kalır.
-/// Persistence katmanında UnitOfWork tarafından kullanılır.
+/// Persistence katmanında domain event'leri MediatR notification'a dönüştürmek için kullanılır.
 /// </summary>
 /// <typeparam name="TDomainEvent">Domain event tipi</typeparam>
 public sealed class DomainEventNotification<TDomainEvent> : INotification

@@ -1,8 +1,6 @@
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace LifeOS.Persistence.Configurations;
 
@@ -18,13 +16,8 @@ public class UserConfiguration : BaseConfiguraiton<User>
         // Table name
         builder.ToTable("Users");
 
-        // UserName - ValueObject converter
-        var userNameConverter = new ValueConverter<UserName, string>(
-            vo => vo.Value,
-            s => UserName.Create(s));
-
+        // UserName
         builder.Property(u => u.UserName)
-            .HasConversion(userNameConverter)
             .HasColumnName("UserName")
             .IsRequired()
             .HasMaxLength(100);
@@ -35,13 +28,8 @@ public class UserConfiguration : BaseConfiguraiton<User>
             .HasComputedColumnSql("UPPER(\"UserName\")", stored: true)
             .ValueGeneratedOnAddOrUpdate();
 
-        // Email - ValueObject converter
-        var emailConverter = new ValueConverter<Email, string>(
-            vo => vo.Value,
-            s => Email.Create(s));
-
+        // Email
         builder.Property(u => u.Email)
-            .HasConversion(emailConverter)
             .HasColumnName("Email")
             .IsRequired()
             .HasMaxLength(200);

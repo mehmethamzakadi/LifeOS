@@ -1,6 +1,5 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Abstractions.Identity;
-using LifeOS.Application.Features.Auths.Login;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Constants;
@@ -24,7 +23,6 @@ public sealed class AuthService : IAuthService
     private readonly ITokenService _tokenService;
     private readonly IMailService _mailService;
     private readonly AppPasswordHasher _passwordHasher;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
@@ -33,7 +31,6 @@ public sealed class AuthService : IAuthService
         ITokenService tokenService,
         IMailService mailService,
         AppPasswordHasher passwordHasher,
-        IUnitOfWork unitOfWork,
         ILogger<AuthService> logger)
     {
         _context = context;
@@ -41,11 +38,10 @@ public sealed class AuthService : IAuthService
         _tokenService = tokenService;
         _mailService = mailService;
         _passwordHasher = passwordHasher;
-        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
-    public async Task<IDataResult<LoginResponse>> LoginAsync(string email, string password, string? deviceId = null)
+    public async Task<IDataResult<AuthResult>> LoginAsync(string email, string password, string? deviceId = null)
     {
         User? user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted)
@@ -122,7 +118,7 @@ public sealed class AuthService : IAuthService
         await _context.RefreshSessions.AddAsync(session);
         await SaveChangesWithConcurrencyHandlingAsync();
 
-        var response = new LoginResponse(
+        var response = new AuthResult(
             user.Id,
             user.UserName,
             accessToken.ExpiresAt,
@@ -131,10 +127,10 @@ public sealed class AuthService : IAuthService
             refreshToken.ExpiresAt,
             accessToken.Permissions.ToList());
 
-        return new SuccessDataResult<LoginResponse>(response, "Giriş Başarılı");
+        return new SuccessDataResult<AuthResult>(response, "Giriş Başarılı");
     }
 
-    public async Task<IDataResult<LoginResponse>> RefreshTokenAsync(string refreshToken)
+    public async Task<IDataResult<AuthResult>> RefreshTokenAsync(string refreshToken)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
@@ -200,7 +196,7 @@ public sealed class AuthService : IAuthService
         await _context.RefreshSessions.AddAsync(replacement);
         await SaveChangesWithConcurrencyHandlingAsync();
 
-        var response = new LoginResponse(
+        var response = new AuthResult(
             user.Id,
             user.UserName,
             newAccess.ExpiresAt,
@@ -209,7 +205,7 @@ public sealed class AuthService : IAuthService
             newRefresh.ExpiresAt,
             newAccess.Permissions.ToList());
 
-        return new SuccessDataResult<LoginResponse>(response, "Token yenilendi");
+        return new SuccessDataResult<AuthResult>(response, "Token yenilendi");
     }
 
     public async Task LogoutAsync(string refreshToken)
@@ -264,7 +260,7 @@ public sealed class AuthService : IAuthService
     {
         try
         {
-            await _unitOfWork.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException ex)
         {

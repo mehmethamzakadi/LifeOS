@@ -1,6 +1,18 @@
 using LifeOS.API.Configuration;
 using LifeOS.API.Extensions;
 using LifeOS.Application;
+using LifeOS.Application.Features.Auths.Endpoints;
+using LifeOS.Application.Features.Books.Endpoints;
+using LifeOS.Application.Features.Categories.Endpoints;
+using LifeOS.Application.Features.Dashboards.Endpoints;
+using LifeOS.Application.Features.Games.Endpoints;
+using LifeOS.Application.Features.MovieSeries.Endpoints;
+using LifeOS.Application.Features.Permissions.Endpoints;
+using LifeOS.Application.Features.PersonalNotes.Endpoints;
+using LifeOS.Application.Features.Roles.Endpoints;
+using LifeOS.Application.Features.Users.Endpoints;
+using LifeOS.Application.Features.WalletTransactions.Endpoints;
+using LifeOS.Application.Features.Images.Endpoints;
 using LifeOS.Infrastructure;
 using LifeOS.Persistence;
 using LifeOS.Persistence.DatabaseInitializer;
@@ -58,6 +70,42 @@ await dbInitializer.EnsurePostgreSqlSerilogTableAsync(builder.Configuration, app
 
 // ✅ Middleware Pipeline
 app.UseApiMiddleware(corsPolicyName);
+
+// ✅ Auth Endpoints (REPR Pattern)
+app.MapAuthsEndpoints();
+
+// ✅ Users Endpoints (REPR Pattern)
+app.MapUsersEndpoints();
+
+// ✅ Roles Endpoints (REPR Pattern)
+app.MapRolesEndpoints();
+
+// ✅ Permissions Endpoints (REPR Pattern)
+app.MapPermissionsEndpoints();
+
+// ✅ Books Endpoints (REPR Pattern)
+app.MapBooksEndpoints();
+
+// ✅ Categories Endpoints (REPR Pattern)
+app.MapCategoriesEndpoints();
+
+// ✅ Games Endpoints (REPR Pattern)
+app.MapGamesEndpoints();
+
+// ✅ MovieSeries Endpoints (REPR Pattern)
+app.MapMovieSeriesEndpoints();
+
+// ✅ PersonalNotes Endpoints (REPR Pattern)
+app.MapPersonalNotesEndpoints();
+
+// ✅ WalletTransactions Endpoints (REPR Pattern)
+app.MapWalletTransactionsEndpoints();
+
+// ✅ Images Endpoints (REPR Pattern)
+app.MapImagesEndpoints();
+
+// ✅ Dashboards Endpoints (REPR Pattern)
+app.MapDashboardsEndpoints();
 
 await app.RunAsync();
 

@@ -1,3 +1,0 @@
-namespace LifeOS.Application.Features.Users.Queries.GetList;
-
-public sealed record GetListUserResponse(Guid Id, string UserName, string Email, DateTimeOffset? LockoutEnd, bool LockoutEnabled, int AccessFailedCount);
