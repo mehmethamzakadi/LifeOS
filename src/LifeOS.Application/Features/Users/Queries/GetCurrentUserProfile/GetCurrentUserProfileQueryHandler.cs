@@ -1,6 +1,6 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +8,7 @@ namespace LifeOS.Application.Features.Users.Queries.GetCurrentUserProfile;
 
 public sealed class GetCurrentUserProfileQueryHandler(
     ICurrentUserService currentUserService,
-    IUserRepository userRepository) : IRequestHandler<GetCurrentUserProfileQuery, IDataResult<GetCurrentUserProfileResponse>>
+    LifeOSDbContext context) : IRequestHandler<GetCurrentUserProfileQuery, IDataResult<GetCurrentUserProfileResponse>>
 {
     public async Task<IDataResult<GetCurrentUserProfileResponse>> Handle(GetCurrentUserProfileQuery request, CancellationToken cancellationToken)
     {
@@ -19,11 +19,11 @@ public sealed class GetCurrentUserProfileQueryHandler(
         }
 
         // ✅ Read-only sorgu - tracking'e gerek yok (performans için)
-        var user = await userRepository.GetAsync(
-            u => u.Id == userId.Value,
-            include: q => q.Include(u => u.UserRoles).ThenInclude(ur => ur.Role),
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        var user = await context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId.Value && !u.IsDeleted, cancellationToken);
 
         if (user == null)
         {

@@ -4,23 +4,22 @@ using LifeOS.Application.Common.Constants;
 using LifeOS.Application.Features.Categories.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.Categories.Commands.Update;
 
 public sealed class UpdateCategoryCommandHandler(
-    ICategoryRepository categoryRepository,
+    LifeOSDbContext context,
     ICacheService cacheService,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateCategoryCommand, IResult>
 {
     public async Task<IResult> Handle(UpdateCategoryCommand request, CancellationToken cancellationToken)
     {
-        var category = await categoryRepository.GetAsync(
-            predicate: x => x.Id == request.Id,
-            enableTracking: true,
-            cancellationToken: cancellationToken);
+        var category = await context.Categories
+            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (category is null)
         {
@@ -29,9 +28,8 @@ public sealed class UpdateCategoryCommandHandler(
 
         // Başka bir kategoride aynı isim var mı kontrol et (mevcut kategori hariç)
         var normalizedName = request.Name.ToUpperInvariant();
-        bool nameExists = await categoryRepository.AnyAsync(
-            x => x.NormalizedName == normalizedName && x.Id != request.Id,
-            cancellationToken: cancellationToken);
+        bool nameExists = await context.Categories
+            .AnyAsync(x => x.NormalizedName == normalizedName && x.Id != request.Id, cancellationToken);
 
         if (nameExists)
         {
@@ -47,9 +45,8 @@ public sealed class UpdateCategoryCommandHandler(
                 return new ErrorResult("Kategori kendi üst kategorisi olamaz.");
             }
 
-            var parentExists = await categoryRepository.AnyAsync(
-                x => x.Id == request.ParentId.Value && !x.IsDeleted,
-                cancellationToken: cancellationToken);
+            var parentExists = await context.Categories
+                .AnyAsync(x => x.Id == request.ParentId.Value && !x.IsDeleted, cancellationToken);
 
             if (!parentExists)
             {
@@ -57,7 +54,9 @@ public sealed class UpdateCategoryCommandHandler(
             }
 
             // Döngüsel referans kontrolü: Parent'ın kendisi veya üst kategorileri bu kategoriyi içeriyor mu?
-            var parentCategory = await categoryRepository.GetByIdAsync(request.ParentId.Value, cancellationToken);
+            var parentCategory = await context.Categories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.ParentId.Value && !x.IsDeleted, cancellationToken);
             if (parentCategory != null)
             {
                 // Parent'ın parent'larını kontrol et (basit döngü kontrolü)
@@ -68,7 +67,9 @@ public sealed class UpdateCategoryCommandHandler(
                     {
                         return new ErrorResult("Döngüsel kategori referansı oluşturulamaz.");
                     }
-                    var currentParent = await categoryRepository.GetByIdAsync(currentParentId.Value, cancellationToken);
+                    var currentParent = await context.Categories
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(x => x.Id == currentParentId.Value && !x.IsDeleted, cancellationToken);
                     if (currentParent == null) break;
                     currentParentId = currentParent.ParentId;
                 }
@@ -76,7 +77,7 @@ public sealed class UpdateCategoryCommandHandler(
         }
 
         category.Update(request.Name, request.Description, request.ParentId);
-        categoryRepository.Update(category);
+        context.Categories.Update(category);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cacheService.Add(

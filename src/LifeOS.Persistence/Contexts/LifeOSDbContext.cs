@@ -1,4 +1,3 @@
-using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -45,9 +44,8 @@ namespace LifeOS.Persistence.Contexts
                 }
 
                 // Global query filter for soft delete - only for ISoftDeletable entities
-                // Excludes OutboxMessage and RefreshSession from soft delete filter
+                // Excludes RefreshSession from soft delete filter
                 if (typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType) &&
-                    entityType.ClrType != typeof(OutboxMessage) &&
                     entityType.ClrType != typeof(RefreshSession))
                 {
                     var parameter = Expression.Parameter(entityType.ClrType, "e");
@@ -70,7 +68,6 @@ namespace LifeOS.Persistence.Contexts
         public DbSet<ActivityLog> ActivityLogs { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
-        public DbSet<OutboxMessage> OutboxMessages { get; set; }
         public DbSet<RefreshSession> RefreshSessions { get; set; }
         public DbSet<Book> Books { get; set; }
         public DbSet<Game> Games { get; set; }

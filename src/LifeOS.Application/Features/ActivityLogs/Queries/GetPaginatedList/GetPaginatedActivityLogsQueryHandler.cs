@@ -3,7 +3,8 @@ using LifeOS.Domain.Common.Dynamic;
 using LifeOS.Domain.Common.Paging;
 using LifeOS.Domain.Common.Responses;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
+using LifeOS.Persistence.Extensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,14 +12,14 @@ namespace LifeOS.Application.Features.ActivityLogs.Queries.GetPaginatedList;
 
 public class GetPaginatedActivityLogsQueryHandler : IRequestHandler<GetPaginatedActivityLogsQuery, PaginatedListResponse<GetPaginatedActivityLogsResponse>>
 {
-    private readonly IActivityLogRepository _activityLogRepository;
+    private readonly LifeOSDbContext _context;
     private readonly IMapper _mapper;
 
     public GetPaginatedActivityLogsQueryHandler(
-        IActivityLogRepository activityLogRepository,
+        LifeOSDbContext context,
         IMapper mapper)
     {
-        _activityLogRepository = activityLogRepository;
+        _context = context;
         _mapper = mapper;
     }
 
@@ -37,13 +38,15 @@ public class GetPaginatedActivityLogsQueryHandler : IRequestHandler<GetPaginated
         dynamicQuery.Sort = sortDescriptors;
 
         // ✅ Read-only sorgu - tracking'e gerek yok (performans için)
-        Paginate<ActivityLog> activityLogs = await _activityLogRepository.GetPaginatedListByDynamicAsync(
-            dynamic: dynamicQuery,
-            index: request.Request.PaginatedRequest.PageIndex,
-            size: request.Request.PaginatedRequest.PageSize,
-            include: a => a.Include(a => a.User!),
-            cancellationToken: cancellationToken
-        );
+        var query = _context.ActivityLogs
+            .Include(a => a.User)
+            .AsNoTracking()
+            .AsQueryable();
+        query = query.ToDynamic(dynamicQuery);
+        var activityLogs = await query.ToPaginateAsync(
+            request.Request.PaginatedRequest.PageIndex,
+            request.Request.PaginatedRequest.PageSize,
+            cancellationToken);
 
         PaginatedListResponse<GetPaginatedActivityLogsResponse> response = _mapper.Map<PaginatedListResponse<GetPaginatedActivityLogsResponse>>(activityLogs);
         return response;

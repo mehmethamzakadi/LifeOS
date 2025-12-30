@@ -1,9 +1,7 @@
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
 
 namespace LifeOS.Domain.Events.WalletTransactionEvents;
 
-[StoreInOutbox]
 public class WalletTransactionUpdatedEvent : DomainEvent
 {
     public Guid WalletTransactionId { get; }

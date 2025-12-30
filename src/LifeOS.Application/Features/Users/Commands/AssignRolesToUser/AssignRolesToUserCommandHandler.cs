@@ -2,27 +2,26 @@ using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Events.UserEvents;
-using LifeOS.Domain.Repositories;
+using LifeOS.Domain.Entities;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.Users.Commands.AssignRolesToUser;
 
 public class AssignRolesToUserCommandHandler : IRequestHandler<AssignRolesToUserCommand, IResult>
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IRoleRepository _roleRepository;
+    private readonly LifeOSDbContext _context;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUnitOfWork _unitOfWork;
 
     public AssignRolesToUserCommandHandler(
-        IUserRepository userRepository,
-        IRoleRepository roleRepository,
+        LifeOSDbContext context,
         ICurrentUserService currentUserService,
         IUnitOfWork unitOfWork)
     {
-        _userRepository = userRepository;
-        _roleRepository = roleRepository;
+        _context = context;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
     }
@@ -30,7 +29,8 @@ public class AssignRolesToUserCommandHandler : IRequestHandler<AssignRolesToUser
     public async Task<IResult> Handle(AssignRolesToUserCommand request, CancellationToken cancellationToken)
     {
         // Kullanıcı kontrolü
-        var user = await _userRepository.FindByIdAsync(request.UserId);
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == request.UserId && !u.IsDeleted, cancellationToken);
         if (user == null)
         {
             return new ErrorResult("Kullanıcı bulunamadı");
@@ -38,8 +38,11 @@ public class AssignRolesToUserCommandHandler : IRequestHandler<AssignRolesToUser
 
         var requestedRoleIds = request.RoleIds.ToHashSet();
 
-        // Mevcut UserRole'leri al (silinmiş olanlar dahil)
-        var existingUserRoles = await _userRepository.GetAllUserRolesAsync(request.UserId, cancellationToken);
+        // Mevcut UserRole'leri al (silinmiş olanlar dahil - IgnoreQueryFilters ile)
+        var existingUserRoles = await _context.UserRoles
+            .IgnoreQueryFilters()
+            .Where(ur => ur.UserId == request.UserId)
+            .ToListAsync(cancellationToken);
 
         var existingRoleIds = existingUserRoles
             .Where(ur => !ur.IsDeleted)
@@ -65,7 +68,11 @@ public class AssignRolesToUserCommandHandler : IRequestHandler<AssignRolesToUser
                 .Where(ur => rolesToRemove.Contains(ur.RoleId) && !ur.IsDeleted)
                 .ToList();
 
-            await _userRepository.SoftDeleteUserRolesAsync(userRolesToRemove, cancellationToken);
+            foreach (var userRole in userRolesToRemove)
+            {
+                userRole.Delete();
+                _context.UserRoles.Update(userRole);
+            }
         }
 
         // Eklenecek rolleri ekle veya geri ekle
@@ -79,20 +86,31 @@ public class AssignRolesToUserCommandHandler : IRequestHandler<AssignRolesToUser
 
                 if (deletedUserRole != null)
                 {
-                    // Silinmiş rolü geri ekle
-                    await _userRepository.RestoreUserRoleAsync(deletedUserRole, cancellationToken);
+                    // Silinmiş rolü geri ekle (soft delete'i kaldır)
+                    deletedUserRole.Restore();
+                    _context.UserRoles.Update(deletedUserRole);
                 }
                 else
                 {
                     // Yeni UserRole oluştur
-                    await _userRepository.AddUserRoleAsync(request.UserId, roleId, cancellationToken);
+                    var newUserRole = new UserRole
+                    {
+                        UserId = request.UserId,
+                        RoleId = roleId
+                    };
+                    await _context.UserRoles.AddAsync(newUserRole, cancellationToken);
                 }
             }
         }
 
-        // Domain Event
-        var allCurrentRoleNames = await _userRepository.GetRolesAsync(user);
-        user.AddDomainEvent(new UserRolesAssignedEvent(user.Id, user.UserName!, allCurrentRoleNames));
+        // Domain Event - Rolleri context'ten al
+        var currentRoles = await _context.UserRoles
+            .Include(ur => ur.Role)
+            .Where(ur => ur.UserId == request.UserId && !ur.IsDeleted)
+            .Select(ur => ur.Role.Name!)
+            .ToListAsync(cancellationToken);
+        
+        user.AddDomainEvent(new UserRolesAssignedEvent(user.Id, user.UserName!, currentRoles));
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

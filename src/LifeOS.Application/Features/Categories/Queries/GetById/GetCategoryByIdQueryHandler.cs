@@ -1,14 +1,14 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Categories.Queries.GetById;
 
 public sealed class GetCategoryByIdQueryHandler(
-    ICategoryRepository categoryRepository,
+    LifeOSDbContext context,
     ICacheService cacheService) : IRequestHandler<GetByIdCategoryQuery, IDataResult<GetByIdCategoryResponse>>
 {
     public async Task<IDataResult<GetByIdCategoryResponse>> Handle(GetByIdCategoryQuery request, CancellationToken cancellationToken)
@@ -18,8 +18,9 @@ public sealed class GetCategoryByIdQueryHandler(
         if (cacheValue is not null)
             return new SuccessDataResult<GetByIdCategoryResponse>(cacheValue);
 
-        // ✅ FIXED: Using repository-specific method instead of Query() leak
-        var category = await categoryRepository.GetByIdAsync(request.Id, cancellationToken);
+        var category = await context.Categories
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
         if (category is null)
             return new ErrorDataResult<GetByIdCategoryResponse>("Kategori bilgisi bulunamadı.");

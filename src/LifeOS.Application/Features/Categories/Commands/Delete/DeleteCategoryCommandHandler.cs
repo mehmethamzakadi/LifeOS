@@ -3,8 +3,9 @@ using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.Categories.Commands.Delete;
@@ -13,23 +14,25 @@ namespace LifeOS.Application.Features.Categories.Commands.Delete;
 /// Handler for deleting a category
 /// </summary>
 public sealed class DeleteCategoryCommandHandler(
-    ICategoryRepository categoryRepository,
+    LifeOSDbContext context,
     ICacheService cacheService,
     IUnitOfWork unitOfWork) : IRequestHandler<DeleteCategoryCommand, IResult>
 {
     public async Task<IResult> Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
     {
-        var category = await categoryRepository.GetAsync(predicate: x => x.Id == request.Id, enableTracking: true, cancellationToken: cancellationToken);
+        var category = await context.Categories
+            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
         if (category is null)
             return new ErrorResult(ResponseMessages.Category.NotFound);
 
         // Alt kategori kontrolü - eğer alt kategoriler varsa silinemez
-        var hasChildren = await categoryRepository.HasChildrenAsync(request.Id, cancellationToken);
+        var hasChildren = await context.Categories
+            .AnyAsync(x => x.ParentId == request.Id && !x.IsDeleted, cancellationToken);
         if (hasChildren)
             return new ErrorResult("Bu kategorinin alt kategorileri bulunmaktadır. Önce alt kategorileri silmeniz gerekmektedir.");
 
         category.Delete();
-        categoryRepository.Delete(category);
+        context.Categories.Update(category);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cacheService.Remove(CacheKeys.Category(category.Id));

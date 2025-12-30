@@ -1,27 +1,28 @@
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Permissions.Queries.GetAll;
 
 public class GetAllPermissionsQueryHandler : IRequestHandler<GetAllPermissionsQuery, IDataResult<GetAllPermissionsResponse>>
 {
-    private readonly IPermissionRepository _permissionRepository;
+    private readonly LifeOSDbContext _context;
 
-    public GetAllPermissionsQueryHandler(IPermissionRepository permissionRepository)
+    public GetAllPermissionsQueryHandler(LifeOSDbContext context)
     {
-        _permissionRepository = permissionRepository;
+        _context = context;
     }
 
     public async Task<IDataResult<GetAllPermissionsResponse>> Handle(GetAllPermissionsQuery request, CancellationToken cancellationToken)
     {
         // Tüm permission'ları al
-        var permissions = await _permissionRepository.GetAllAsync(
-            predicate: p => !p.IsDeleted,
-            orderBy: q => q.OrderBy(p => p.Module).ThenBy(p => p.Type),
-            enableTracking: false,
-            cancellationToken: cancellationToken
-        );
+        var permissions = await _context.Permissions
+            .AsNoTracking()
+            .Where(p => !p.IsDeleted)
+            .OrderBy(p => p.Module)
+            .ThenBy(p => p.Type)
+            .ToListAsync(cancellationToken);
 
         var grouped = permissions
             .GroupBy(p => p.Module)

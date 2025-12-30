@@ -1,5 +1,4 @@
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Repositories;
 using LifeOS.Persistence.Contexts;
 using LifeOS.Persistence.DatabaseInitializer;
 using LifeOS.Persistence.Repositories;
@@ -34,19 +33,6 @@ public static class PersistenceServicesRegistration
 
         #endregion
 
-        services.AddScoped<ICategoryRepository, CategoryRepository>();
-        services.AddScoped<IImageRepository, ImageRepository>();
-        services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
-        services.AddScoped<IPermissionRepository, PermissionRepository>();
-        services.AddScoped<IOutboxMessageRepository, OutboxMessageRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IRoleRepository, RoleRepository>();
-        services.AddScoped<IRefreshSessionRepository, RefreshSessionRepository>();
-        services.AddScoped<IBookRepository, BookRepository>();
-        services.AddScoped<IGameRepository, GameRepository>();
-        services.AddScoped<IMovieSeriesRepository, MovieSeriesRepository>();
-        services.AddScoped<IPersonalNoteRepository, PersonalNoteRepository>();
-        services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
         services.AddScoped<IDbInitializer, DbInitializer>();
 
         // Unit of Work kaydı

@@ -4,13 +4,15 @@ using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Paging;
 using LifeOS.Domain.Common.Responses;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
+using LifeOS.Persistence.Extensions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.WalletTransactions.Queries.GetPaginatedListByDynamic;
 
 public sealed class GetPaginatedListByDynamicWalletTransactionsQueryHandler(
-    IWalletTransactionRepository walletTransactionRepository,
+    LifeOSDbContext context,
     IMapper mapper,
     ICacheService cacheService) : IRequestHandler<GetPaginatedListByDynamicWalletTransactionsQuery, PaginatedListResponse<GetPaginatedListByDynamicWalletTransactionsResponse>>
 {
@@ -32,14 +34,9 @@ public sealed class GetPaginatedListByDynamicWalletTransactionsQueryHandler(
             return cachedResponse;
         }
 
-        Paginate<WalletTransaction> walletTransactionsDynamic = await walletTransactionRepository.GetPaginatedListByDynamicAsync(
-            dynamic: request.DataGridRequest.DynamicQuery,
-            index: pagination.PageIndex,
-            size: pagination.PageSize,
-            include: null,
-            enableTracking: false,
-            cancellationToken: cancellationToken
-        );
+        var query = context.WalletTransactions.AsNoTracking().AsQueryable();
+        query = query.ToDynamic(request.DataGridRequest.DynamicQuery);
+        var walletTransactionsDynamic = await query.ToPaginateAsync(pagination.PageIndex, pagination.PageSize, cancellationToken);
 
         PaginatedListResponse<GetPaginatedListByDynamicWalletTransactionsResponse> response = mapper.Map<PaginatedListResponse<GetPaginatedListByDynamicWalletTransactionsResponse>>(walletTransactionsDynamic);
         await cacheService.Add(

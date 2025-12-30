@@ -3,25 +3,27 @@ using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.PersonalNotes.Commands.Delete;
 
 public sealed class DeletePersonalNoteCommandHandler(
-    IPersonalNoteRepository personalNoteRepository,
+    LifeOSDbContext context,
     ICacheService cacheService,
     IUnitOfWork unitOfWork) : IRequestHandler<DeletePersonalNoteCommand, IResult>
 {
     public async Task<IResult> Handle(DeletePersonalNoteCommand request, CancellationToken cancellationToken)
     {
-        var personalNote = await personalNoteRepository.GetAsync(predicate: x => x.Id == request.Id, enableTracking: true, cancellationToken: cancellationToken);
+        var personalNote = await context.PersonalNotes
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
         if (personalNote is null)
             return new ErrorResult(ResponseMessages.PersonalNote.NotFound);
 
         personalNote.Delete();
-        personalNoteRepository.Update(personalNote);
+        context.PersonalNotes.Update(personalNote);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cacheService.Remove(CacheKeys.PersonalNote(personalNote.Id));

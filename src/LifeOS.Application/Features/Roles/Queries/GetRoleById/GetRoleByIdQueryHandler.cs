@@ -1,20 +1,19 @@
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Roles.Queries.GetRoleById;
 
-public sealed class GetRoleByIdQueryHandler(IRoleRepository roleRepository) : IRequestHandler<GetRoleByIdRequest, IDataResult<GetRoleByIdQueryResponse>>
+public sealed class GetRoleByIdQueryHandler(LifeOSDbContext context) : IRequestHandler<GetRoleByIdRequest, IDataResult<GetRoleByIdQueryResponse>>
 {
     public async Task<IDataResult<GetRoleByIdQueryResponse>> Handle(GetRoleByIdRequest request, CancellationToken cancellationToken)
     {
         // ✅ Read-only sorgu - tracking'e gerek yok (performans için)
-        Role? role = await roleRepository.GetAsync(
-            r => r.Id == request.Id,
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        Role? role = await context.Roles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == request.Id && !r.IsDeleted, cancellationToken);
 
         if (role is null)
         {

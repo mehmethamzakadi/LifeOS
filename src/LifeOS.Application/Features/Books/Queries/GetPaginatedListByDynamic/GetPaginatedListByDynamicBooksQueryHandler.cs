@@ -4,13 +4,15 @@ using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Paging;
 using LifeOS.Domain.Common.Responses;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
+using LifeOS.Persistence.Extensions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Books.Queries.GetPaginatedListByDynamic;
 
 public sealed class GetPaginatedListByDynamicBooksQueryHandler(
-    IBookRepository bookRepository,
+    LifeOSDbContext context,
     IMapper mapper,
     ICacheService cacheService) : IRequestHandler<GetPaginatedListByDynamicBooksQuery, PaginatedListResponse<GetPaginatedListByDynamicBooksResponse>>
 {
@@ -32,14 +34,9 @@ public sealed class GetPaginatedListByDynamicBooksQueryHandler(
             return cachedResponse;
         }
 
-        Paginate<Book> booksDynamic = await bookRepository.GetPaginatedListByDynamicAsync(
-            dynamic: request.DataGridRequest.DynamicQuery,
-            index: pagination.PageIndex,
-            size: pagination.PageSize,
-            include: null,
-            enableTracking: false,
-            cancellationToken: cancellationToken
-        );
+        var query = context.Books.AsNoTracking().AsQueryable();
+        query = query.ToDynamic(request.DataGridRequest.DynamicQuery);
+        var booksDynamic = await query.ToPaginateAsync(pagination.PageIndex, pagination.PageSize, cancellationToken);
 
         PaginatedListResponse<GetPaginatedListByDynamicBooksResponse> response = mapper.Map<PaginatedListResponse<GetPaginatedListByDynamicBooksResponse>>(booksDynamic);
         await cacheService.Add(

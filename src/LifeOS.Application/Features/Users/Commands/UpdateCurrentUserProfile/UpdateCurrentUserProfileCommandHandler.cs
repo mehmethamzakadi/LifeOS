@@ -1,14 +1,15 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Users.Commands.UpdateCurrentUserProfile;
 
 public sealed class UpdateCurrentUserProfileCommandHandler(
     ICurrentUserService currentUserService,
-    IUserRepository userRepository,
+    LifeOSDbContext context,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateCurrentUserProfileCommand, IResult>
 {
     public async Task<IResult> Handle(UpdateCurrentUserProfileCommand request, CancellationToken cancellationToken)
@@ -19,7 +20,8 @@ public sealed class UpdateCurrentUserProfileCommandHandler(
             return new ErrorResult("Kullanıcı kimliği bulunamadı.");
         }
 
-        var user = await userRepository.FindByIdAsync(userId.Value);
+        var user = await context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId.Value && !u.IsDeleted, cancellationToken);
         if (user == null)
         {
             return new ErrorResult("Kullanıcı bulunamadı.");
@@ -28,7 +30,9 @@ public sealed class UpdateCurrentUserProfileCommandHandler(
         // Email değiştiyse kontrol et
         if (user.Email != request.Email)
         {
-            var existingEmail = await userRepository.FindByEmailAsync(request.Email);
+            var existingEmail = await context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
             if (existingEmail != null && existingEmail.Id != userId.Value)
             {
                 return new ErrorResult("Bu e-posta adresi zaten kullanılıyor!");
@@ -38,7 +42,9 @@ public sealed class UpdateCurrentUserProfileCommandHandler(
         // UserName değiştiyse kontrol et
         if (user.UserName != request.UserName)
         {
-            var existingUserName = await userRepository.FindByUserNameAsync(request.UserName);
+            var existingUserName = await context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
             if (existingUserName != null && existingUserName.Id != userId.Value)
             {
                 return new ErrorResult("Bu kullanıcı adı zaten kullanılıyor!");

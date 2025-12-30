@@ -4,23 +4,22 @@ using LifeOS.Application.Common.Constants;
 using LifeOS.Application.Features.Games.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.Games.Commands.Update;
 
 public sealed class UpdateGameCommandHandler(
-    IGameRepository gameRepository,
+    LifeOSDbContext context,
     ICacheService cacheService,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateGameCommand, IResult>
 {
     public async Task<IResult> Handle(UpdateGameCommand request, CancellationToken cancellationToken)
     {
-        var game = await gameRepository.GetAsync(
-            predicate: x => x.Id == request.Id,
-            enableTracking: true,
-            cancellationToken: cancellationToken);
+        var game = await context.Games
+            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (game is null)
         {
@@ -35,7 +34,7 @@ public sealed class UpdateGameCommandHandler(
             request.Status,
             request.IsOwned);
 
-        gameRepository.Update(game);
+        context.Games.Update(game);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cacheService.Add(

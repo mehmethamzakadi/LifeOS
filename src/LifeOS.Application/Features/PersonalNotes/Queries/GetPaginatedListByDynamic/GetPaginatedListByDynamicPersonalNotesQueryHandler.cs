@@ -4,13 +4,15 @@ using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Paging;
 using LifeOS.Domain.Common.Responses;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
+using LifeOS.Persistence.Extensions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.PersonalNotes.Queries.GetPaginatedListByDynamic;
 
 public sealed class GetPaginatedListByDynamicPersonalNotesQueryHandler(
-    IPersonalNoteRepository personalNoteRepository,
+    LifeOSDbContext context,
     IMapper mapper,
     ICacheService cacheService) : IRequestHandler<GetPaginatedListByDynamicPersonalNotesQuery, PaginatedListResponse<GetPaginatedListByDynamicPersonalNotesResponse>>
 {
@@ -32,14 +34,9 @@ public sealed class GetPaginatedListByDynamicPersonalNotesQueryHandler(
             return cachedResponse;
         }
 
-        Paginate<PersonalNote> personalNotesDynamic = await personalNoteRepository.GetPaginatedListByDynamicAsync(
-            dynamic: request.DataGridRequest.DynamicQuery,
-            index: pagination.PageIndex,
-            size: pagination.PageSize,
-            include: null,
-            enableTracking: false,
-            cancellationToken: cancellationToken
-        );
+        var query = context.PersonalNotes.AsNoTracking().AsQueryable();
+        query = query.ToDynamic(request.DataGridRequest.DynamicQuery);
+        var personalNotesDynamic = await query.ToPaginateAsync(pagination.PageIndex, pagination.PageSize, cancellationToken);
 
         PaginatedListResponse<GetPaginatedListByDynamicPersonalNotesResponse> response = mapper.Map<PaginatedListResponse<GetPaginatedListByDynamicPersonalNotesResponse>>(personalNotesDynamic);
         await cacheService.Add(

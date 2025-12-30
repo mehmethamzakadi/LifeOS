@@ -3,14 +3,14 @@ using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Exceptions;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 
 namespace LifeOS.Application.Features.Images.Commands.Upload;
 
 public sealed class UploadImageCommandHandler(
     IImageStorageService imageStorageService,
-    IImageRepository imageRepository,
+    LifeOSDbContext context,
     IUnitOfWork unitOfWork) : IRequestHandler<UploadImageCommand, IDataResult<UploadImageResponse>>
 {
     public async Task<IDataResult<UploadImageResponse>> Handle(UploadImageCommand request, CancellationToken cancellationToken)
@@ -54,7 +54,7 @@ public sealed class UploadImageCommandHandler(
                 Type = uploadResult.ContentType
             };
 
-            await imageRepository.AddAsync(image);
+            await context.Images.AddAsync(image, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             var response = new UploadImageResponse

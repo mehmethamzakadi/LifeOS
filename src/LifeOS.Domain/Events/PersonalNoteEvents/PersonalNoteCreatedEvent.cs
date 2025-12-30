@@ -1,9 +1,7 @@
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
 
 namespace LifeOS.Domain.Events.PersonalNoteEvents;
 
-[StoreInOutbox]
 public class PersonalNoteCreatedEvent : DomainEvent
 {
     public Guid PersonalNoteId { get; }

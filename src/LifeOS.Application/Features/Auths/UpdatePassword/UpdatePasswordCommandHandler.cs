@@ -1,23 +1,24 @@
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Exceptions;
-using LifeOS.Domain.Repositories;
 using LifeOS.Domain.Services;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Auths.UpdatePassword;
 
 public sealed class UpdatePasswordCommandHandler : IRequestHandler<UpdatePasswordCommand, UpdatePasswordResponse>
 {
-    private readonly IUserRepository _userRepository;
+    private readonly LifeOSDbContext _context;
     private readonly IUserDomainService _userDomainService;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdatePasswordCommandHandler(
-        IUserRepository userRepository,
+        LifeOSDbContext context,
         IUserDomainService userDomainService,
         IUnitOfWork unitOfWork)
     {
-        _userRepository = userRepository;
+        _context = context;
         _userDomainService = userDomainService;
         _unitOfWork = unitOfWork;
     }
@@ -27,7 +28,8 @@ public sealed class UpdatePasswordCommandHandler : IRequestHandler<UpdatePasswor
         if (!request.Password.Equals(request.PasswordConfirm))
             throw new PasswordChangeFailedException("Girilen şifre aynı değil, lütfen şifreyi doğrulayınız!");
 
-        var user = await _userRepository.GetAsync(u => u.Id == Guid.Parse(request.UserId), enableTracking: true);
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == Guid.Parse(request.UserId) && !u.IsDeleted, cancellationToken);
         if (user == null)
             throw new PasswordChangeFailedException("Kullanıcı bulunamadı.");
 
@@ -35,7 +37,7 @@ public sealed class UpdatePasswordCommandHandler : IRequestHandler<UpdatePasswor
         if (!result.Success)
             throw new PasswordChangeFailedException(result.Message ?? "Şifre güncellenemedi.");
 
-        _userRepository.Update(user);
+        _context.Users.Update(user);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return new();
     }

@@ -4,14 +4,16 @@ using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Paging;
 using LifeOS.Domain.Common.Responses;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
+using LifeOS.Persistence.Extensions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using MovieSeriesEntity = LifeOS.Domain.Entities.MovieSeries;
 
 namespace LifeOS.Application.Features.MovieSeries.Queries.GetPaginatedListByDynamic;
 
 public sealed class GetPaginatedListByDynamicMovieSeriesQueryHandler(
-    IMovieSeriesRepository movieSeriesRepository,
+    LifeOSDbContext context,
     IMapper mapper,
     ICacheService cacheService) : IRequestHandler<GetPaginatedListByDynamicMovieSeriesQuery, PaginatedListResponse<GetPaginatedListByDynamicMovieSeriesResponse>>
 {
@@ -33,14 +35,9 @@ public sealed class GetPaginatedListByDynamicMovieSeriesQueryHandler(
             return cachedResponse;
         }
 
-        Paginate<MovieSeriesEntity> movieSeriesDynamic = await movieSeriesRepository.GetPaginatedListByDynamicAsync(
-            dynamic: request.DataGridRequest.DynamicQuery,
-            index: pagination.PageIndex,
-            size: pagination.PageSize,
-            include: null,
-            enableTracking: false,
-            cancellationToken: cancellationToken
-        );
+        var query = context.MovieSeries.AsNoTracking().AsQueryable();
+        query = query.ToDynamic(request.DataGridRequest.DynamicQuery);
+        var movieSeriesDynamic = await query.ToPaginateAsync(pagination.PageIndex, pagination.PageSize, cancellationToken);
 
         PaginatedListResponse<GetPaginatedListByDynamicMovieSeriesResponse> response = mapper.Map<PaginatedListResponse<GetPaginatedListByDynamicMovieSeriesResponse>>(movieSeriesDynamic);
         await cacheService.Add(

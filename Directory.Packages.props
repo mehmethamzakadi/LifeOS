@@ -45,6 +45,7 @@
 
     <!-- MediatR -->
     <PackageVersion Include="MediatR" Version="13.0.0" />
+    <PackageVersion Include="MediatR.Contracts" Version="2.0.1" />
 
     <!-- Entity Framework Core - PostgreSQL -->
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />

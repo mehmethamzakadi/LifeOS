@@ -1,9 +1,7 @@
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
 
 namespace LifeOS.Domain.Events.BookEvents;
 
-[StoreInOutbox]
 public class BookDeletedEvent : DomainEvent
 {
     public Guid BookId { get; }

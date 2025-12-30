@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Constants;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -53,12 +54,18 @@ public class SessionCleanupService : BackgroundService
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var repository = scope.ServiceProvider.GetRequiredService<IRefreshSessionRepository>();
+            var context = scope.ServiceProvider.GetRequiredService<LifeOSDbContext>();
             var executionContextAccessor = scope.ServiceProvider.GetRequiredService<IExecutionContextAccessor>();
 
             using var auditScope = executionContextAccessor.BeginScope(SystemUsers.SystemUserId);
 
-            var deletedCount = await repository.DeleteExpiredSessionsAsync(cancellationToken);
+            // Soft delete expired sessions (süresi dolmuş ve revoked olmayan session'ları sil)
+            var deletedCount = await context.RefreshSessions
+                .Where(rs => (rs.ExpiresAt <= DateTime.UtcNow || rs.Revoked) && !rs.IsDeleted)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(rs => rs.IsDeleted, true)
+                    .SetProperty(rs => rs.DeletedDate, DateTime.UtcNow),
+                    cancellationToken);
 
             if (deletedCount > 0)
             {

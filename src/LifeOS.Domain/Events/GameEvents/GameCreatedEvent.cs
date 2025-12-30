@@ -1,9 +1,7 @@
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
 
 namespace LifeOS.Domain.Events.GameEvents;
 
-[StoreInOutbox]
 public class GameCreatedEvent : DomainEvent
 {
     public Guid GameId { get; }

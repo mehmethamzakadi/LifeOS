@@ -4,14 +4,15 @@ using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Paging;
 using LifeOS.Domain.Common.Responses;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
+using LifeOS.Persistence.Extensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.Categories.Queries.GetPaginatedListByDynamic;
 
 public sealed class GetPaginatedListByDynamicCategoriesQueryHandler(
-    ICategoryRepository categoryRepository,
+    LifeOSDbContext context,
     IMapper mapper,
     ICacheService cacheService) : IRequestHandler<GetPaginatedListByDynamicCategoriesQuery, PaginatedListResponse<GetPaginatedListByDynamicCategoriesResponse>>
 {
@@ -34,14 +35,12 @@ public sealed class GetPaginatedListByDynamicCategoriesQueryHandler(
         }
 
         // ✅ Read-only sorgu - tracking'e gerek yok (performans için)
-        Paginate<Category> categoriesDynamic = await categoryRepository.GetPaginatedListByDynamicAsync(
-            dynamic: request.DataGridRequest.DynamicQuery,
-            index: pagination.PageIndex,
-            size: pagination.PageSize,
-            include: q => q.Include(c => c.Parent),
-            enableTracking: false,
-            cancellationToken: cancellationToken
-        );
+        var query = context.Categories
+            .Include(c => c.Parent)
+            .AsNoTracking()
+            .AsQueryable();
+        query = query.ToDynamic(request.DataGridRequest.DynamicQuery);
+        var categoriesDynamic = await query.ToPaginateAsync(pagination.PageIndex, pagination.PageSize, cancellationToken);
 
         PaginatedListResponse<GetPaginatedListByDynamicCategoriesResponse> response = mapper.Map<PaginatedListResponse<GetPaginatedListByDynamicCategoriesResponse>>(categoriesDynamic);
         await cacheService.Add(

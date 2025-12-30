@@ -1,12 +1,8 @@
-using LifeOS.Application.Common;
 using LifeOS.Domain.Common;
-using LifeOS.Domain.Common.Attributes;
-using LifeOS.Domain.Entities;
 using LifeOS.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace LifeOS.Persistence.Repositories;
 
@@ -102,38 +98,7 @@ public sealed class UnitOfWork : IUnitOfWork
             }
         }
 
-        // 3. Outbox'a kaydet (out-of-process integration events için)
-        // Reliable messaging: RabbitMQ'ya gidecek event'ler
-        foreach (var domainEvent in domainEvents)
-        {
-            if (ShouldStoreInOutbox(domainEvent))
-            {
-                var outboxMessage = new OutboxMessage
-                {
-                    IdempotencyKey = domainEvent.EventId.ToString(),
-                    EventType = domainEvent.GetType().Name,
-                    Payload = JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
-                    CreatedAt = DateTime.UtcNow,
-                    RetryCount = 0
-                };
-
-                await _context.OutboxMessages.AddAsync(outboxMessage, cancellationToken);
-            }
-        }
-
-        // 4. Outbox mesajlarını kaydet
-        if (domainEvents.Any(ShouldStoreInOutbox))
-        {
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-
         return result;
-    }
-
-    private static bool ShouldStoreInOutbox(IDomainEvent domainEvent)
-    {
-        var eventType = domainEvent.GetType();
-        return eventType.GetCustomAttributes(typeof(StoreInOutboxAttribute), false).Any();
     }
 
     public int SaveChanges()

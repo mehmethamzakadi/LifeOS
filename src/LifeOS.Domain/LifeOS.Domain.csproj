@@ -10,8 +10,11 @@
     Clean Architecture Improvement:
     Removed EntityFrameworkCore and System.Linq.Dynamic.Core dependencies.
     Domain layer is now pure and has no dependency on persistence technologies.
+    MediatR is used only for INotification interface (contract), not implementation.
   -->
   <ItemGroup>
+    <!-- Versiyonlar Directory.Packages.props'tan alınır (Central Package Management) -->
+    <PackageReference Include="MediatR" />
   </ItemGroup>
 
 </Project>

@@ -4,16 +4,11 @@ using LifeOS.Application.Abstractions.Images;
 using LifeOS.Domain.Common.Utilities;
 using LifeOS.Domain.Constants;
 using LifeOS.Domain.Entities;
-using LifeOS.Domain.Events.IntegrationEvents;
-using LifeOS.Domain.Repositories;
 using LifeOS.Domain.Services;
 using LifeOS.Infrastructure.Authorization;
-using LifeOS.Infrastructure.Consumers;
 using LifeOS.Infrastructure.Options;
 using LifeOS.Infrastructure.Services;
-using LifeOS.Infrastructure.Services.BackgroundServices.Outbox.Converters;
 using LifeOS.Infrastructure.Services.Images;
-using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -38,7 +33,6 @@ namespace LifeOS.Infrastructure
             services.Configure<TokenOptions>(configuration.GetSection(TokenOptions.SectionName));
             services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
             services.Configure<PasswordResetOptions>(configuration.GetSection(PasswordResetOptions.SectionName));
-            services.Configure<RabbitMqOptions>(configuration.GetSection(RabbitMqOptions.SectionName));
             services.Configure<ImageStorageOptions>(configuration.GetSection(ImageStorageOptions.SectionName));
             services.Configure<Options.OllamaOptions>(configuration.GetSection(Options.OllamaOptions.SectionName));
 
@@ -98,44 +92,8 @@ namespace LifeOS.Infrastructure
                 services.AddDistributedMemoryCache();
             }
 
-            services.AddMassTransit(x =>
-            {
-                x.AddConsumer<ActivityLogConsumer>();
-
-                x.UsingRabbitMq((context, cfg) =>
-                {
-                    var rabbitOptions = context.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
-
-                    cfg.Host(rabbitOptions.HostName, "/", hostConfigurator =>
-                    {
-                        hostConfigurator.Username(rabbitOptions.UserName);
-                        hostConfigurator.Password(rabbitOptions.Password);
-                    });
-
-                    // ✅ OpenTelemetry tracing desteği - Trace ID'yi mesajlara ekle
-                    cfg.ConfigureEndpoints(context);
-
-                    // Global retry configuration
-                    if (rabbitOptions.RetryLimit > 0)
-                    {
-                        cfg.UseMessageRetry(retryConfigurator => retryConfigurator.Immediate(rabbitOptions.RetryLimit));
-                    }
-                });
-            });
-
             // Background Services
-            services.AddHostedService<Services.BackgroundServices.OutboxProcessorService>();
             services.AddHostedService<Services.BackgroundServices.SessionCleanupService>();
-
-            // Register all IIntegrationEventConverterStrategy implementations automatically
-            var converterInterface = typeof(IIntegrationEventConverterStrategy);
-            var converterTypes = typeof(InfrastructureServicesRegistration).Assembly.GetTypes()
-                .Where(t => converterInterface.IsAssignableFrom(t) && t.IsClass && !t.IsAbstract);
-
-            foreach (var impl in converterTypes)
-            {
-                services.AddScoped(converterInterface, impl);
-            }
 
             // RedisCacheService requires IConnectionMultiplexer - only register if Redis is available
             if (connectionMultiplexer != null)

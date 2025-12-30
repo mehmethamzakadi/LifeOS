@@ -1,13 +1,14 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeOS.Application.Features.MovieSeries.Queries.GetById;
 
 public sealed class GetMovieSeriesByIdQueryHandler(
-    IMovieSeriesRepository movieSeriesRepository,
+    LifeOSDbContext context,
     ICacheService cacheService) : IRequestHandler<GetByIdMovieSeriesQuery, IDataResult<GetByIdMovieSeriesResponse>>
 {
     public async Task<IDataResult<GetByIdMovieSeriesResponse>> Handle(GetByIdMovieSeriesQuery request, CancellationToken cancellationToken)
@@ -17,7 +18,9 @@ public sealed class GetMovieSeriesByIdQueryHandler(
         if (cacheValue is not null)
             return new SuccessDataResult<GetByIdMovieSeriesResponse>(cacheValue);
 
-        var movieSeries = await movieSeriesRepository.GetByIdAsync(request.Id, cancellationToken);
+        var movieSeries = await context.MovieSeries
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
         if (movieSeries is null)
             return new ErrorDataResult<GetByIdMovieSeriesResponse>("Film/Dizi bilgisi bulunamadı.");

@@ -1,11 +1,10 @@
-using LifeOS.Domain.Common;
 using MediatR;
 
-namespace LifeOS.Application.Common;
+namespace LifeOS.Domain.Common;
 
 /// <summary>
 /// Domain event'leri MediatR notification'larına dönüştüren wrapper.
-/// Bu sayede Domain katmanı MediatR'dan bağımsız kalır.
+/// Bu sayede Domain katmanı MediatR implementasyon detaylarından bağımsız kalır.
 /// </summary>
 /// <typeparam name="TDomainEvent">Domain event tipi</typeparam>
 public sealed class DomainEventNotification<TDomainEvent> : INotification

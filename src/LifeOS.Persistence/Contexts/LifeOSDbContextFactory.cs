@@ -1,4 +1,4 @@
-using LifeOS.Application.Abstractions;
+using LifeOS.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 

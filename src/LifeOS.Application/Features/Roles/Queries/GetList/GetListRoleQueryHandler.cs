@@ -1,20 +1,23 @@
 using AutoMapper;
+using LifeOS.Domain.Common.Paging;
 using LifeOS.Domain.Common.Responses;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
+using LifeOS.Persistence.Extensions;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace LifeOS.Application.Features.Roles.Queries.GetList;
 
-public sealed class GetListRoleQueryHandler(IRoleRepository roleRepository, IMapper mapper) : IRequestHandler<GetListRoleQuery, PaginatedListResponse<GetListRoleResponse>>
+public sealed class GetListRoleQueryHandler(LifeOSDbContext context, IMapper mapper) : IRequestHandler<GetListRoleQuery, PaginatedListResponse<GetListRoleResponse>>
 {
 
     public async Task<PaginatedListResponse<GetListRoleResponse>> Handle(GetListRoleQuery request, CancellationToken cancellationToken)
     {
-        var roles = await roleRepository.GetRoles(
-            index: request.PageRequest.PageIndex,
-            size: request.PageRequest.PageSize,
-            cancellationToken: cancellationToken);
+        var query = context.Roles
+            .AsNoTracking()
+            .AsQueryable();
+        var roles = await query.ToPaginateAsync(request.PageRequest.PageIndex, request.PageRequest.PageSize, cancellationToken);
 
         PaginatedListResponse<GetListRoleResponse> response = mapper.Map<PaginatedListResponse<GetListRoleResponse>>(roles);
         return response;

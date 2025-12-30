@@ -4,23 +4,22 @@ using LifeOS.Application.Common.Constants;
 using LifeOS.Application.Features.MovieSeries.Queries.GetById;
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.Application.Features.MovieSeries.Commands.Update;
 
 public sealed class UpdateMovieSeriesCommandHandler(
-    IMovieSeriesRepository movieSeriesRepository,
+    LifeOSDbContext context,
     ICacheService cacheService,
     IUnitOfWork unitOfWork) : IRequestHandler<UpdateMovieSeriesCommand, IResult>
 {
     public async Task<IResult> Handle(UpdateMovieSeriesCommand request, CancellationToken cancellationToken)
     {
-        var movieSeries = await movieSeriesRepository.GetAsync(
-            predicate: x => x.Id == request.Id,
-            enableTracking: true,
-            cancellationToken: cancellationToken);
+        var movieSeries = await context.MovieSeries
+            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (movieSeries is null)
         {
@@ -38,7 +37,7 @@ public sealed class UpdateMovieSeriesCommandHandler(
             request.Rating,
             request.PersonalNote);
 
-        movieSeriesRepository.Update(movieSeries);
+        context.MovieSeries.Update(movieSeries);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         await cacheService.Add(

@@ -1,5 +1,5 @@
 using LifeOS.Domain.Common.Results;
-using LifeOS.Domain.Repositories;
+using LifeOS.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,30 +7,30 @@ namespace LifeOS.Application.Features.Permissions.Queries.GetRolePermissions;
 
 public class GetRolePermissionsQueryHandler : IRequestHandler<GetRolePermissionsQuery, IDataResult<GetRolePermissionsResponse>>
 {
-    private readonly IPermissionRepository _permissionRepository;
-    private readonly IRoleRepository _roleRepository;
+    private readonly LifeOSDbContext _context;
 
-    public GetRolePermissionsQueryHandler(IPermissionRepository permissionRepository, IRoleRepository roleRepository)
+    public GetRolePermissionsQueryHandler(LifeOSDbContext context)
     {
-        _permissionRepository = permissionRepository;
-        _roleRepository = roleRepository;
+        _context = context;
     }
 
     public async Task<IDataResult<GetRolePermissionsResponse>> Handle(GetRolePermissionsQuery request, CancellationToken cancellationToken)
     {
         // ✅ Read-only sorgu - tracking'e gerek yok (performans için)
-        var role = await _roleRepository.GetAsync(
-            r => r.Id == request.RoleId,
-            enableTracking: false,
-            cancellationToken: cancellationToken);
+        var role = await _context.Roles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == request.RoleId && !r.IsDeleted, cancellationToken);
 
         if (role == null)
         {
             return new ErrorDataResult<GetRolePermissionsResponse>("Rol bulunamadı");
         }
 
-        var rolePermissions = await _permissionRepository.GetRolePermissionsAsync(request.RoleId, cancellationToken);
-        var permissionIds = rolePermissions.Select(rp => rp.PermissionId).ToList();
+        var permissionIds = await _context.RolePermissions
+            .AsNoTracking()
+            .Where(rp => rp.RoleId == request.RoleId)
+            .Select(rp => rp.PermissionId)
+            .ToListAsync(cancellationToken);
 
         var response = new GetRolePermissionsResponse
         {

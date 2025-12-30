@@ -6,9 +6,9 @@ using LifeOS.Domain.Common.Results;
 using LifeOS.Domain.Constants;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Exceptions;
-using LifeOS.Domain.Repositories;
 using LifeOS.Domain.Services;
 using LifeOS.Infrastructure.Extensions;
+using LifeOS.Persistence.Contexts;
 using AppPasswordHasher = LifeOS.Application.Abstractions.Identity.IPasswordHasher;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -19,29 +19,26 @@ namespace LifeOS.Infrastructure.Services;
 
 public sealed class AuthService : IAuthService
 {
-    private readonly IUserRepository _userRepository;
+    private readonly LifeOSDbContext _context;
     private readonly IUserDomainService _userDomainService;
     private readonly ITokenService _tokenService;
-    private readonly IRefreshSessionRepository _refreshSessionRepository;
     private readonly IMailService _mailService;
     private readonly AppPasswordHasher _passwordHasher;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
-        IUserRepository userRepository,
+        LifeOSDbContext context,
         IUserDomainService userDomainService,
         ITokenService tokenService,
-        IRefreshSessionRepository refreshSessionRepository,
         IMailService mailService,
         AppPasswordHasher passwordHasher,
         IUnitOfWork unitOfWork,
         ILogger<AuthService> logger)
     {
-        _userRepository = userRepository;
+        _context = context;
         _userDomainService = userDomainService;
         _tokenService = tokenService;
-        _refreshSessionRepository = refreshSessionRepository;
         _mailService = mailService;
         _passwordHasher = passwordHasher;
         _unitOfWork = unitOfWork;
@@ -50,7 +47,8 @@ public sealed class AuthService : IAuthService
 
     public async Task<IDataResult<LoginResponse>> LoginAsync(string email, string password, string? deviceId = null)
     {
-        User? user = await _userRepository.FindByEmailAsync(email)
+        User? user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted)
             ?? throw new AuthenticationErrorException();
 
         // Check if account is locked
@@ -77,7 +75,7 @@ public sealed class AuthService : IAuthService
                 user.LockAccount(DateTimeOffset.UtcNow.AddMinutes(15));
             }
 
-            _userRepository.Update(user);
+            _context.Users.Update(user);
             await SaveChangesWithConcurrencyHandlingAsync();
 
             throw new AuthenticationErrorException();
@@ -91,12 +89,17 @@ public sealed class AuthService : IAuthService
         // This ensures only one active session per device while allowing multi-device login
         if (!string.IsNullOrWhiteSpace(deviceId))
         {
-            await _refreshSessionRepository.RevokeActiveSessionsByDeviceAsync(
-                user.Id,
-                deviceId,
-                "Replaced by new login",
-                SystemUsers.SystemUserId,
-                cancellationToken: default);
+            await _context.RefreshSessions
+                .Where(rs => rs.UserId == user.Id && 
+                            rs.DeviceId == deviceId && 
+                            !rs.Revoked && 
+                            !rs.IsDeleted)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(rs => rs.Revoked, true)
+                    .SetProperty(rs => rs.RevokedAt, DateTime.UtcNow)
+                    .SetProperty(rs => rs.RevokedReason, "Replaced by new login")
+                    .SetProperty(rs => rs.UpdatedDate, DateTime.UtcNow)
+                    .SetProperty(rs => rs.UpdatedById, SystemUsers.SystemUserId));
         }
 
         var authClaims = await _tokenService.GetAuthClaims(user);
@@ -116,7 +119,7 @@ public sealed class AuthService : IAuthService
             CreatedById = SystemUsers.SystemUserId
         };
 
-        await _refreshSessionRepository.AddAsync(session);
+        await _context.RefreshSessions.AddAsync(session);
         await SaveChangesWithConcurrencyHandlingAsync();
 
         var response = new LoginResponse(
@@ -139,7 +142,9 @@ public sealed class AuthService : IAuthService
         }
 
         var tokenHash = HashRefreshToken(refreshToken);
-        var session = await _refreshSessionRepository.GetByTokenHashAsync(tokenHash, includeDeleted: true);
+        var session = await _context.RefreshSessions
+            .IgnoreQueryFilters() // includeDeleted: true için
+            .FirstOrDefaultAsync(rs => rs.TokenHash == tokenHash);
 
         if (session is null)
         {
@@ -158,7 +163,8 @@ public sealed class AuthService : IAuthService
             throw new AuthenticationErrorException("Refresh token süresi dolmuş.");
         }
 
-        var user = await _userRepository.FindByIdAsync(session.UserId)
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Id == session.UserId && !u.IsDeleted)
             ?? throw new AuthenticationErrorException("Kullanıcı bulunamadı.");
 
         if (user.IsLockedOut())
@@ -190,8 +196,8 @@ public sealed class AuthService : IAuthService
         session.UpdatedDate = DateTime.UtcNow;
         session.UpdatedById = SystemUsers.SystemUserId;
 
-        _refreshSessionRepository.Update(session);
-        await _refreshSessionRepository.AddAsync(replacement);
+        _context.RefreshSessions.Update(session);
+        await _context.RefreshSessions.AddAsync(replacement);
         await SaveChangesWithConcurrencyHandlingAsync();
 
         var response = new LoginResponse(
@@ -214,7 +220,8 @@ public sealed class AuthService : IAuthService
         }
 
         var tokenHash = HashRefreshToken(refreshToken);
-        var session = await _refreshSessionRepository.GetByTokenHashAsync(tokenHash);
+        var session = await _context.RefreshSessions
+            .FirstOrDefaultAsync(rs => rs.TokenHash == tokenHash && !rs.IsDeleted);
         if (session is null)
         {
             return;
@@ -226,13 +233,14 @@ public sealed class AuthService : IAuthService
         session.UpdatedDate = DateTime.UtcNow;
         session.UpdatedById = SystemUsers.SystemUserId;
 
-        _refreshSessionRepository.Update(session);
+        _context.RefreshSessions.Update(session);
         await SaveChangesWithConcurrencyHandlingAsync();
     }
 
     public async Task PasswordResetAsync(string email)
     {
-        User? user = await _userRepository.FindByEmailAsync(email);
+        User? user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted);
         if (user != null)
         {
             // Rastgele token oluştur
@@ -244,7 +252,7 @@ public sealed class AuthService : IAuthService
             // ✅ SECURITY: Using User entity behavior method
             user.SetPasswordResetToken(tokenHash, DateTime.UtcNow.AddHours(1));
 
-            _userRepository.Update(user);
+            _context.Users.Update(user);
             await SaveChangesWithConcurrencyHandlingAsync();
 
             // Kullanıcıya orijinal token'ı gönder (hash'i değil!)
@@ -268,11 +276,14 @@ public sealed class AuthService : IAuthService
     private async Task RevokeAllSessionsAsync(Guid userId, string reason)
     {
         // ✅ Performans iyileştirmesi: ExecuteUpdateAsync kullanarak veriyi RAM'e çekmeden tek SQL sorgusuyla güncelle
-        await _refreshSessionRepository.RevokeAllActiveSessionsAsync(
-            userId,
-            reason,
-            SystemUsers.SystemUserId,
-            cancellationToken: default);
+        await _context.RefreshSessions
+            .Where(rs => rs.UserId == userId && !rs.Revoked && !rs.IsDeleted)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(rs => rs.Revoked, true)
+                .SetProperty(rs => rs.RevokedAt, DateTime.UtcNow)
+                .SetProperty(rs => rs.RevokedReason, reason)
+                .SetProperty(rs => rs.UpdatedDate, DateTime.UtcNow)
+                .SetProperty(rs => rs.UpdatedById, SystemUsers.SystemUserId));
     }
 
     public async Task<IDataResult<bool>> PasswordVerify(string resetToken, string userId)
@@ -285,7 +296,8 @@ public sealed class AuthService : IAuthService
                 return new SuccessDataResult<bool>(false);
             }
 
-            User? user = await _userRepository.FindByIdAsync(userIdGuid);
+            User? user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userIdGuid && !u.IsDeleted);
             if (user == null)
             {
                 _logger.LogWarning("Password reset verification failed: User not found {UserId}", userIdGuid);
