@@ -3,7 +3,6 @@ using LifeOS.Domain.Common.Results;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using IResult = LifeOS.Domain.Common.Results.IResult;
 
 namespace LifeOS.API.Controllers;
 
@@ -26,7 +25,7 @@ public abstract class BaseApiController(IMediator mediator) : ControllerBase
             });
 
     [NonAction]
-    protected IActionResult ToResponse(IResult result) =>
+    protected IActionResult ToResponse(LifeOS.Domain.Common.Results.IResult result) =>
         StatusCode(result.Success ? StatusCodes.Status200OK : StatusCodes.Status400BadRequest,
             new ApiResult<object>
             {

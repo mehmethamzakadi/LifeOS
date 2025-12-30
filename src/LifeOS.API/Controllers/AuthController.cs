@@ -1,10 +1,10 @@
+using LifeOS.API.Common;
 using LifeOS.Application.Features.Auths.Login;
 using LifeOS.Application.Features.Auths.Logout;
 using LifeOS.Application.Features.Auths.PasswordReset;
 using LifeOS.Application.Features.Auths.PasswordVerify;
 using LifeOS.Application.Features.Auths.RefreshToken;
 using LifeOS.Application.Features.Auths.Register;
-using LifeOS.Domain.Common.Results;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
