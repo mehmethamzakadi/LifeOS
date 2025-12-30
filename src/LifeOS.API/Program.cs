@@ -81,7 +81,6 @@ builder.Services.AddConfigurePersistenceServices(builder.Configuration);
 builder.Services.AddConfigureApplicationServices(builder.Configuration);
 builder.Services.AddConfigureInfrastructureServices(builder.Configuration);
 
-builder.Services.AddOptions();
 builder.Services.AddHttpContextAccessor();
 
 // ✅ Response Optimization (Caching & Compression)
@@ -90,11 +89,8 @@ builder.Services.AddResponseOptimization();
 // ✅ Rate Limiting
 builder.Services.AddRateLimiting(builder.Configuration);
 
-// ✅ API Controllers
+// ✅ API Services (OpenAPI, Routing)
 builder.Services.AddApiControllers();
-
-// ✅ Application Cookie
-builder.Services.AddApplicationCookie(builder.Environment);
 
 var app = builder.Build();
 

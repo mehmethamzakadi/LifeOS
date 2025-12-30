@@ -1,14 +1,8 @@
 using AspNetCoreRateLimit;
-using LifeOS.API.Common;
 using LifeOS.API.Configuration;
-using LifeOS.API.Filters;
-using Microsoft.AspNetCore.CookiePolicy;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Scalar.AspNetCore;
 
 namespace LifeOS.API.Extensions;
@@ -108,48 +102,10 @@ public static class WebApplicationBuilderExtensions
     }
 
     /// <summary>
-    /// Controllers ve API davranışlarını yapılandırır
+    /// Minimal API için gerekli servisleri yapılandırır
     /// </summary>
     public static IServiceCollection AddApiControllers(this IServiceCollection services)
     {
-        services.AddControllers(options =>
-            {
-                // Request/Response loglama için global action filter ekle
-                options.Filters.Add<RequestResponseLoggingFilter>();
-            })
-            .AddJsonOptions(options =>
-            {
-                // ✅ JSON serialization'ı camelCase'e ayarla (JavaScript/TypeScript best practice)
-                // Bu sayede frontend'de property mapping yapmaya gerek kalmaz
-                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-                options.JsonSerializerOptions.DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-                options.JsonSerializerOptions.WriteIndented = false; // Production'da false, Development'ta true olabilir
-            })
-            .ConfigureApiBehaviorOptions(options =>
-            {
-                options.InvalidModelStateResponseFactory = context =>
-                {
-                    var errors = context.ModelState
-                        .Where(state => state.Value?.Errors.Count > 0)
-                        .SelectMany(state => state.Value!.Errors)
-                        .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage)
-                            ? "Geçersiz veya eksik bilgiler mevcut."
-                            : error.ErrorMessage)
-                        .Distinct()
-                        .ToList();
-
-                    var apiResult = new ApiResult<object>
-                    {
-                        Success = false,
-                        Message = errors.FirstOrDefault() ?? "Geçersiz veya eksik bilgiler mevcut.",
-                        InternalMessage = "ModelValidationError",
-                        Errors = errors
-                    };
-
-                    return new BadRequestObjectResult(apiResult);
-                };
-            });
-
         // Küçük harfli URL'ler için routing yapılandırması
         services.Configure<RouteOptions>(options =>
         {
@@ -162,32 +118,6 @@ public static class WebApplicationBuilderExtensions
         services.AddOpenApi(options =>
         {
             options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
-        });
-
-        return services;
-    }
-
-    /// <summary>
-    /// Application cookie ayarlarını yapılandırır
-    /// </summary>
-    public static IServiceCollection AddApplicationCookie(this IServiceCollection services, IWebHostEnvironment environment)
-    {
-        var isDevelopment = environment.IsDevelopment();
-
-        services.ConfigureApplicationCookie(options =>
-        {
-            options.Cookie = new CookieBuilder
-            {
-                Name = "LifeOS",
-                HttpOnly = true,
-                SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.Strict,
-                SecurePolicy = isDevelopment ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always,
-            };
-            options.LoginPath = "/Identity/Account/Login";
-            options.LogoutPath = "/Identity/Account/Logout";
-            options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-            options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-            options.SlidingExpiration = true;
         });
 
         return services;
