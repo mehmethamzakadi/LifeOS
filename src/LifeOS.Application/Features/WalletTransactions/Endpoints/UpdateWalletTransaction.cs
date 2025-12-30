@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Enums;
 using LifeOS.Persistence.Contexts;
@@ -59,12 +60,13 @@ public static class UpdateWalletTransaction
             CancellationToken cancellationToken) =>
         {
             if (id != request.Id)
-                return Results.BadRequest(new { Error = "ID mismatch" });
+                return ApiResultExtensions.Failure("ID uyuşmazlığı").ToResult();
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var walletTransaction = await context.WalletTransactions
@@ -72,7 +74,7 @@ public static class UpdateWalletTransaction
 
             if (walletTransaction is null)
             {
-                return Results.NotFound(new { Error = ResponseMessages.WalletTransaction.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.WalletTransaction.NotFound).ToResult();
             }
 
             walletTransaction.Update(
@@ -104,14 +106,14 @@ public static class UpdateWalletTransaction
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.WalletTransaction.Updated).ToResult();
         })
         .WithName("UpdateWalletTransaction")
         .WithTags("WalletTransactions")
         .RequireAuthorization(Domain.Constants.Permissions.WalletTransactionsUpdate)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,7 +23,7 @@ public static class DeleteMovieSeries
             var movieSeries = await context.MovieSeries
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
             if (movieSeries is null)
-                return Results.NotFound(new { Error = ResponseMessages.MovieSeries.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.MovieSeries.NotFound).ToResult();
 
             movieSeries.Delete();
             context.MovieSeries.Update(movieSeries);
@@ -36,13 +37,13 @@ public static class DeleteMovieSeries
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.MovieSeries.Deleted).ToResult();
         })
         .WithName("DeleteMovieSeries")
         .WithTags("MovieSeries")
         .RequireAuthorization(Domain.Constants.Permissions.MovieSeriesDelete)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

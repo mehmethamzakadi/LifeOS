@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Enums;
 using LifeOS.Persistence.Contexts;
@@ -53,12 +54,13 @@ public static class UpdateGame
             CancellationToken cancellationToken) =>
         {
             if (id != request.Id)
-                return Results.BadRequest(new { Error = "ID mismatch" });
+                return ApiResultExtensions.Failure("ID uyuşmazlığı").ToResult();
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var game = await context.Games
@@ -66,7 +68,7 @@ public static class UpdateGame
 
             if (game is null)
             {
-                return Results.NotFound(new { Error = ResponseMessages.Game.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.Game.NotFound).ToResult();
             }
 
             game.Update(
@@ -100,14 +102,14 @@ public static class UpdateGame
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.Game.Updated).ToResult();
         })
         .WithName("UpdateGame")
         .WithTags("Games")
         .RequireAuthorization(Domain.Constants.Permissions.GamesUpdate)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

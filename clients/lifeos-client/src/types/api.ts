@@ -83,9 +83,9 @@ export function normalizeApiResult<T>(data: any): ApiResult<T> {
   const message = data?.Message ?? data?.message ?? collectedErrors[0] ?? '';
 
   return {
-    success: Boolean(data?.Success),
+    success: Boolean(data?.Success ?? data?.success),
     message,
-    data: data?.Data as T,
+    data: (data?.Data ?? data?.data) as T,
     internalMessage: data?.InternalMessage ?? data?.internalMessage,
     errors: collectedErrors.length > 0 ? collectedErrors : undefined
   };
@@ -152,17 +152,27 @@ export function normalizeApiError(error: unknown, fallbackMessage = 'Beklenmeyen
 }
 
 export function normalizePaginatedResponse<T>(data: any): PaginatedListResponse<T> {
-  if (data && typeof data === 'object' && 'items' in data) {
-    return data as PaginatedListResponse<T>;
+  // Eğer ApiResult wrapper'ı içindeyse, önce onu normalize et
+  let actualData = data;
+  if (data && typeof data === 'object' && ('success' in data || 'Success' in data)) {
+    // ApiResult wrapper'ı var, data'yı çıkar
+    actualData = data.data ?? data.Data;
   }
 
+  // Backend artık camelCase döndürüyor (JSON serialization ayarı sayesinde)
+  // Eğer direkt PaginatedListResponse formatındaysa
+  if (actualData && typeof actualData === 'object' && 'items' in actualData) {
+    return actualData as PaginatedListResponse<T>;
+  }
+
+  // Fallback: Eğer hala büyük harf formatı gelirse (geriye dönük uyumluluk)
   return {
-    items: (data?.Items ?? []) as T[],
-    size: Number(data?.Size ?? data?.PageSize ?? 0),
-    index: Number(data?.Index ?? data?.PageIndex ?? 0),
-    count: Number(data?.Count ?? 0),
-    pages: Number(data?.Pages ?? 0),
-    hasPrevious: Boolean(data?.HasPrevious ?? false),
-    hasNext: Boolean(data?.HasNext ?? false)
+    items: (actualData?.Items ?? actualData?.items ?? []) as T[],
+    size: Number(actualData?.Size ?? actualData?.size ?? actualData?.PageSize ?? 0),
+    index: Number(actualData?.Index ?? actualData?.index ?? actualData?.PageIndex ?? 0),
+    count: Number(actualData?.Count ?? actualData?.count ?? 0),
+    pages: Number(actualData?.Pages ?? actualData?.pages ?? 0),
+    hasPrevious: Boolean(actualData?.HasPrevious ?? actualData?.hasPrevious ?? false),
+    hasNext: Boolean(actualData?.HasNext ?? actualData?.hasNext ?? false)
   };
 }

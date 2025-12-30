@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Services;
 using LifeOS.Persistence.Contexts;
@@ -52,43 +53,44 @@ public static class ChangePassword
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var userId = currentUserService.GetCurrentUserId();
             if (userId == null)
             {
-                return Results.Unauthorized();
+                return ApiResultExtensions.Failure("Yetkisiz erişim").ToResult();
             }
 
             var user = await context.Users
                 .FirstOrDefaultAsync(u => u.Id == userId.Value && !u.IsDeleted, cancellationToken);
             if (user == null)
             {
-                return Results.NotFound(new { Error = "Kullanıcı bulunamadı." });
+                return ApiResultExtensions.Failure("Kullanıcı bulunamadı.").ToResult();
             }
 
             if (!userDomainService.VerifyPassword(user, request.CurrentPassword))
             {
-                return Results.BadRequest(new { Error = "Mevcut şifre hatalı." });
+                return ApiResultExtensions.Failure("Mevcut şifre hatalı.").ToResult();
             }
 
             var result = userDomainService.SetPassword(user, request.NewPassword);
             if (!result.Success)
             {
-                return Results.BadRequest(new { Error = result.Message ?? "Şifre ayarlanamadı" });
+                return ApiResultExtensions.Failure(result.Message ?? "Şifre ayarlanamadı").ToResult();
             }
 
             await context.SaveChangesAsync(cancellationToken);
 
-            return Results.Ok(new { Message = "Şifre başarıyla değiştirildi." });
+            return ApiResultExtensions.Success("Şifre başarıyla değiştirildi.").ToResult();
         })
         .WithName("ChangePassword")
         .WithTags("Profile")
-        .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status401Unauthorized)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status401Unauthorized)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

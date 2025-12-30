@@ -1,3 +1,4 @@
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -27,12 +28,12 @@ public static class GetAllCategories
 
             var response = categories.Select(c => new Response(c.Id, c.Name, c.Description, c.ParentId)).ToList();
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kategoriler başarıyla getirildi").ToResult();
         })
         .WithName("GetAllCategories")
         .WithTags("Categories")
         .AllowAnonymous()
-        .Produces<List<Response>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<List<Response>>>(StatusCodes.Status200OK);
     }
 }
 

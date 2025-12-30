@@ -1,3 +1,5 @@
+using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Constants;
 using LifeOS.Domain.Entities;
@@ -94,26 +96,27 @@ public static class CreateUser
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var existingUser = await context.Users
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
             if (existingUser is not null)
-                return Results.BadRequest(new { Error = "Bu e-posta adresi zaten kullanılıyor!" });
+                return ApiResultExtensions.Failure<Response>(ResponseMessages.User.EmailAlreadyExists).ToResult();
 
             var existingUserName = await context.Users
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
             if (existingUserName is not null)
-                return Results.BadRequest(new { Error = "Bu kullanıcı adı zaten kullanılıyor!" });
+                return ApiResultExtensions.Failure<Response>(ResponseMessages.User.UsernameAlreadyExists).ToResult();
 
             var user = User.Create(request.UserName, request.Email, string.Empty);
 
             var passwordResult = userDomainService.SetPassword(user, request.Password);
             if (!passwordResult.Success)
-                return Results.BadRequest(new { Error = passwordResult.Message });
+                return ApiResultExtensions.Failure<Response>(passwordResult.Message).ToResult();
 
             await context.Users.AddAsync(user, cancellationToken);
 
@@ -124,18 +127,19 @@ public static class CreateUser
             {
                 var roleResult = userDomainService.AddToRole(user, userRole);
                 if (!roleResult.Success)
-                    return Results.BadRequest(new { Error = roleResult.Message });
+                    return ApiResultExtensions.Failure<Response>(roleResult.Message).ToResult();
             }
 
             await context.SaveChangesAsync(cancellationToken);
 
-            return Results.Created($"/api/users/{user.Id}", new Response(user.Id));
+            var response = new Response(user.Id);
+            return ApiResultExtensions.CreatedResult(response, $"/api/users/{user.Id}", ResponseMessages.User.Created);
         })
         .WithName("CreateUser")
         .WithTags("Users")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.UsersCreate)
-        .Produces<Response>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<Response>>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Response>>(StatusCodes.Status400BadRequest);
     }
 }
 

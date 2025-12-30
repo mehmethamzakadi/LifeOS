@@ -1,21 +1,20 @@
+using LifeOS.Application.Common.Responses;
+
 namespace LifeOS.API.Common;
 
 /// <summary>
 /// API response model for standardized responses
+/// Re-exports Application.Common.Responses.ApiResult for backward compatibility
 /// </summary>
-public class ApiResult<T>
+public class ApiResult<T> : LifeOS.Application.Common.Responses.ApiResult<T>
 {
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public string InternalMessage { get; set; } = string.Empty;
-    public T? Data { get; set; }
-    public List<string> Errors { get; set; } = new();
 }
 
 /// <summary>
 /// API response model without generic type parameter
+/// Re-exports Application.Common.Responses.ApiReturn for backward compatibility
 /// </summary>
-public class ApiReturn : ApiResult<object>
+public class ApiReturn : LifeOS.Application.Common.Responses.ApiReturn
 {
 }
 

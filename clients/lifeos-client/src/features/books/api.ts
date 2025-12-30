@@ -4,12 +4,12 @@ import { buildDataGridPayload } from '../../lib/data-grid-helpers';
 import { Book, BookFormValues, BookListResponse, BookTableFilters } from './types';
 
 export async function fetchBooks(filters: BookTableFilters): Promise<BookListResponse> {
-  const response = await api.post('/book/search', buildDataGridPayload(filters, 'Title'));
+  const response = await api.post('/books/search', buildDataGridPayload(filters, 'Title'));
   return normalizePaginatedResponse<Book>(response.data);
 }
 
 export async function getBookById(id: string): Promise<Book> {
-  const response = await api.get<ApiResult<Book>>(`/book/${id}`);
+  const response = await api.get<ApiResult<Book>>(`/books/${id}`);
   const result = normalizeApiResult<Book>(response.data);
   if (!result.success || !result.data) {
     throw new Error(result.message || 'Kitap bulunamadı');
@@ -18,7 +18,7 @@ export async function getBookById(id: string): Promise<Book> {
 }
 
 export async function createBook(values: BookFormValues) {
-  const response = await api.post<ApiResult>('/book', {
+  const response = await api.post<ApiResult>('/books', {
     Title: values.title,
     Author: values.author,
     CoverUrl: values.coverUrl || null,
@@ -33,7 +33,7 @@ export async function createBook(values: BookFormValues) {
 }
 
 export async function updateBook(id: string, values: BookFormValues) {
-  const response = await api.put<ApiResult>(`/book/${id}`, {
+  const response = await api.put<ApiResult>(`/books/${id}`, {
     Id: id,
     Title: values.title,
     Author: values.author,
@@ -49,7 +49,7 @@ export async function updateBook(id: string, values: BookFormValues) {
 }
 
 export async function deleteBook(id: string) {
-  const response = await api.delete<ApiResult>(`/book/${id}`);
+  const response = await api.delete<ApiResult>(`/books/${id}`);
   return normalizeApiResult(response.data);
 }
 

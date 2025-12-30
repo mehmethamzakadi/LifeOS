@@ -48,7 +48,7 @@ public static class SearchGames
             var cachedResponse = await cacheService.Get<PaginatedListResponse<Response>>(cacheKey);
             if (cachedResponse is not null)
             {
-                return Results.Ok(cachedResponse);
+                return ApiResultExtensions.Success(cachedResponse, "Oyunlar başarıyla getirildi").ToResult();
             }
 
             var query = context.Games.AsNoTracking().AsQueryable();
@@ -62,12 +62,12 @@ public static class SearchGames
                 DateTimeOffset.UtcNow.Add(CacheDurations.GameGrid),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Oyunlar başarıyla getirildi").ToResult();
         })
         .WithName("SearchGames")
         .WithTags("Games")
         .RequireAuthorization(Domain.Constants.Permissions.GamesViewAll)
-        .Produces<PaginatedListResponse<Response>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<PaginatedListResponse<Response>>>(StatusCodes.Status200OK);
     }
 }
 

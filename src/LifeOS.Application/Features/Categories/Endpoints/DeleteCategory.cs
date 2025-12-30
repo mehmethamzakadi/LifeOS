@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,13 +23,13 @@ public static class DeleteCategory
             var category = await context.Categories
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
             if (category is null)
-                return Results.NotFound(new { Error = ResponseMessages.Category.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.Category.NotFound).ToResult();
 
             // Alt kategori kontrolü
             var hasChildren = await context.Categories
                 .AnyAsync(x => x.ParentId == id && !x.IsDeleted, cancellationToken);
             if (hasChildren)
-                return Results.BadRequest(new { Error = "Bu kategorinin alt kategorileri bulunmaktadır. Önce alt kategorileri silmeniz gerekmektedir." });
+                return ApiResultExtensions.Failure("Bu kategorinin alt kategorileri bulunmaktadır. Önce alt kategorileri silmeniz gerekmektedir.").ToResult();
 
             category.Delete();
             context.Categories.Update(category);
@@ -42,14 +43,14 @@ public static class DeleteCategory
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.Category.Deleted).ToResult();
         })
         .WithName("DeleteCategory")
         .WithTags("Categories")
         .RequireAuthorization(Domain.Constants.Permissions.CategoriesDelete)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest);
     }
 }
 

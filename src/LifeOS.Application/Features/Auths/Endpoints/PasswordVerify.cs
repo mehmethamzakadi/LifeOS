@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions.Identity;
+using LifeOS.Application.Common.Responses;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,8 +23,6 @@ public static class PasswordVerify
         }
     }
 
-    public sealed record Response(bool Success, bool IsValid, string? Message = null);
-
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("api/auth/password-verify", async (
@@ -35,17 +34,19 @@ public static class PasswordVerify
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new Response(false, false, string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))));
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var result = await authService.PasswordVerify(request.ResetToken, request.UserId);
-            return Results.Ok(new Response(result.Success, result.Data, result.Message));
+            var responseData = new { IsValid = result.Data, Message = result.Message };
+            return ApiResultExtensions.Success(responseData, result.Message ?? "Token doğrulandı").ToResult();
         })
         .WithName("PasswordVerify")
         .WithTags("Auth")
         .AllowAnonymous()
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces<Response>(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest);
     }
 }
 

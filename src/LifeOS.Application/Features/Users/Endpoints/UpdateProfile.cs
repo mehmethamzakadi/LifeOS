@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Persistence.Contexts;
 using FluentValidation;
@@ -61,20 +62,21 @@ public static class UpdateProfile
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var userId = currentUserService.GetCurrentUserId();
             if (userId == null)
             {
-                return Results.Unauthorized();
+                return ApiResultExtensions.Failure("Yetkisiz erişim").ToResult();
             }
 
             var user = await context.Users
                 .FirstOrDefaultAsync(u => u.Id == userId.Value && !u.IsDeleted, cancellationToken);
             if (user == null)
             {
-                return Results.NotFound(new { Error = "Kullanıcı bulunamadı." });
+                return ApiResultExtensions.Failure("Kullanıcı bulunamadı.").ToResult();
             }
 
             if (user.Email != request.Email)
@@ -85,7 +87,7 @@ public static class UpdateProfile
 
                 if (existingEmail != null && existingEmail.Id != userId.Value)
                 {
-                    return Results.BadRequest(new { Error = "Bu e-posta adresi zaten kullanılıyor!" });
+                    return ApiResultExtensions.Failure("Bu e-posta adresi zaten kullanılıyor!").ToResult();
                 }
             }
 
@@ -96,7 +98,7 @@ public static class UpdateProfile
                     .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
                 if (existingUserName != null && existingUserName.Id != userId.Value)
                 {
-                    return Results.BadRequest(new { Error = "Bu kullanıcı adı zaten kullanılıyor!" });
+                    return ApiResultExtensions.Failure("Bu kullanıcı adı zaten kullanılıyor!").ToResult();
                 }
             }
 
@@ -105,14 +107,14 @@ public static class UpdateProfile
 
             await context.SaveChangesAsync(cancellationToken);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success("Profil başarıyla güncellendi").ToResult();
         })
         .WithName("UpdateProfile")
         .WithTags("Profile")
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status401Unauthorized)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status401Unauthorized)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

@@ -117,6 +117,14 @@ public static class WebApplicationBuilderExtensions
                 // Request/Response loglama için global action filter ekle
                 options.Filters.Add<RequestResponseLoggingFilter>();
             })
+            .AddJsonOptions(options =>
+            {
+                // ✅ JSON serialization'ı camelCase'e ayarla (JavaScript/TypeScript best practice)
+                // Bu sayede frontend'de property mapping yapmaya gerek kalmaz
+                options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+                options.JsonSerializerOptions.DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+                options.JsonSerializerOptions.WriteIndented = false; // Production'da false, Development'ta true olabilir
+            })
             .ConfigureApiBehaviorOptions(options =>
             {
                 options.InvalidModelStateResponseFactory = context =>

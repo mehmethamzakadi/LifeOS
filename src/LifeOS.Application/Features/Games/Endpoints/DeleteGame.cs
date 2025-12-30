@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,7 +23,7 @@ public static class DeleteGame
             var game = await context.Games
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
             if (game is null)
-                return Results.NotFound(new { Error = ResponseMessages.Game.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.Game.NotFound).ToResult();
 
             game.Delete();
             context.Games.Update(game);
@@ -36,13 +37,13 @@ public static class DeleteGame
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.Game.Deleted).ToResult();
         })
         .WithName("DeleteGame")
         .WithTags("Games")
         .RequireAuthorization(Domain.Constants.Permissions.GamesDelete)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

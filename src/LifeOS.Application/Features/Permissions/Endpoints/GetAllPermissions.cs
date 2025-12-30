@@ -1,3 +1,4 @@
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -46,12 +47,13 @@ public static class GetAllPermissions
                 .OrderBy(m => m.ModuleName)
                 .ToList();
 
-            return Results.Ok(new Response(grouped));
+            var response = new Response(grouped);
+            return ApiResultExtensions.Success(response, "İzinler başarıyla getirildi").ToResult();
         })
         .WithName("GetAllPermissions")
         .WithTags("Permissions")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesRead)
-        .Produces<Response>(StatusCodes.Status200OK);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK);
     }
 }
 

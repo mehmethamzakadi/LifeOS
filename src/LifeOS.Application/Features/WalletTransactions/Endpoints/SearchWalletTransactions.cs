@@ -47,7 +47,7 @@ public static class SearchWalletTransactions
             var cachedResponse = await cacheService.Get<PaginatedListResponse<Response>>(cacheKey);
             if (cachedResponse is not null)
             {
-                return Results.Ok(cachedResponse);
+                return ApiResultExtensions.Success(cachedResponse, "Cüzdan işlemleri başarıyla getirildi").ToResult();
             }
 
             var query = context.WalletTransactions.AsNoTracking().AsQueryable();
@@ -61,12 +61,12 @@ public static class SearchWalletTransactions
                 DateTimeOffset.UtcNow.Add(CacheDurations.WalletTransactionGrid),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Cüzdan işlemleri başarıyla getirildi").ToResult();
         })
         .WithName("SearchWalletTransactions")
         .WithTags("WalletTransactions")
         .RequireAuthorization(Domain.Constants.Permissions.WalletTransactionsViewAll)
-        .Produces<PaginatedListResponse<Response>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<PaginatedListResponse<Response>>>(StatusCodes.Status200OK);
     }
 }
 

@@ -1,3 +1,5 @@
+using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -23,15 +25,16 @@ public static class GetRoleById
                 .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted, cancellationToken);
 
             if (role is null)
-                return Results.NotFound(new { Error = "Rol bulunamadı!" });
+                return ApiResultExtensions.Failure<Response>(ResponseMessages.Role.NotFound).ToResult();
 
-            return Results.Ok(new Response(role.Id, role.Name ?? string.Empty));
+            var response = new Response(role.Id, role.Name ?? string.Empty);
+            return ApiResultExtensions.Success(response, "Rol bilgisi başarıyla getirildi").ToResult();
         })
         .WithName("GetRoleById")
         .WithTags("Roles")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesRead)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

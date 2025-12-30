@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Persistence.Contexts;
 using FluentValidation;
@@ -49,12 +50,13 @@ public static class UpdateCategory
             CancellationToken cancellationToken) =>
         {
             if (id != request.Id)
-                return Results.BadRequest(new { Error = "ID mismatch" });
+                return ApiResultExtensions.Failure("ID uyuşmazlığı").ToResult();
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var category = await context.Categories
@@ -62,7 +64,7 @@ public static class UpdateCategory
 
             if (category is null)
             {
-                return Results.NotFound(new { Error = ResponseMessages.Category.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.Category.NotFound).ToResult();
             }
 
             // Başka bir kategoride aynı isim var mı kontrol et
@@ -72,7 +74,7 @@ public static class UpdateCategory
 
             if (nameExists)
             {
-                return Results.BadRequest(new { Error = ResponseMessages.Category.AlreadyExists });
+                return ApiResultExtensions.Failure(ResponseMessages.Category.AlreadyExists).ToResult();
             }
 
             // Parent kontrolü
@@ -80,7 +82,7 @@ public static class UpdateCategory
             {
                 if (request.ParentId.Value == request.Id)
                 {
-                    return Results.BadRequest(new { Error = "Kategori kendi üst kategorisi olamaz." });
+                    return ApiResultExtensions.Failure("Kategori kendi üst kategorisi olamaz.").ToResult();
                 }
 
                 var parentExists = await context.Categories
@@ -88,7 +90,7 @@ public static class UpdateCategory
 
                 if (!parentExists)
                 {
-                    return Results.BadRequest(new { Error = "Üst kategori bulunamadı." });
+                    return ApiResultExtensions.Failure("Üst kategori bulunamadı.").ToResult();
                 }
 
                 // Döngüsel referans kontrolü
@@ -102,7 +104,7 @@ public static class UpdateCategory
                     {
                         if (currentParentId.Value == request.Id)
                         {
-                            return Results.BadRequest(new { Error = "Döngüsel kategori referansı oluşturulamaz." });
+                            return ApiResultExtensions.Failure("Döngüsel kategori referansı oluşturulamaz.").ToResult();
                         }
                         var currentParent = await context.Categories
                             .AsNoTracking()
@@ -130,14 +132,14 @@ public static class UpdateCategory
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.Category.Updated).ToResult();
         })
         .WithName("UpdateCategory")
         .WithTags("Categories")
         .RequireAuthorization(Domain.Constants.Permissions.CategoriesUpdate)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

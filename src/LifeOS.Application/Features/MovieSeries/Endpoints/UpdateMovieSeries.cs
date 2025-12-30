@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Enums;
 using LifeOS.Persistence.Contexts;
@@ -68,12 +69,13 @@ public static class UpdateMovieSeries
             CancellationToken cancellationToken) =>
         {
             if (id != request.Id)
-                return Results.BadRequest(new { Error = "ID mismatch" });
+                return ApiResultExtensions.Failure("ID uyuşmazlığı").ToResult();
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var movieSeries = await context.MovieSeries
@@ -81,7 +83,7 @@ public static class UpdateMovieSeries
 
             if (movieSeries is null)
             {
-                return Results.NotFound(new { Error = ResponseMessages.MovieSeries.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.MovieSeries.NotFound).ToResult();
             }
 
             movieSeries.Update(
@@ -121,14 +123,14 @@ public static class UpdateMovieSeries
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.MovieSeries.Updated).ToResult();
         })
         .WithName("UpdateMovieSeries")
         .WithTags("MovieSeries")
         .RequireAuthorization(Domain.Constants.Permissions.MovieSeriesUpdate)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

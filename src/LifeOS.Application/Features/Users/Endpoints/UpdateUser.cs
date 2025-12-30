@@ -1,3 +1,5 @@
+using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
@@ -61,18 +63,19 @@ public static class UpdateUser
             CancellationToken cancellationToken) =>
         {
             if (id != request.Id)
-                return Results.BadRequest(new { Error = "ID mismatch" });
+                return ApiResultExtensions.Failure("ID uyuşmazlığı").ToResult();
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var user = await context.Users
                 .FirstOrDefaultAsync(u => u.Id == request.Id && !u.IsDeleted, cancellationToken);
             if (user is null)
-                return Results.NotFound(new { Error = "Kullanıcı Bilgisi Bulunamadı!" });
+                return ApiResultExtensions.Failure(ResponseMessages.User.NotFound).ToResult();
 
             if (user.Email != request.Email)
             {
@@ -80,7 +83,7 @@ public static class UpdateUser
                     .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
                 if (existingEmail != null && existingEmail.Id != request.Id)
-                    return Results.BadRequest(new { Error = "Bu e-posta adresi zaten kullanılıyor!" });
+                    return ApiResultExtensions.Failure(ResponseMessages.User.EmailAlreadyExists).ToResult();
             }
 
             if (user.UserName != request.UserName)
@@ -89,21 +92,21 @@ public static class UpdateUser
                     .AsNoTracking()
                     .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
                 if (existingUserName != null && existingUserName.Id != request.Id)
-                    return Results.BadRequest(new { Error = "Bu kullanıcı adı zaten kullanılıyor!" });
+                    return ApiResultExtensions.Failure(ResponseMessages.User.UsernameAlreadyExists).ToResult();
             }
 
             user.Update(request.UserName, request.Email);
             context.Users.Update(user);
             await context.SaveChangesAsync(cancellationToken);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.User.Updated).ToResult();
         })
         .WithName("UpdateUser")
         .WithTags("Users")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.UsersUpdate)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

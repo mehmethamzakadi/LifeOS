@@ -1,3 +1,4 @@
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -26,11 +27,12 @@ public static class GetStatistics
             var totalRoles = await context.Roles
                 .CountAsync(r => !r.IsDeleted, cancellationToken);
 
-            return Results.Ok(new Response(totalCategories, totalUsers, totalRoles));
+            var response = new Response(totalCategories, totalUsers, totalRoles);
+            return ApiResultExtensions.Success(response, "İstatistikler başarıyla getirildi").ToResult();
         })
         .WithName("GetStatistics")
         .WithTags("Dashboards")
-        .Produces<Response>(StatusCodes.Status200OK);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK);
     }
 }
 

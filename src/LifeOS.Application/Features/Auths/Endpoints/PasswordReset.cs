@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions.Identity;
+using LifeOS.Application.Common.Responses;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -20,8 +21,6 @@ public static class PasswordReset
         }
     }
 
-    public sealed record Response(bool Success, string Message);
-
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("api/auth/password-reset", async (
@@ -33,17 +32,18 @@ public static class PasswordReset
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new Response(false, string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))));
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             await authService.PasswordResetAsync(request.Email);
-            return Results.Ok(new Response(true, "Şifre yenileme işlemleri için mail gönderildi."));
+            return ApiResultExtensions.Success("Şifre yenileme işlemleri için mail gönderildi.").ToResult();
         })
         .WithName("PasswordReset")
         .WithTags("Auth")
         .AllowAnonymous()
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces<Response>(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest);
     }
 }
 

@@ -1,5 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
+using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Enums;
@@ -73,7 +75,8 @@ public static class CreateBook
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var book = Book.Create(
@@ -97,13 +100,14 @@ public static class CreateBook
                 null,
                 null);
 
-            return Results.Created($"/api/books/{book.Id}", new Response(book.Id));
+            var response = new Response(book.Id);
+            return ApiResultExtensions.CreatedResult(response, $"/api/books/{book.Id}", ResponseMessages.Book.Created);
         })
         .WithName("CreateBook")
         .WithTags("Books")
         .RequireAuthorization(Domain.Constants.Permissions.BooksCreate)
-        .Produces<Response>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<Response>>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Response>>(StatusCodes.Status400BadRequest);
     }
 }
 

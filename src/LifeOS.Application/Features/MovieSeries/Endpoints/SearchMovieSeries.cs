@@ -51,7 +51,7 @@ public static class SearchMovieSeries
             var cachedResponse = await cacheService.Get<PaginatedListResponse<Response>>(cacheKey);
             if (cachedResponse is not null)
             {
-                return Results.Ok(cachedResponse);
+                return ApiResultExtensions.Success(cachedResponse, "Film/Diziler başarıyla getirildi").ToResult();
             }
 
             var query = context.MovieSeries.AsNoTracking().AsQueryable();
@@ -65,12 +65,12 @@ public static class SearchMovieSeries
                 DateTimeOffset.UtcNow.Add(CacheDurations.MovieSeriesGrid),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Film/Diziler başarıyla getirildi").ToResult();
         })
         .WithName("SearchMovieSeries")
         .WithTags("MovieSeries")
         .RequireAuthorization(Domain.Constants.Permissions.MovieSeriesViewAll)
-        .Produces<PaginatedListResponse<Response>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<PaginatedListResponse<Response>>>(StatusCodes.Status200OK);
     }
 }
 

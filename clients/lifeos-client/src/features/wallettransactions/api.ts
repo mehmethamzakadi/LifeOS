@@ -4,12 +4,12 @@ import { buildDataGridPayload } from '../../lib/data-grid-helpers';
 import { WalletTransaction, WalletTransactionFormValues, WalletTransactionListResponse, WalletTransactionTableFilters } from './types';
 
 export async function fetchWalletTransactions(filters: WalletTransactionTableFilters): Promise<WalletTransactionListResponse> {
-  const response = await api.post('/wallettransaction/search', buildDataGridPayload(filters, 'Title'));
+  const response = await api.post('/wallettransactions/search', buildDataGridPayload(filters, 'Title'));
   return normalizePaginatedResponse<WalletTransaction>(response.data);
 }
 
 export async function getWalletTransactionById(id: string): Promise<WalletTransaction> {
-  const response = await api.get<ApiResult<WalletTransaction>>(`/wallettransaction/${id}`);
+  const response = await api.get<ApiResult<WalletTransaction>>(`/wallettransactions/${id}`);
   const result = normalizeApiResult<WalletTransaction>(response.data);
   if (!result.success || !result.data) {
     throw new Error(result.message || 'İşlem bulunamadı');
@@ -18,7 +18,7 @@ export async function getWalletTransactionById(id: string): Promise<WalletTransa
 }
 
 export async function createWalletTransaction(values: WalletTransactionFormValues) {
-  const response = await api.post<ApiResult>('/wallettransaction', {
+  const response = await api.post<ApiResult>('/wallettransactions', {
     Title: values.title,
     Amount: values.amount,
     Type: values.type,
@@ -29,7 +29,7 @@ export async function createWalletTransaction(values: WalletTransactionFormValue
 }
 
 export async function updateWalletTransaction(id: string, values: WalletTransactionFormValues) {
-  const response = await api.put<ApiResult>(`/wallettransaction/${id}`, {
+  const response = await api.put<ApiResult>(`/wallettransactions/${id}`, {
     Id: id,
     Title: values.title,
     Amount: values.amount,
@@ -41,7 +41,7 @@ export async function updateWalletTransaction(id: string, values: WalletTransact
 }
 
 export async function deleteWalletTransaction(id: string) {
-  const response = await api.delete<ApiResult>(`/wallettransaction/${id}`);
+  const response = await api.delete<ApiResult>(`/wallettransactions/${id}`);
   return normalizeApiResult(response.data);
 }
 

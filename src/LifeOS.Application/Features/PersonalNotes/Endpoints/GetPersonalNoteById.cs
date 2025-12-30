@@ -1,5 +1,6 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -29,14 +30,14 @@ public static class GetPersonalNoteById
             var cacheKey = CacheKeys.PersonalNote(id);
             var cacheValue = await cacheService.Get<Response>(cacheKey);
             if (cacheValue is not null)
-                return Results.Ok(cacheValue);
+                return ApiResultExtensions.Success(cacheValue, "Kişisel not başarıyla getirildi").ToResult();
 
             var personalNote = await context.PersonalNotes
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
             if (personalNote is null)
-                return Results.NotFound(new { Error = "Kişisel not bulunamadı." });
+                return ApiResultExtensions.Failure<Response>("Kişisel not bulunamadı.").ToResult();
 
             var response = new Response(
                 personalNote.Id,
@@ -52,13 +53,13 @@ public static class GetPersonalNoteById
                 DateTimeOffset.UtcNow.Add(CacheDurations.PersonalNote),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kişisel not başarıyla getirildi").ToResult();
         })
         .WithName("GetPersonalNoteById")
         .WithTags("PersonalNotes")
         .RequireAuthorization(Domain.Constants.Permissions.PersonalNotesRead)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

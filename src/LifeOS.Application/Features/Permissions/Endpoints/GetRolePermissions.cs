@@ -1,3 +1,4 @@
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -26,7 +27,7 @@ public static class GetRolePermissions
                 .FirstOrDefaultAsync(r => r.Id == roleId && !r.IsDeleted, cancellationToken);
 
             if (role == null)
-                return Results.NotFound(new { Error = "Rol bulunamadı" });
+                return ApiResultExtensions.Failure<Response>("Rol bulunamadı").ToResult();
 
             var permissionIds = await context.RolePermissions
                 .AsNoTracking()
@@ -39,13 +40,13 @@ public static class GetRolePermissions
                 role.Name ?? string.Empty,
                 permissionIds);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Rol izinleri başarıyla getirildi").ToResult();
         })
         .WithName("GetRolePermissions")
         .WithTags("Permissions")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesRead)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

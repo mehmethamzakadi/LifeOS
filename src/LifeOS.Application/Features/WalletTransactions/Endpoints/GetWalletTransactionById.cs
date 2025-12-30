@@ -1,5 +1,6 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Enums;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -30,14 +31,14 @@ public static class GetWalletTransactionById
             var cacheKey = CacheKeys.WalletTransaction(id);
             var cacheValue = await cacheService.Get<Response>(cacheKey);
             if (cacheValue is not null)
-                return Results.Ok(cacheValue);
+                return ApiResultExtensions.Success(cacheValue, "Cüzdan işlemi başarıyla getirildi").ToResult();
 
             var walletTransaction = await context.WalletTransactions
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
             if (walletTransaction is null)
-                return Results.NotFound(new { Error = "Cüzdan işlemi bulunamadı." });
+                return ApiResultExtensions.Failure<Response>("Cüzdan işlemi bulunamadı.").ToResult();
 
             var response = new Response(
                 walletTransaction.Id,
@@ -53,13 +54,13 @@ public static class GetWalletTransactionById
                 DateTimeOffset.UtcNow.Add(CacheDurations.WalletTransaction),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Cüzdan işlemi başarıyla getirildi").ToResult();
         })
         .WithName("GetWalletTransactionById")
         .WithTags("WalletTransactions")
         .RequireAuthorization(Domain.Constants.Permissions.WalletTransactionsRead)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

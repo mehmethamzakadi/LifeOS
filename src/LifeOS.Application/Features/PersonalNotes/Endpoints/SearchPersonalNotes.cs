@@ -46,7 +46,7 @@ public static class SearchPersonalNotes
             var cachedResponse = await cacheService.Get<PaginatedListResponse<Response>>(cacheKey);
             if (cachedResponse is not null)
             {
-                return Results.Ok(cachedResponse);
+                return ApiResultExtensions.Success(cachedResponse, "Kişisel notlar başarıyla getirildi").ToResult();
             }
 
             var query = context.PersonalNotes.AsNoTracking().AsQueryable();
@@ -60,12 +60,12 @@ public static class SearchPersonalNotes
                 DateTimeOffset.UtcNow.Add(CacheDurations.PersonalNoteGrid),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kişisel notlar başarıyla getirildi").ToResult();
         })
         .WithName("SearchPersonalNotes")
         .WithTags("PersonalNotes")
         .RequireAuthorization(Domain.Constants.Permissions.PersonalNotesViewAll)
-        .Produces<PaginatedListResponse<Response>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<PaginatedListResponse<Response>>>(StatusCodes.Status200OK);
     }
 }
 

@@ -1,3 +1,5 @@
+using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -20,19 +22,19 @@ public static class DeleteUser
                 .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
 
             if (user == null)
-                return Results.NotFound(new { Error = "Kullanıcı bilgisi bulunamadı!" });
+                return ApiResultExtensions.Failure(ResponseMessages.User.NotFound).ToResult();
 
             user.Delete();
             context.Users.Update(user);
             await context.SaveChangesAsync(cancellationToken);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.User.Deleted).ToResult();
         })
         .WithName("DeleteUser")
         .WithTags("Users")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.UsersDelete)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

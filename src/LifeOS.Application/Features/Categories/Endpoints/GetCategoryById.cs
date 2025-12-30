@@ -1,5 +1,6 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -27,14 +28,14 @@ public static class GetCategoryById
             var cacheKey = CacheKeys.Category(id);
             var cacheValue = await cacheService.Get<Response>(cacheKey);
             if (cacheValue is not null)
-                return Results.Ok(cacheValue);
+                return ApiResultExtensions.Success(cacheValue, "Kategori bilgisi başarıyla getirildi").ToResult();
 
             var category = await context.Categories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
             if (category is null)
-                return Results.NotFound(new { Error = "Kategori bilgisi bulunamadı." });
+                return ApiResultExtensions.Failure<Response>("Kategori bilgisi bulunamadı.").ToResult();
 
             var response = new Response(
                 category.Id,
@@ -48,13 +49,13 @@ public static class GetCategoryById
                 DateTimeOffset.UtcNow.Add(CacheDurations.Category),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kategori bilgisi başarıyla getirildi").ToResult();
         })
         .WithName("GetCategoryById")
         .WithTags("Categories")
         .RequireAuthorization(Domain.Constants.Permissions.CategoriesRead)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

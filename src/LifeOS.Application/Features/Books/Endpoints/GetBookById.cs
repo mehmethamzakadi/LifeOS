@@ -1,5 +1,6 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Enums;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -34,14 +35,14 @@ public static class GetBookById
             var cacheKey = CacheKeys.Book(id);
             var cacheValue = await cacheService.Get<Response>(cacheKey);
             if (cacheValue is not null)
-                return Results.Ok(cacheValue);
+                return ApiResultExtensions.Success(cacheValue, "Kitap bilgisi başarıyla getirildi").ToResult();
 
             var book = await context.Books
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
             if (book is null)
-                return Results.NotFound(new { Error = "Kitap bilgisi bulunamadı." });
+                return ApiResultExtensions.Failure<Response>("Kitap bilgisi bulunamadı.").ToResult();
 
             var response = new Response(
                 book.Id,
@@ -61,13 +62,13 @@ public static class GetBookById
                 DateTimeOffset.UtcNow.Add(CacheDurations.Book),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kitap bilgisi başarıyla getirildi").ToResult();
         })
         .WithName("GetBookById")
         .WithTags("Books")
         .RequireAuthorization(Domain.Constants.Permissions.BooksRead)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

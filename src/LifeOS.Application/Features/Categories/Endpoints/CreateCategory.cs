@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Entities;
 using LifeOS.Persistence.Contexts;
@@ -49,7 +50,8 @@ public static class CreateCategory
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             // NormalizedName ile case-insensitive kontrol
@@ -59,7 +61,7 @@ public static class CreateCategory
 
             if (categoryExists)
             {
-                return Results.BadRequest(new { Error = ResponseMessages.Category.AlreadyExists });
+                return ApiResultExtensions.Failure<Response>(ResponseMessages.Category.AlreadyExists).ToResult();
             }
 
             // Parent kontrolü
@@ -70,7 +72,7 @@ public static class CreateCategory
 
                 if (!parentExists)
                 {
-                    return Results.BadRequest(new { Error = "Üst kategori bulunamadı." });
+                    return ApiResultExtensions.Failure<Response>("Üst kategori bulunamadı.").ToResult();
                 }
             }
 
@@ -91,13 +93,14 @@ public static class CreateCategory
                 null,
                 null);
 
-            return Results.Created($"/api/categories/{category.Id}", new Response(category.Id));
+            var response = new Response(category.Id);
+            return ApiResultExtensions.CreatedResult(response, $"/api/categories/{category.Id}", ResponseMessages.Category.Created);
         })
         .WithName("CreateCategory")
         .WithTags("Categories")
         .RequireAuthorization(Domain.Constants.Permissions.CategoriesCreate)
-        .Produces<Response>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<Response>>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Response>>(StatusCodes.Status400BadRequest);
     }
 }
 

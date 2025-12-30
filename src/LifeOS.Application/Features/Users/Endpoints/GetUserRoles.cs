@@ -1,3 +1,4 @@
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -31,7 +32,7 @@ public static class GetUserRoles
                 .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
 
             if (user == null)
-                return Results.NotFound(new { Error = "Kullanıcı bulunamadı" });
+                return ApiResultExtensions.Failure<Response>("Kullanıcı bulunamadı").ToResult();
 
             var userRoles = user.UserRoles
                 .Where(ur => !ur.IsDeleted)
@@ -44,13 +45,13 @@ public static class GetUserRoles
                 user.Email,
                 userRoles);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kullanıcı rolleri başarıyla getirildi").ToResult();
         })
         .WithName("GetUserRoles")
         .WithTags("Users")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesRead)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

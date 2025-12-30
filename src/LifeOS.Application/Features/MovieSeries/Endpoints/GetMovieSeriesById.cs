@@ -1,5 +1,6 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Enums;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -34,14 +35,14 @@ public static class GetMovieSeriesById
             var cacheKey = CacheKeys.MovieSeries(id);
             var cacheValue = await cacheService.Get<Response>(cacheKey);
             if (cacheValue is not null)
-                return Results.Ok(cacheValue);
+                return ApiResultExtensions.Success(cacheValue, "Film/Dizi bilgisi başarıyla getirildi").ToResult();
 
             var movieSeries = await context.MovieSeries
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
             if (movieSeries is null)
-                return Results.NotFound(new { Error = "Film/Dizi bilgisi bulunamadı." });
+                return ApiResultExtensions.Failure<Response>("Film/Dizi bilgisi bulunamadı.").ToResult();
 
             var response = new Response(
                 movieSeries.Id,
@@ -61,13 +62,13 @@ public static class GetMovieSeriesById
                 DateTimeOffset.UtcNow.Add(CacheDurations.MovieSeries),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Film/Dizi bilgisi başarıyla getirildi").ToResult();
         })
         .WithName("GetMovieSeriesById")
         .WithTags("MovieSeries")
         .RequireAuthorization(Domain.Constants.Permissions.MovieSeriesRead)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

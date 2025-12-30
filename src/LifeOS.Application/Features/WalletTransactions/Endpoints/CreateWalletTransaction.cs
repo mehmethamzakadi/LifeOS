@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Enums;
@@ -58,7 +59,8 @@ public static class CreateWalletTransaction
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var walletTransaction = WalletTransaction.Create(
@@ -90,13 +92,14 @@ public static class CreateWalletTransaction
                 null,
                 null);
 
-            return Results.Created($"/api/wallettransactions/{walletTransaction.Id}", new Response(walletTransaction.Id));
+            var response = new Response(walletTransaction.Id);
+            return ApiResultExtensions.CreatedResult(response, $"/api/wallettransactions/{walletTransaction.Id}", ResponseMessages.WalletTransaction.Created);
         })
         .WithName("CreateWalletTransaction")
         .WithTags("WalletTransactions")
         .RequireAuthorization(Domain.Constants.Permissions.WalletTransactionsCreate)
-        .Produces<Response>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<Response>>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Response>>(StatusCodes.Status400BadRequest);
     }
 }
 

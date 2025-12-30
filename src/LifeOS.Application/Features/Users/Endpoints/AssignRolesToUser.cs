@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Domain.Events.UserEvents;
 using LifeOS.Domain.Entities;
@@ -40,18 +41,19 @@ public static class AssignRolesToUser
             CancellationToken cancellationToken) =>
         {
             if (id != request.UserId)
-                return Results.BadRequest(new { Error = "ID mismatch" });
+                return ApiResultExtensions.Failure("ID uyuşmazlığı").ToResult();
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var user = await context.Users
                 .FirstOrDefaultAsync(u => u.Id == request.UserId && !u.IsDeleted, cancellationToken);
             if (user == null)
-                return Results.NotFound(new { Error = "Kullanıcı bulunamadı" });
+                return ApiResultExtensions.Failure("Kullanıcı bulunamadı").ToResult();
 
             var requestedRoleIds = request.RoleIds.ToHashSet();
 
@@ -70,7 +72,7 @@ public static class AssignRolesToUser
 
             if (!rolesToRemove.Any() && !rolesToAdd.Any())
             {
-                return Results.Ok(new { Message = "Roller zaten güncel" });
+                return ApiResultExtensions.Success("Roller zaten güncel").ToResult();
             }
 
             if (rolesToRemove.Any())
@@ -120,14 +122,14 @@ public static class AssignRolesToUser
 
             await context.SaveChangesAsync(cancellationToken);
 
-            return Results.Ok(new { Message = "Roller başarıyla atandı" });
+            return ApiResultExtensions.Success("Roller başarıyla atandı").ToResult();
         })
         .WithName("AssignRolesToUser")
         .WithTags("Users")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesAssignPermissions)
-        .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

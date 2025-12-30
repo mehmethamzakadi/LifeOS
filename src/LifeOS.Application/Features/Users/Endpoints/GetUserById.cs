@@ -1,4 +1,5 @@
 using AutoMapper;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -33,16 +34,16 @@ public static class GetUserById
                 .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
 
             if (user is null)
-                return Results.NotFound(new { Error = "Kullanıcı bulunamadı!" });
+                return ApiResultExtensions.Failure<Response>("Kullanıcı bulunamadı!").ToResult();
 
             var response = mapper.Map<Response>(user);
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kullanıcı bilgisi başarıyla getirildi").ToResult();
         })
         .WithName("GetUserById")
         .WithTags("Users")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.UsersRead)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Entities;
 using LifeOS.Persistence.Contexts;
@@ -57,7 +58,8 @@ public static class CreatePersonalNote
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var personalNote = PersonalNote.Create(
@@ -89,13 +91,14 @@ public static class CreatePersonalNote
                 null,
                 null);
 
-            return Results.Created($"/api/personalnotes/{personalNote.Id}", new Response(personalNote.Id));
+            var response = new Response(personalNote.Id);
+            return ApiResultExtensions.CreatedResult(response, $"/api/personalnotes/{personalNote.Id}", ResponseMessages.PersonalNote.Created);
         })
         .WithName("CreatePersonalNote")
         .WithTags("PersonalNotes")
         .RequireAuthorization(Domain.Constants.Permissions.PersonalNotesCreate)
-        .Produces<Response>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<Response>>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Response>>(StatusCodes.Status400BadRequest);
     }
 }
 

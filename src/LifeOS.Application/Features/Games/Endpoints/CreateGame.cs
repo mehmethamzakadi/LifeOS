@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Enums;
@@ -52,7 +53,8 @@ public static class CreateGame
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var game = Game.Create(
@@ -86,13 +88,14 @@ public static class CreateGame
                 null,
                 null);
 
-            return Results.Created($"/api/games/{game.Id}", new Response(game.Id));
+            var response = new Response(game.Id);
+            return ApiResultExtensions.CreatedResult(response, $"/api/games/{game.Id}", ResponseMessages.Game.Created);
         })
         .WithName("CreateGame")
         .WithTags("Games")
         .RequireAuthorization(Domain.Constants.Permissions.GamesCreate)
-        .Produces<Response>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<Response>>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Response>>(StatusCodes.Status400BadRequest);
     }
 }
 

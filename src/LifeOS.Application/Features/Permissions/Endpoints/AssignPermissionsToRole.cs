@@ -1,4 +1,6 @@
 using LifeOS.Application.Abstractions;
+using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Domain.Events.PermissionEvents;
 using LifeOS.Domain.Entities;
@@ -40,19 +42,20 @@ public static class AssignPermissionsToRole
             CancellationToken cancellationToken) =>
         {
             if (roleId != request.RoleId)
-                return Results.BadRequest(new { Error = "ID mismatch" });
+                return ApiResultExtensions.Failure("ID uyuşmazlığı").ToResult();
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var role = await context.Roles
                 .FirstOrDefaultAsync(r => r.Id == request.RoleId && !r.IsDeleted, cancellationToken);
 
             if (role == null)
-                return Results.NotFound(new { Error = "Rol bulunamadı" });
+                return ApiResultExtensions.Failure("Rol bulunamadı").ToResult();
 
             var permissionsEntities = await context.Permissions
                 .AsNoTracking()
@@ -99,14 +102,14 @@ public static class AssignPermissionsToRole
 
             await context.SaveChangesAsync(cancellationToken);
 
-            return Results.Ok(new { Message = "Permission'lar başarıyla atandı" });
+            return ApiResultExtensions.Success(ResponseMessages.Permission.Assigned).ToResult();
         })
         .WithName("AssignPermissionsToRole")
         .WithTags("Permissions")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesAssignPermissions)
-        .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

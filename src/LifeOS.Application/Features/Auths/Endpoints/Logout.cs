@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions.Identity;
+using LifeOS.Application.Common.Responses;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -7,8 +8,6 @@ namespace LifeOS.Application.Features.Auths.Endpoints;
 
 public static class Logout
 {
-    public sealed record Response(bool Success, string Message);
-
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("api/auth/logout", async (
@@ -19,17 +18,17 @@ public static class Logout
             if (!AuthCookieHelper.TryGetRefreshTokenFromCookie(httpContext, out var refreshToken))
             {
                 AuthCookieHelper.ClearRefreshTokenCookie(httpContext);
-                return Results.Ok(new Response(true, "Çıkış yapıldı."));
+                return ApiResultExtensions.Success("Çıkış yapıldı.").ToResult();
             }
 
             await authService.LogoutAsync(refreshToken);
             AuthCookieHelper.ClearRefreshTokenCookie(httpContext);
 
-            return Results.Ok(new Response(true, "Çıkış yapıldı."));
+            return ApiResultExtensions.Success("Çıkış yapıldı.").ToResult();
         })
         .WithName("Logout")
         .WithTags("Auth")
-        .Produces<Response>(StatusCodes.Status200OK);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK);
     }
 }
 

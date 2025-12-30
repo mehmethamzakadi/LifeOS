@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,7 +23,7 @@ public static class DeletePersonalNote
             var personalNote = await context.PersonalNotes
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
             if (personalNote is null)
-                return Results.NotFound(new { Error = ResponseMessages.PersonalNote.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.PersonalNote.NotFound).ToResult();
 
             personalNote.Delete();
             context.PersonalNotes.Update(personalNote);
@@ -36,13 +37,13 @@ public static class DeletePersonalNote
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.PersonalNote.Deleted).ToResult();
         })
         .WithName("DeletePersonalNote")
         .WithTags("PersonalNotes")
         .RequireAuthorization(Domain.Constants.Permissions.PersonalNotesDelete)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

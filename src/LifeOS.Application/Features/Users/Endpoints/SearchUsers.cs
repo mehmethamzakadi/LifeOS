@@ -44,12 +44,12 @@ public static class SearchUsers
                 cancellationToken);
 
             PaginatedListResponse<Response> response = mapper.Map<PaginatedListResponse<Response>>(usersDynamic);
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kullanıcılar başarıyla getirildi").ToResult();
         })
         .WithName("SearchUsers")
         .WithTags("Users")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.UsersViewAll)
-        .Produces<PaginatedListResponse<Response>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<PaginatedListResponse<Response>>>(StatusCodes.Status200OK);
     }
 }
 

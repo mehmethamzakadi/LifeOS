@@ -1,3 +1,5 @@
+using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
@@ -21,26 +23,26 @@ public static class DeleteRole
                 .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted, cancellationToken);
 
             if (role == null)
-                return Results.NotFound(new { Error = "Rol bulunamadı!" });
+                return ApiResultExtensions.Failure(ResponseMessages.Role.NotFound).ToResult();
 
             if (role.NormalizedName == "ADMIN")
-                return Results.BadRequest(new { Error = "Admin rolü silinemez!" });
+                return ApiResultExtensions.Failure("Admin rolü silinemez!").ToResult();
 
             if (role.UserRoles.Any(ur => !ur.IsDeleted))
-                return Results.BadRequest(new { Error = "Bu role atanmış aktif kullanıcılar bulunmaktadır. Önce kullanıcılardan bu rolü kaldırmalısınız." });
+                return ApiResultExtensions.Failure("Bu role atanmış aktif kullanıcılar bulunmaktadır. Önce kullanıcılardan bu rolü kaldırmalısınız.").ToResult();
 
             role.Delete();
             context.Roles.Update(role);
             await context.SaveChangesAsync(cancellationToken);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.Role.Deleted).ToResult();
         })
         .WithName("DeleteRole")
         .WithTags("Roles")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesDelete)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

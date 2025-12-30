@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -24,7 +25,7 @@ public static class DeleteBook
 
             if (book is null)
             {
-                return Results.NotFound(new { Error = ResponseMessages.Book.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.Book.NotFound).ToResult();
             }
 
             book.Delete();
@@ -39,13 +40,13 @@ public static class DeleteBook
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.Book.Deleted).ToResult();
         })
         .WithName("DeleteBook")
         .WithTags("Books")
         .RequireAuthorization(Domain.Constants.Permissions.BooksDelete)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

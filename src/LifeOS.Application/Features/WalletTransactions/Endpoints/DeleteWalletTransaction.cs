@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -22,7 +23,7 @@ public static class DeleteWalletTransaction
             var walletTransaction = await context.WalletTransactions
                 .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
             if (walletTransaction is null)
-                return Results.NotFound(new { Error = ResponseMessages.WalletTransaction.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.WalletTransaction.NotFound).ToResult();
 
             walletTransaction.Delete();
             context.WalletTransactions.Update(walletTransaction);
@@ -36,13 +37,13 @@ public static class DeleteWalletTransaction
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.WalletTransaction.Deleted).ToResult();
         })
         .WithName("DeleteWalletTransaction")
         .WithTags("WalletTransactions")
         .RequireAuthorization(Domain.Constants.Permissions.WalletTransactionsDelete)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

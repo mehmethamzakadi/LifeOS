@@ -1,3 +1,5 @@
+using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Constants;
 using LifeOS.Domain.Entities;
@@ -38,26 +40,28 @@ public static class CreateRole
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var normalizedName = request.Name.ToUpperInvariant();
             var checkRole = await context.Roles
                 .AnyAsync(r => r.NormalizedName == normalizedName, cancellationToken);
             if (checkRole)
-                return Results.BadRequest(new { Error = "Eklemek istediğiniz Rol sistemde mevcut!" });
+                return ApiResultExtensions.Failure<Response>(ResponseMessages.Role.AlreadyExists).ToResult();
 
             var role = Role.Create(request.Name);
             await context.Roles.AddAsync(role, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
 
-            return Results.Created($"/api/roles/{role.Id}", new Response(role.Id));
+            var response = new Response(role.Id);
+            return ApiResultExtensions.CreatedResult(response, $"/api/roles/{role.Id}", ResponseMessages.Role.Created);
         })
         .WithName("CreateRole")
         .WithTags("Roles")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesCreate)
-        .Produces<Response>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<Response>>(StatusCodes.Status201Created)
+        .Produces<ApiResult<Response>>(StatusCodes.Status400BadRequest);
     }
 }
 

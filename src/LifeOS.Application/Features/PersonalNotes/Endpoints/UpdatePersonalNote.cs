@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Common.Caching;
 using LifeOS.Application.Common.Constants;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Persistence.Contexts;
 using FluentValidation;
@@ -58,12 +59,13 @@ public static class UpdatePersonalNote
             CancellationToken cancellationToken) =>
         {
             if (id != request.Id)
-                return Results.BadRequest(new { Error = "ID mismatch" });
+                return ApiResultExtensions.Failure("ID uyuşmazlığı").ToResult();
 
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var personalNote = await context.PersonalNotes
@@ -71,7 +73,7 @@ public static class UpdatePersonalNote
 
             if (personalNote is null)
             {
-                return Results.NotFound(new { Error = ResponseMessages.PersonalNote.NotFound });
+                return ApiResultExtensions.Failure(ResponseMessages.PersonalNote.NotFound).ToResult();
             }
 
             personalNote.Update(
@@ -103,14 +105,14 @@ public static class UpdatePersonalNote
                 null,
                 null);
 
-            return Results.NoContent();
+            return ApiResultExtensions.Success(ResponseMessages.PersonalNote.Updated).ToResult();
         })
         .WithName("UpdatePersonalNote")
         .WithTags("PersonalNotes")
         .RequireAuthorization(Domain.Constants.Permissions.PersonalNotesUpdate)
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest)
+        .Produces<ApiResult<object>>(StatusCodes.Status404NotFound);
     }
 }
 

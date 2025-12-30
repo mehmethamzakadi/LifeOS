@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
 using FluentValidation;
@@ -40,7 +41,8 @@ public static class BulkDeleteRoles
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var validationErrors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(validationErrors).ToResult();
             }
 
             var deletedCount = 0;
@@ -94,13 +96,17 @@ public static class BulkDeleteRoles
                 await context.SaveChangesAsync(cancellationToken);
             }
 
-            return Results.Ok(response);
+            var message = failedCount > 0 
+                ? $"{deletedCount} rol silindi, {failedCount} rol silinemedi"
+                : $"{deletedCount} rol başarıyla silindi";
+
+            return ApiResultExtensions.Success(response, message).ToResult();
         })
         .WithName("BulkDeleteRoles")
         .WithTags("Roles")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesDelete)
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status400BadRequest);
     }
 }
 

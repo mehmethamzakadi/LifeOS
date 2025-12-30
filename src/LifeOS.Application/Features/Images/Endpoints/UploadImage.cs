@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions.Images;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Exceptions;
 using LifeOS.Persistence.Contexts;
@@ -30,7 +31,7 @@ public static class UploadImage
         {
             if (!httpRequest.HasFormContentType)
             {
-                return Results.BadRequest(new { Error = "Content-Type must be multipart/form-data" });
+                return ApiResultExtensions.Failure<Response>("Content-Type must be multipart/form-data").ToResult();
             }
 
             var form = await httpRequest.ReadFormAsync(cancellationToken);
@@ -38,7 +39,7 @@ public static class UploadImage
             
             if (file == null || file.Length == 0)
             {
-                return Results.BadRequest(new { Error = "Geçerli bir dosya seçiniz." });
+                return ApiResultExtensions.Failure<Response>("Geçerli bir dosya seçiniz.").ToResult();
             }
 
             var scope = form["scope"].ToString();
@@ -98,19 +99,19 @@ public static class UploadImage
                     uploadResult.Width,
                     uploadResult.Height);
 
-                return Results.Ok(response);
+                return ApiResultExtensions.Success(response, "Resim başarıyla yüklendi").ToResult();
             }
             catch (ImageStorageException storageException)
             {
-                return Results.BadRequest(new { Error = storageException.Message });
+                return ApiResultExtensions.Failure<Response>(storageException.Message).ToResult();
             }
         })
         .WithName("UploadImage")
         .WithTags("Images")
         .RequireAuthorization(Domain.Constants.Permissions.MediaUpload)
         .Accepts<IFormFile>("multipart/form-data")
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status400BadRequest);
     }
 }
 

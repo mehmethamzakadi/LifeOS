@@ -51,7 +51,7 @@ public static class SearchBooks
             var cachedResponse = await cacheService.Get<PaginatedListResponse<Response>>(cacheKey);
             if (cachedResponse is not null)
             {
-                return Results.Ok(cachedResponse);
+                return ApiResultExtensions.Success(cachedResponse, "Kitaplar başarıyla getirildi").ToResult();
             }
 
             var query = context.Books.AsNoTracking().AsQueryable();
@@ -65,12 +65,12 @@ public static class SearchBooks
                 DateTimeOffset.UtcNow.Add(CacheDurations.BookGrid),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kitaplar başarıyla getirildi").ToResult();
         })
         .WithName("SearchBooks")
         .WithTags("Books")
         .RequireAuthorization(Domain.Constants.Permissions.BooksViewAll)
-        .Produces<PaginatedListResponse<Response>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<PaginatedListResponse<Response>>>(StatusCodes.Status200OK);
     }
 }
 

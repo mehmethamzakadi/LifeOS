@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions.Identity;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using FluentValidation;
 using FluentValidation.Validators;
@@ -43,7 +44,8 @@ public static class Login
             if (!validationResult.IsValid)
             {
                 AuthCookieHelper.ClearRefreshTokenCookie(httpContext);
-                return Results.BadRequest(new { Errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var result = await authService.LoginAsync(request.Email, request.Password, request.DeviceId);
@@ -51,24 +53,24 @@ public static class Login
             if (!result.Success || result.Data is null)
             {
                 AuthCookieHelper.ClearRefreshTokenCookie(httpContext);
-                return Results.Unauthorized();
+                return ApiResultExtensions.Failure<Response>("Giriş başarısız. E-posta veya şifre hatalı.").ToResult();
             }
 
             AuthCookieHelper.SetRefreshTokenCookie(httpContext, result.Data.RefreshToken, result.Data.RefreshTokenExpiration);
 
-            var response = new Response(
+            var responseData = new Response(
                 result.Data.UserId,
                 result.Data.UserName,
                 result.Data.Expiration,
                 result.Data.Token,
                 result.Data.Permissions);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(responseData, "Giriş başarılı").ToResult();
         })
         .WithName("Login")
         .WithTags("Auth")
         .AllowAnonymous()
-        .Produces<Response>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status401Unauthorized)
         .Produces(StatusCodes.Status400BadRequest);
     }

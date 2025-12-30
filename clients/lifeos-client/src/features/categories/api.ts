@@ -11,12 +11,12 @@ import {
 export async function fetchCategories(
   filters: CategoryTableFilters
 ): Promise<CategoryListResponse> {
-  const response = await api.post('/category/search', buildDataGridPayload(filters, 'Name'));
+  const response = await api.post('/categories/search', buildDataGridPayload(filters, 'Name'));
   return normalizePaginatedResponse<Category>(response.data);
 }
 
 export async function createCategory(values: CategoryFormValues) {
-  const response = await api.post<ApiResult>('/category', {
+  const response = await api.post<ApiResult>('/categories', {
     Name: values.name,
     Description: values.description || null,
     ParentId: values.parentId || null
@@ -25,7 +25,7 @@ export async function createCategory(values: CategoryFormValues) {
 }
 
 export async function updateCategory(id: string, values: CategoryFormValues) {
-  const response = await api.put<ApiResult>(`/category/${id}`, {
+  const response = await api.put<ApiResult>(`/categories/${id}`, {
     Id: id,
     Name: values.name,
     Description: values.description || null,
@@ -35,12 +35,12 @@ export async function updateCategory(id: string, values: CategoryFormValues) {
 }
 
 export async function deleteCategory(id: string) {
-  const response = await api.delete<ApiResult>(`/category/${id}`);
+  const response = await api.delete<ApiResult>(`/categories/${id}`);
   return normalizeApiResult(response.data);
 }
 
 export async function getAllCategories(): Promise<Category[]> {
-  const response = await api.get('/category');
+  const response = await api.get('/categories');
   const data = response.data;
   
   // Backend'den direkt array geliyorsa
@@ -70,7 +70,7 @@ export async function getAllCategories(): Promise<Category[]> {
 }
 
 export async function generateCategoryDescription(categoryName: string): Promise<string> {
-  const response = await api.get<{ description: string }>('/category/generate-description', {
+  const response = await api.get<{ description: string }>('/categories/generate-description', {
     params: { categoryName }
   });
   return response.data.description;

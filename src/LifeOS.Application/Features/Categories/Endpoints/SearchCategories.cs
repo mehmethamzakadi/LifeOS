@@ -45,7 +45,7 @@ public static class SearchCategories
             var cachedResponse = await cacheService.Get<PaginatedListResponse<Response>>(cacheKey);
             if (cachedResponse is not null)
             {
-                return Results.Ok(cachedResponse);
+                return ApiResultExtensions.Success(cachedResponse, "Kategoriler başarıyla getirildi").ToResult();
             }
 
             var query = context.Categories
@@ -62,12 +62,12 @@ public static class SearchCategories
                 DateTimeOffset.UtcNow.Add(CacheDurations.CategoryGrid),
                 null);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Kategoriler başarıyla getirildi").ToResult();
         })
         .WithName("SearchCategories")
         .WithTags("Categories")
         .RequireAuthorization(Domain.Constants.Permissions.CategoriesViewAll)
-        .Produces<PaginatedListResponse<Response>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<PaginatedListResponse<Response>>>(StatusCodes.Status200OK);
     }
 }
 

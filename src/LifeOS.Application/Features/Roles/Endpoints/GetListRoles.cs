@@ -33,12 +33,12 @@ public static class GetListRoles
             var roles = await query.ToPaginateAsync(pageRequest.PageIndex, pageRequest.PageSize, cancellationToken);
 
             PaginatedListResponse<Response> response = mapper.Map<PaginatedListResponse<Response>>(roles);
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Roller başarıyla getirildi").ToResult();
         })
         .WithName("GetListRoles")
         .WithTags("Roles")
         .RequireAuthorization(LifeOS.Domain.Constants.Permissions.RolesViewAll)
-        .Produces<PaginatedListResponse<Response>>(StatusCodes.Status200OK);
+        .Produces<ApiResult<PaginatedListResponse<Response>>>(StatusCodes.Status200OK);
     }
 }
 

@@ -1,4 +1,5 @@
 using LifeOS.Application.Abstractions;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Persistence.Contexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -28,7 +29,7 @@ public static class GetProfile
             var userId = currentUserService.GetCurrentUserId();
             if (userId == null)
             {
-                return Results.Unauthorized();
+                return ApiResultExtensions.Failure<Response>("Yetkisiz erişim").ToResult();
             }
 
             var user = await context.Users
@@ -39,7 +40,7 @@ public static class GetProfile
 
             if (user == null)
             {
-                return Results.NotFound(new { Error = "Kullanıcı bulunamadı." });
+                return ApiResultExtensions.Failure<Response>("Kullanıcı bulunamadı.").ToResult();
             }
 
             var response = new Response(
@@ -51,13 +52,13 @@ public static class GetProfile
                 user.EmailConfirmed,
                 user.CreatedDate);
 
-            return Results.Ok(response);
+            return ApiResultExtensions.Success(response, "Profil bilgisi başarıyla getirildi").ToResult();
         })
         .WithName("GetProfile")
         .WithTags("Profile")
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status401Unauthorized)
-        .Produces(StatusCodes.Status404NotFound);
+        .Produces<ApiResult<Response>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<Response>>(StatusCodes.Status401Unauthorized)
+        .Produces<ApiResult<Response>>(StatusCodes.Status404NotFound);
     }
 }
 

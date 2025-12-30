@@ -1,3 +1,4 @@
+using LifeOS.Application.Common.Responses;
 using LifeOS.Application.Common.Security;
 using LifeOS.Domain.Constants;
 using LifeOS.Domain.Entities;
@@ -43,8 +44,6 @@ public static class Register
         }
     }
 
-    public sealed record Response(bool Success, string Message);
-
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("api/auth/register", async (
@@ -57,7 +56,8 @@ public static class Register
             var validationResult = await validator.ValidateAsync(request, cancellationToken);
             if (!validationResult.IsValid)
             {
-                return Results.BadRequest(new Response(false, string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage))));
+                var errors = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                return ApiResultExtensions.ValidationError(errors).ToResult();
             }
 
             var existingUser = await context.Users
@@ -65,14 +65,14 @@ public static class Register
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
             if (existingUser is not null)
             {
-                return Results.BadRequest(new Response(false, "Bu e-posta adresi zaten kullanılıyor!"));
+                return ApiResultExtensions.Failure("Bu e-posta adresi zaten kullanılıyor!").ToResult();
             }
 
             var user = User.Create(request.UserName, request.Email, string.Empty);
 
             var passwordResult = userDomainService.SetPassword(user, request.Password);
             if (!passwordResult.Success)
-                return Results.BadRequest(new Response(false, passwordResult.Message ?? "Şifre ayarlanamadı"));
+                return ApiResultExtensions.Failure(passwordResult.Message ?? "Şifre ayarlanamadı").ToResult();
 
             await context.Users.AddAsync(user, cancellationToken);
 
@@ -83,17 +83,17 @@ public static class Register
             {
                 var roleResult = userDomainService.AddToRole(user, userRole);
                 if (!roleResult.Success)
-                    return Results.BadRequest(new Response(false, roleResult.Message ?? "Rol atanamadı"));
+                    return ApiResultExtensions.Failure(roleResult.Message ?? "Rol atanamadı").ToResult();
             }
 
             await context.SaveChangesAsync(cancellationToken);
-            return Results.Ok(new Response(true, "Kayıt işlemi başarılı. Giriş yapabilirsiniz."));
+            return ApiResultExtensions.Success("Kayıt işlemi başarılı. Giriş yapabilirsiniz.").ToResult();
         })
         .WithName("Register")
         .WithTags("Auth")
         .AllowAnonymous()
-        .Produces<Response>(StatusCodes.Status200OK)
-        .Produces<Response>(StatusCodes.Status400BadRequest);
+        .Produces<ApiResult<object>>(StatusCodes.Status200OK)
+        .Produces<ApiResult<object>>(StatusCodes.Status400BadRequest);
     }
 }
 
