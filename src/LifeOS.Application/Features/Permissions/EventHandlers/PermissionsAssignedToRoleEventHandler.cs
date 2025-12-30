@@ -1,6 +1,7 @@
 using LifeOS.Application.Abstractions;
-using LifeOS.Domain.Common;
 using LifeOS.Application.Common.Caching;
+using LifeOS.Persistence.Common;
+using LifeOS.Domain.Common;
 using LifeOS.Domain.Events.PermissionEvents;
 using MediatR;
 using Microsoft.Extensions.Logging;

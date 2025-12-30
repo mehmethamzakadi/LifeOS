@@ -1,4 +1,5 @@
 using LifeOS.Domain.Common;
+using LifeOS.Persistence.Common;
 using LifeOS.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -32,31 +33,35 @@ public sealed class UnitOfWork : IUnitOfWork
     {
         var domainEvents = GetDomainEvents().ToList();
 
-        if (!domainEvents.Any())
-        {
-            return await _context.SaveChangesAsync(cancellationToken);
-        }
-
-        var existingTransaction = _context.Database.CurrentTransaction;
-        if (existingTransaction != null)
-        {
-            return await SaveWithinTransaction(domainEvents, cancellationToken);
-        }
-
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var result = await SaveWithinTransaction(domainEvents, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return result;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
+            if (!domainEvents.Any())
+            {
+                return await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            var existingTransaction = _context.Database.CurrentTransaction;
+            if (existingTransaction != null)
+            {
+                return await SaveWithinTransaction(domainEvents, cancellationToken);
+            }
+
+            await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                var result = await SaveWithinTransaction(domainEvents, cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return result;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
         finally
         {
+            // Her durumda domain event'leri temizle (başarılı veya hatalı durumda)
             ClearDomainEvents();
         }
     }
@@ -186,8 +191,9 @@ public sealed class UnitOfWork : IUnitOfWork
     {
         if (!_disposed && disposing)
         {
+            // Sadece kendi transaction'ımızı dispose et
+            // DbContext DI container tarafından yönetiliyor, dispose edilmemeli
             _transaction?.Dispose();
-            _context.Dispose();
         }
         _disposed = true;
     }
