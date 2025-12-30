@@ -1,5 +1,6 @@
 using LifeOS.Domain.Common;
 using LifeOS.Domain.Constants;
+using LifeOS.Infrastructure.Constants;
 using LifeOS.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +17,7 @@ public class SessionCleanupService : BackgroundService
 {
     private readonly ILogger<SessionCleanupService> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly TimeSpan _cleanupInterval = TimeSpan.FromHours(6); // Her 6 saatte bir
+    private readonly TimeSpan _cleanupInterval = BackgroundServiceConstants.SessionCleanupInterval;
 
     public SessionCleanupService(
         ILogger<SessionCleanupService> logger,

@@ -102,7 +102,7 @@ Proje **temel mimari açısından iyi** ancak **kritik güvenlik sorunları** ne
 ```json
 "RabbitMQOptions": {
   "HostName": "rabbitmq",
-  "UserName": "baseproject",
+  "UserName": "lifeos",
   "Password": "supersecret",  // ❌ Hardcoded password
 },
 "EmailOptions": {

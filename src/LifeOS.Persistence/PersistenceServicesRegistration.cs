@@ -1,4 +1,5 @@
 using LifeOS.Domain.Common;
+using LifeOS.Persistence.Constants;
 using LifeOS.Persistence.Contexts;
 using LifeOS.Persistence.DatabaseInitializer;
 using LifeOS.Persistence.Repositories;
@@ -20,13 +21,10 @@ public static class PersistenceServicesRegistration
         {
             options.UseNpgsql(postgreSqlConnectionString, npgsqlOptions =>
             {
-                npgsqlOptions.MaxBatchSize(100);
-                npgsqlOptions.CommandTimeout(30);
+                npgsqlOptions.MaxBatchSize(DatabaseConstants.MaxBatchSize);
+                npgsqlOptions.CommandTimeout(DatabaseConstants.CommandTimeoutSeconds);
             });
-            // ✅ Default Tracking (EF Core default) - Update/Delete işlemleri için gerekli
-            // Read-only sorgularda .AsNoTracking() kullanılmalı (performans için)
-            // NoTrackingWithIdentityResolution sadece özel durumlar için kullanılır
-            // options.UseQueryTrackingBehavior(QueryTrackingBehavior.Tracking); // Default, açıkça belirtmeye gerek yok
+            
             options.EnableServiceProviderCaching();
             options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
         });

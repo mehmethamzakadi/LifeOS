@@ -137,8 +137,8 @@ return new SuccessResult("Rol başarıyla oluşturuldu.");
 ### 🔴 KRİTİK-003: Duplicate Frontend Dosyaları
 
 **Dosyalar:**
-- `clients/baseproject-client/src/pages/ForbiddenPage.tsx`
-- `clients/baseproject-client/src/pages/error/forbidden-page.tsx`
+- `clients/lifeos-client/src/pages/ForbiddenPage.tsx`
+- `clients/lifeos-client/src/pages/error/forbidden-page.tsx`
 
 **Sorun:**
 İki farklı ForbiddenPage komponenti var. Hangisinin kullanıldığı belirsiz.

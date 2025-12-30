@@ -6,6 +6,7 @@ using LifeOS.Domain.Constants;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Services;
 using LifeOS.Infrastructure.Authorization;
+using LifeOS.Infrastructure.Constants;
 using LifeOS.Infrastructure.Options;
 using LifeOS.Infrastructure.Services;
 using LifeOS.Infrastructure.Services.BackgroundServices;
@@ -65,7 +66,7 @@ namespace LifeOS.Infrastructure
                     ValidIssuer = tokenOptions.Issuer,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenOptions.SecurityKey)),
-                    ClockSkew = TimeSpan.FromSeconds(30)
+                    ClockSkew = JwtConstants.ClockSkew
                 };
             });
 

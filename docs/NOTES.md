@@ -74,5 +74,5 @@ dotnet ef database update -c LifeOSDbContext -p src/LifeOS.Persistence -s src/Li
 
 ---
 
-**Son Güncelleme:** Aralık 2025
+**Son Güncelleme:** 2 Aralık 2025
 

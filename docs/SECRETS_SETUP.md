@@ -26,7 +26,7 @@ dotnet user-secrets set "TokenOptions:Audience" "https://localhost:5000"
 dotnet user-secrets set "TokenOptions:Issuer" "https://localhost:5000"
 
 # RabbitMQ
-dotnet user-secrets set "RabbitMQOptions:UserName" "baseproject"
+dotnet user-secrets set "RabbitMQOptions:UserName" "lifeos"
 dotnet user-secrets set "RabbitMQOptions:Password" "YOUR_RABBITMQ_PASSWORD"
 
 # Email (opsiyonel)
@@ -65,7 +65,7 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your_secure_password
 
 # RabbitMQ
-RABBITMQ_DEFAULT_USER=baseproject
+RABBITMQ_DEFAULT_USER=lifeos
 RABBITMQ_DEFAULT_PASS=your_rabbitmq_password
 
 # Seq
@@ -86,7 +86,7 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=
 
 # RabbitMQ
-RABBITMQ_DEFAULT_USER=baseproject
+RABBITMQ_DEFAULT_USER=lifeos
 RABBITMQ_DEFAULT_PASS=
 
 # Seq
@@ -118,7 +118,7 @@ builder.Configuration.AddAzureKeyVault(
 apiVersion: v1
 kind: Secret
 metadata:
-  name: baseproject-secrets
+  name: lifeos-secrets
 type: Opaque
 stringData:
   ConnectionStrings__LifeOSPostgreConnectionString: "Host=..."

@@ -1,6 +1,6 @@
 # Soft Delete ve DDD Analiz Raporu
 
-> **Tarih:** 30 Aralık 2024  
+> **Tarih:** 30 Kasım 2025  
 > **Versiyon:** 1.0  
 > **Analiz Tipi:** Soft Delete Best Practices ve DDD Yapılanması Değerlendirmesi
 
@@ -380,5 +380,5 @@ await context.SaveChangesAsync(cancellationToken);
 
 ---
 
-**Son Güncelleme:** 30 Aralık 2024
+**Son Güncelleme:** 30 Kasım 2025
 

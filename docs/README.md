@@ -14,6 +14,7 @@ Bu klasör LifeOS projesinin dokümantasyonunu içerir.
 - **[DETAILED_PROJECT_ANALYSIS.md](./DETAILED_PROJECT_ANALYSIS.md)** - Kapsamlı teknik analiz, mimari değerlendirme, performans ve güvenlik analizi
 - **[PERFORMANCE_AND_OPTIMIZATION_REPORT.md](./PERFORMANCE_AND_OPTIMIZATION_REPORT.md)** - Performans optimizasyon önerileri ve gereksiz kod tespitleri
 - **[PRODUCTION_READINESS_REPORT.md](./PRODUCTION_READINESS_REPORT.md)** - Production ortamına hazırlık durumu ve güvenlik değerlendirmesi
+- **[SOFT_DELETE_AND_DDD_ANALYSIS.md](./SOFT_DELETE_AND_DDD_ANALYSIS.md)** - Soft Delete yaklaşımı ve DDD yapılanması analizi
 
 ### 🔧 Kurulum ve Yapılandırma
 
@@ -43,7 +44,8 @@ Bu klasör LifeOS projesinin dokümantasyonunu içerir.
 
 1. **[DETAILED_PROJECT_ANALYSIS.md](./DETAILED_PROJECT_ANALYSIS.md)** - Mimari ve kod kalitesi analizi
 2. **[PERFORMANCE_AND_OPTIMIZATION_REPORT.md](./PERFORMANCE_AND_OPTIMIZATION_REPORT.md)** - Performans optimizasyon önerileri
-3. **[CHANGELOG.md](./CHANGELOG.md)** - Son değişiklikler ve iyileştirmeler
+3. **[SOFT_DELETE_AND_DDD_ANALYSIS.md](./SOFT_DELETE_AND_DDD_ANALYSIS.md)** - Soft Delete ve DDD yapılanması analizi
+4. **[CHANGELOG.md](./CHANGELOG.md)** - Son değişiklikler ve iyileştirmeler
 
 ### Production Deployment İçin
 

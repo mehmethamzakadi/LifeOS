@@ -2,19 +2,19 @@
 
 ## 📋 Genel Bilgi
 
-Ollama modelleri Docker volume'unda (`baseproject_ollama_local`) saklanır. Bu volume silinirse veya container yeniden oluşturulursa modeller de silinir.
+Ollama modelleri Docker volume'unda (`lifeos_ollama_local`) saklanır. Bu volume silinirse veya container yeniden oluşturulursa modeller de silinir.
 
 ## 🔍 Model Durumunu Kontrol Etme
 
 ```bash
 # Ollama container'ında yüklü modelleri listele
-docker exec baseproject_ollama_dev ollama list
+docker exec lifeos_ollama_dev ollama list
 
 # Volume'un varlığını kontrol et
 docker volume ls | grep ollama
 
 # Volume içeriğini kontrol et (opsiyonel)
-docker volume inspect baseproject_ollama_local
+docker volume inspect lifeos_ollama_local
 ```
 
 ## 📥 Model Yükleme
@@ -23,10 +23,10 @@ docker volume inspect baseproject_ollama_local
 
 ```bash
 # qwen2.5:7b modelini yükle (yaklaşık 4-5 GB, 5-10 dakika sürebilir)
-docker exec baseproject_ollama_dev ollama pull qwen2.5:7b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
 
 # Daha küçük alternatif model (yaklaşık 2 GB, daha hızlı)
-docker exec baseproject_ollama_dev ollama pull qwen2.5:3b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:3b
 ```
 
 ### Yöntem 2: Daha Küçük Model Kullanma
@@ -42,7 +42,7 @@ Eğer `qwen2.5:7b` çok büyükse, daha küçük bir model kullanabilirsiniz:
 
 2. Modeli yükleyin:
    ```bash
-   docker exec baseproject_ollama_dev ollama pull qwen2.5:3b
+   docker exec lifeos_ollama_dev ollama pull qwen2.5:3b
    ```
 
 ## ⚠️ Önemli Notlar
@@ -53,7 +53,7 @@ Eğer `qwen2.5:7b` çok büyükse, daha küçük bir model kullanabilirsiniz:
 
 2. **Container Silme**: Container silindiğinde (`docker rm`) volume korunur, modeller kaybolmaz.
 
-3. **Volume Silme**: Volume silindiğinde (`docker volume rm baseproject_ollama_local`) **TÜM MODELLER SİLİNİR**.
+3. **Volume Silme**: Volume silindiğinde (`docker volume rm lifeos_ollama_local`) **TÜM MODELLER SİLİNİR**.
 
 4. **`docker-compose down -v`**: `-v` flag'i ile çalıştırılırsa **TÜM VOLUMELER SİLİNİR**, modeller kaybolur.
 
@@ -73,10 +73,10 @@ Eğer model silinmişse veya yeni bir model denemek isterseniz:
 
 ```bash
 # Mevcut modeli sil (opsiyonel)
-docker exec baseproject_ollama_dev ollama rm qwen2.5:7b
+docker exec lifeos_ollama_dev ollama rm qwen2.5:7b
 
 # Yeni modeli yükle
-docker exec baseproject_ollama_dev ollama pull qwen2.5:7b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
 ```
 
 ## 📊 Model Boyutları ve Öneriler
@@ -102,10 +102,10 @@ docker exec baseproject_ollama_dev ollama pull qwen2.5:7b
 docker ps | grep ollama
 
 # 2. Modeli yükle
-docker exec baseproject_ollama_dev ollama pull qwen2.5:7b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
 
 # 3. Yüklü modelleri kontrol et
-docker exec baseproject_ollama_dev ollama list
+docker exec lifeos_ollama_dev ollama list
 ```
 
 ### Volume Boş Görünüyor
@@ -114,20 +114,20 @@ Eğer volume var ama modeller görünmüyorsa:
 
 ```bash
 # Volume'u kontrol et
-docker volume inspect baseproject_ollama_local
+docker volume inspect lifeos_ollama_local
 
 # Container'ı yeniden başlat
 docker-compose -f docker-compose.local.yml restart ollama
 
 # Modeli tekrar yükle
-docker exec baseproject_ollama_dev ollama pull qwen2.5:7b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
 ```
 
 ## 💡 Best Practices
 
 1. **Volume Yedekleme**: Önemli modeller için volume'u yedekleyin:
    ```bash
-   docker run --rm -v baseproject_ollama_local:/data -v $(pwd):/backup alpine tar czf /backup/ollama-backup.tar.gz -C /data .
+   docker run --rm -v lifeos_ollama_local:/data -v $(pwd):/backup alpine tar czf /backup/ollama-backup.tar.gz -C /data .
    ```
 
 2. **Model Seçimi**: Development için küçük model, production için büyük model kullanın.
