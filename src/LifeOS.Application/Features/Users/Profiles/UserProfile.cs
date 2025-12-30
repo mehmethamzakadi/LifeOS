@@ -4,7 +4,7 @@ using LifeOS.Application.Features.Users.Queries.GetById;
 using LifeOS.Application.Features.Users.Queries.GetList;
 using LifeOS.Application.Features.Users.Queries.GetPaginatedListByDynamic;
 using LifeOS.Domain.Common.Paging;
-using LifeOS.Domain.Common.Responses;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Entities;
 
 namespace LifeOS.Application.Features.Users.Profiles;

@@ -6,16 +6,16 @@ namespace LifeOS.Domain.Entities;
 /// <summary>
 /// Kişisel not entity'si
 /// </summary>
-public sealed class PersonalNote : BaseEntity
+public sealed class PersonalNote : AggregateRoot
 {
     // EF Core için parameterless constructor
     public PersonalNote() { }
 
-    public string Title { get; set; } = default!;
-    public string Content { get; set; } = default!; // HTML/RichText
-    public string? Category { get; set; }
-    public bool IsPinned { get; set; }
-    public string? Tags { get; set; } // Comma separated string
+    public string Title { get; private set; } = default!;
+    public string Content { get; private set; } = default!; // HTML/RichText
+    public string? Category { get; private set; }
+    public bool IsPinned { get; private set; }
+    public string? Tags { get; private set; } // Comma separated string
 
     public static PersonalNote Create(string title, string content, string? category, bool isPinned, string? tags)
     {

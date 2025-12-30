@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { FolderKanban, LayoutDashboard, Users, Shield, Activity, User, BookOpen, Gamepad2, Film, StickyNote, Wallet } from 'lucide-react';
+import { FolderKanban, LayoutDashboard, Users, Shield, User, BookOpen, Gamepad2, Film, StickyNote, Wallet } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { usePermission } from '../../hooks/use-permission';
 import { Permissions } from '../../lib/permissions';
@@ -87,12 +87,6 @@ const menuGroups = [
         label: 'Roller & Yetkiler',
         icon: Shield,
         requiredPermission: Permissions.RolesViewAll as string | undefined
-      },
-      {
-        to: '/admin/activity-logs',
-        label: 'Aktivite Logları',
-        icon: Activity,
-        requiredPermission: Permissions.ActivityLogsView as string | undefined
       }
     ]
   }

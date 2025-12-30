@@ -27,20 +27,20 @@ public sealed class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand
         if (user is null)
             return new ErrorResult("Kullanıcı Bilgisi Bulunamadı!");
 
-        if (user.Email != request.Email)
+        if (user.Email.Value != request.Email)
         {
             var existingEmail = await _context.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+                .FirstOrDefaultAsync(u => u.Email.Value == request.Email, cancellationToken);
             if (existingEmail != null && existingEmail.Id != request.Id)
                 return new ErrorResult("Bu e-posta adresi zaten kullanılıyor!");
         }
 
-        if (user.UserName != request.UserName)
+        if (user.UserName.Value != request.UserName)
         {
             var existingUserName = await _context.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
+                .FirstOrDefaultAsync(u => u.UserName.Value == request.UserName, cancellationToken);
             if (existingUserName != null && existingUserName.Id != request.Id)
                 return new ErrorResult("Bu kullanıcı adı zaten kullanılıyor!");
         }

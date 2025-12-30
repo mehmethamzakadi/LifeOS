@@ -31,13 +31,13 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
     {
         var existingUser = await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email.Value == request.Email, cancellationToken);
         if (existingUser is not null)
             return new ErrorResult("Bu e-posta adresi zaten kullanılıyor!");
 
         var existingUserName = await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.UserName == request.UserName, cancellationToken);
+            .FirstOrDefaultAsync(u => u.UserName.Value == request.UserName, cancellationToken);
         if (existingUserName is not null)
             return new ErrorResult("Bu kullanıcı adı zaten kullanılıyor!");
 

@@ -40,8 +40,8 @@ public class GetUserRolesQueryHandler : IRequestHandler<GetUserRolesQuery, IData
         var response = new GetUserRolesResponse
         {
             UserId = user.Id,
-            UserName = user.UserName ?? string.Empty,
-            Email = user.Email ?? string.Empty,
+            UserName = user.UserName.Value,
+            Email = user.Email.Value,
             Roles = userRoles
         };
 

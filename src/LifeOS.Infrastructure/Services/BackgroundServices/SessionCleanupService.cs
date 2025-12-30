@@ -1,4 +1,4 @@
-using LifeOS.Application.Abstractions;
+using LifeOS.Domain.Common;
 using LifeOS.Domain.Constants;
 using LifeOS.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;

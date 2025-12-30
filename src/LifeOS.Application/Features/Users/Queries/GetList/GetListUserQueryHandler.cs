@@ -1,6 +1,6 @@
 using AutoMapper;
 using LifeOS.Domain.Common.Paging;
-using LifeOS.Domain.Common.Responses;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Entities;
 using LifeOS.Persistence.Contexts;
 using LifeOS.Persistence.Extensions;

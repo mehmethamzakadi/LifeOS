@@ -1,6 +1,6 @@
 using LifeOS.Domain.Common.Paging;
 
-namespace LifeOS.Domain.Common.Responses;
+namespace LifeOS.Application.Common.Responses;
 
 public class PaginatedListResponse<T> : BasePageableModel
 {
@@ -12,3 +12,4 @@ public class PaginatedListResponse<T> : BasePageableModel
         set => _items = value ?? new List<T>();
     }
 }
+

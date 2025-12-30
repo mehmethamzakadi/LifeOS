@@ -1,4 +1,4 @@
-namespace LifeOS.Domain.Common.Requests;
+namespace LifeOS.Application.Common.Requests;
 
 public class PaginatedRequest
 {
@@ -30,3 +30,4 @@ public class PaginatedRequest
         }
     }
 }
+

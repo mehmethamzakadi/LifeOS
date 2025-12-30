@@ -29,7 +29,7 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, IR
     {
         User? existingUser = await _context.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email.Value == request.Email, cancellationToken);
         if (existingUser is not null)
         {
             return new ErrorResult("Bu e-posta adresi zaten kullanılıyor!");

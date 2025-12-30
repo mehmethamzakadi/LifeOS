@@ -7,17 +7,17 @@ namespace LifeOS.Domain.Entities;
 /// <summary>
 /// Oyun entity'si
 /// </summary>
-public sealed class Game : BaseEntity
+public sealed class Game : AggregateRoot
 {
     // EF Core için parameterless constructor
     public Game() { }
 
-    public string Title { get; set; } = default!;
-    public string? CoverUrl { get; set; }
-    public GamePlatform Platform { get; set; }
-    public GameStore Store { get; set; }
-    public GameStatus Status { get; set; }
-    public bool IsOwned { get; set; }
+    public string Title { get; private set; } = default!;
+    public string? CoverUrl { get; private set; }
+    public GamePlatform Platform { get; private set; }
+    public GameStore Store { get; private set; }
+    public GameStatus Status { get; private set; }
+    public bool IsOwned { get; private set; }
 
     public static Game Create(string title, string? coverUrl, GamePlatform platform, GameStore store, GameStatus status, bool isOwned)
     {

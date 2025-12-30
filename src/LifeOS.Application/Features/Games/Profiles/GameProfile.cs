@@ -5,7 +5,7 @@ using LifeOS.Application.Features.Games.Commands.Update;
 using LifeOS.Application.Features.Games.Queries.GetById;
 using LifeOS.Application.Features.Games.Queries.GetPaginatedListByDynamic;
 using LifeOS.Domain.Common.Paging;
-using LifeOS.Domain.Common.Responses;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Entities;
 
 namespace LifeOS.Application.Features.Games.Profiles;

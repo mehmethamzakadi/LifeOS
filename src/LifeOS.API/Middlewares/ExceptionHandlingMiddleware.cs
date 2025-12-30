@@ -1,4 +1,4 @@
-using LifeOS.Domain.Common.Results;
+using LifeOS.API.Common;
 using LifeOS.Domain.Exceptions;
 
 namespace LifeOS.API.Middlewares

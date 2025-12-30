@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
-namespace LifeOS.Infrastructure.Services.Images;
+namespace LifeOS.Infrastructure.Services;
 
 public sealed class ImageStorageService : IImageStorageService
 {

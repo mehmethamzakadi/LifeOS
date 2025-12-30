@@ -13,8 +13,6 @@ export function useInvalidateQueries() {
   const invalidateUsers = () => {
     queryClient.invalidateQueries({ queryKey: ['users'] });
     queryClient.invalidateQueries({ queryKey: ['user-roles'] });
-    queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
-    queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
   };
 
   /**
@@ -23,8 +21,6 @@ export function useInvalidateQueries() {
   const invalidateRoles = () => {
     queryClient.invalidateQueries({ queryKey: ['roles'] });
     queryClient.invalidateQueries({ queryKey: ['role-permissions'] });
-    queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
-    queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
   };
 
   /**
@@ -34,16 +30,6 @@ export function useInvalidateQueries() {
     queryClient.invalidateQueries({ queryKey: ['categories'] });
     queryClient.invalidateQueries({ queryKey: ['all-categories'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard-statistics'] });
-    queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
-    queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
-  };
-
-  /**
-   * Activity log'ları invalidate et
-   */
-  const invalidateActivityLogs = () => {
-    queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
-    queryClient.invalidateQueries({ queryKey: ['recent-activities'] });
   };
 
   /**
@@ -57,7 +43,6 @@ export function useInvalidateQueries() {
     invalidateUsers,
     invalidateRoles,
     invalidateCategories,
-    invalidateActivityLogs,
     invalidateAll
   };
 }

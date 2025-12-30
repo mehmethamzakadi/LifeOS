@@ -9,7 +9,6 @@ import { DashboardPage } from '../pages/admin/dashboard-page';
 import { CategoriesPage } from '../pages/admin/categories-page';
 import { UsersPage } from '../pages/admin/users-page';
 import { RolesPage } from '../pages/admin/roles-page';
-import { ActivityLogsPage } from '../pages/admin/activity-logs-page';
 import { ProfilePage } from '../pages/admin/profile-page';
 import { BooksPage } from '../pages/admin/books-page';
 import { GamesPage } from '../pages/admin/games-page';
@@ -79,14 +78,6 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredPermission={Permissions.RolesViewAll}>
             <RolesPage />
-          </ProtectedRoute>
-        )
-      },
-      {
-        path: 'activity-logs',
-        element: (
-          <ProtectedRoute requiredPermission={Permissions.ActivityLogsView}>
-            <ActivityLogsPage />
           </ProtectedRoute>
         )
       },

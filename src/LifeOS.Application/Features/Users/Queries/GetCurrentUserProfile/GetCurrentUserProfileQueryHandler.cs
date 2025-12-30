@@ -32,8 +32,8 @@ public sealed class GetCurrentUserProfileQueryHandler(
 
         var response = new GetCurrentUserProfileResponse(
             user.Id,
-            user.UserName,
-            user.Email,
+            user.UserName.Value,
+            user.Email.Value,
             user.PhoneNumber,
             user.ProfilePictureUrl,
             user.EmailConfirmed,

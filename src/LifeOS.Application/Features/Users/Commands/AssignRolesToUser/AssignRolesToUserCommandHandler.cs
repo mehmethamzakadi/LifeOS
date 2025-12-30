@@ -110,7 +110,7 @@ public class AssignRolesToUserCommandHandler : IRequestHandler<AssignRolesToUser
             .Select(ur => ur.Role.Name!)
             .ToListAsync(cancellationToken);
         
-        user.AddDomainEvent(new UserRolesAssignedEvent(user.Id, user.UserName!, currentRoles));
+        user.AddDomainEvent(new UserRolesAssignedEvent(user.Id, user.UserName.Value, currentRoles));
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

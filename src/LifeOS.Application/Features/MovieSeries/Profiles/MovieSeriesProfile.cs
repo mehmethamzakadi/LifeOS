@@ -5,7 +5,7 @@ using LifeOS.Application.Features.MovieSeries.Commands.Update;
 using LifeOS.Application.Features.MovieSeries.Queries.GetById;
 using LifeOS.Application.Features.MovieSeries.Queries.GetPaginatedListByDynamic;
 using LifeOS.Domain.Common.Paging;
-using LifeOS.Domain.Common.Responses;
+using LifeOS.Application.Common.Responses;
 using LifeOS.Domain.Entities;
 using MovieSeriesEntity = LifeOS.Domain.Entities.MovieSeries;
 

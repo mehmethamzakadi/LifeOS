@@ -5,7 +5,6 @@ import {
   FolderKanban,
   Users,
   Shield,
-  Activity as ActivityIcon,
 } from "lucide-react";
 import {
   Card,
@@ -16,14 +15,7 @@ import {
 } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { StatCard } from "../../components/dashboard/stat-card";
-import {
-  ActivityFeed,
-  Activity,
-} from "../../components/dashboard/activity-feed";
-import {
-  fetchStatistics,
-  fetchRecentActivities,
-} from "../../features/dashboard/api";
+import { fetchStatistics } from "../../features/dashboard/api";
 
 export function DashboardPage() {
   // ✅ Dashboard istatistikleri - sık değişen veri için staleTime override
@@ -35,25 +27,7 @@ export function DashboardPage() {
     refetchInterval: 30000, // Her 30 saniyede bir güncelle
   });
 
-  // ✅ Son aktiviteler - sık değişen veri için staleTime override
-  const { data: recentActivities = [], isLoading: isLoadingActivities } =
-    useQuery({
-      queryKey: ["recent-activities"],
-      queryFn: () => fetchRecentActivities(10),
-      staleTime: 30 * 1000, // 30 saniye (global 5 dakika yerine override)
-      refetchInterval: 30000, // Her 30 saniyede bir güncelle
-    });
-
-  // API verisini bileşen formatına dönüştür
-  const activities: Activity[] = recentActivities.map((activity) => ({
-    id: activity.id,
-    activityType: activity.activityType,
-    title: activity.title,
-    timestamp: activity.timestamp,
-    userName: activity.userName,
-  }));
-
-  if (isLoading || isLoadingActivities) {
+  if (isLoading) {
     return (
       <div className="space-y-8">
         <Card className="p-6">
@@ -112,58 +86,38 @@ export function DashboardPage() {
           color="green"
           delay={0.2}
         />
-        <StatCard
-          title="Aktiviteler"
-          value={recentActivities.length}
-          description="Son aktivite sayısı"
-          icon={ActivityIcon}
-          color="yellow"
-          delay={0.3}
-        />
       </div>
 
-      {/* Hızlı Aksiyonlar ve Aktiviteler */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FolderKanban className="h-5 w-5 text-primary" />
-              Hızlı Aksiyonlar
-            </CardTitle>
-            <CardDescription>Sık kullanılan işlemler</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/admin/categories">
-                <FolderKanban className="mr-2 h-4 w-4" />
-                Kategorileri Yönet
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/admin/users">
-                <Users className="mr-2 h-4 w-4" />
-                Kullanıcıları Yönet
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/admin/roles">
-                <Shield className="mr-2 h-4 w-4" />
-                Rolleri Yönet
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link to="/admin/activity-logs">
-                <ActivityIcon className="mr-2 h-4 w-4" />
-                Aktivite Logları
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <div className="lg:col-span-2">
-          <ActivityFeed activities={activities} delay={0.6} />
-        </div>
-      </div>
+      {/* Hızlı Aksiyonlar */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FolderKanban className="h-5 w-5 text-primary" />
+            Hızlı Aksiyonlar
+          </CardTitle>
+          <CardDescription>Sık kullanılan işlemler</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <Button variant="outline" className="w-full justify-start" asChild>
+            <Link to="/admin/categories">
+              <FolderKanban className="mr-2 h-4 w-4" />
+              Kategorileri Yönet
+            </Link>
+          </Button>
+          <Button variant="outline" className="w-full justify-start" asChild>
+            <Link to="/admin/users">
+              <Users className="mr-2 h-4 w-4" />
+              Kullanıcıları Yönet
+            </Link>
+          </Button>
+          <Button variant="outline" className="w-full justify-start" asChild>
+            <Link to="/admin/roles">
+              <Shield className="mr-2 h-4 w-4" />
+              Rolleri Yönet
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

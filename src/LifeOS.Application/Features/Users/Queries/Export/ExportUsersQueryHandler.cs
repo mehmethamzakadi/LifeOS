@@ -44,7 +44,7 @@ public class ExportUsersQueryHandler : IRequestHandler<ExportUsersQuery, ExportU
         // Satırlar
         foreach (var user in users)
         {
-            sb.AppendLine($"{user.Id},{EscapeCsv(user.UserName!)},{EscapeCsv(user.Email!)},{EscapeCsv(user.PhoneNumber)},{user.EmailConfirmed}");
+            sb.AppendLine($"{user.Id},{EscapeCsv(user.UserName.Value)},{EscapeCsv(user.Email.Value)},{EscapeCsv(user.PhoneNumber)},{user.EmailConfirmed}");
         }
 
         return sb.ToString();

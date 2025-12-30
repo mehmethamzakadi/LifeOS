@@ -1,21 +1,19 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Application.Abstractions.Identity;
 using LifeOS.Application.Abstractions.Images;
-using LifeOS.Domain.Common.Utilities;
+using LifeOS.Domain.Common;
 using LifeOS.Domain.Constants;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Services;
 using LifeOS.Infrastructure.Authorization;
 using LifeOS.Infrastructure.Options;
 using LifeOS.Infrastructure.Services;
-using LifeOS.Infrastructure.Services.Images;
+using LifeOS.Infrastructure.Services.BackgroundServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Polly;
 using Polly.Extensions.Http;
@@ -93,7 +91,7 @@ namespace LifeOS.Infrastructure
             }
 
             // Background Services
-            services.AddHostedService<Services.BackgroundServices.SessionCleanupService>();
+            services.AddHostedService<SessionCleanupService>();
 
             // RedisCacheService requires IConnectionMultiplexer - only register if Redis is available
             if (connectionMultiplexer != null)
@@ -110,11 +108,14 @@ namespace LifeOS.Infrastructure
             }
             services.AddTransient<ITokenService, JwtTokenService>();
             services.AddTransient<IMailService, MailService>();
+            
+            // IExecutionContextAccessor - Domain.Common için tek implementation
             services.AddScoped<IExecutionContextAccessor, ExecutionContextAccessor>();
+            
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IImageStorageService, ImageStorageService>();
-            services.AddScoped<IUserDomainService, Domain.Services.UserDomainService>();
+            services.AddScoped<IUserDomainService, UserDomainService>();
 
             // Ollama AI Service - Best practices: IHttpClientFactory + Polly retry policy
             var ollamaOptions = configuration.GetSection(Options.OllamaOptions.SectionName).Get<Options.OllamaOptions>()

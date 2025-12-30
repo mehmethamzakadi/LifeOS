@@ -1,6 +1,6 @@
 using LifeOS.Domain.Common.Dynamic;
 
-namespace LifeOS.Domain.Common.Requests;
+namespace LifeOS.Application.Common.Requests;
 
 public class DataGridRequest
 {
@@ -17,3 +17,4 @@ public class DataGridRequest
         DynamicQuery = dynamicQuery;
     }
 }
+

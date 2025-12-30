@@ -56,6 +56,8 @@ public sealed class Category : AggregateRoot
         if (IsDeleted)
             throw new InvalidOperationException("Category is already deleted");
 
+        IsDeleted = true;
+        DeletedDate = DateTime.UtcNow;
         AddDomainEvent(new CategoryDeletedEvent(Id, Name));
     }
 }
