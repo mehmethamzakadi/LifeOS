@@ -133,7 +133,7 @@ namespace LifeOS.Infrastructure
 
             // Authorization
             services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
-            services.AddAuthorizationCore(options =>
+            services.AddAuthorization(options =>
             {
                 // Permission'lar için policy'ler oluştur
                 foreach (var permission in Permissions.GetAllPermissions())

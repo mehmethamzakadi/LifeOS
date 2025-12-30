@@ -100,17 +100,17 @@ app.UseStaticFilesWithImageStorage();
 // ✅ API Documentation (Development only)
 app.UseApiDocumentation();
 
-// ✅ Serilog Request Logging
-app.UseSerilogRequestLogging();
-
 // ✅ Veritabanı başlatma ve gerekli tabloları oluştur
 await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
 var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
 await dbInitializer.InitializeAsync(scope.ServiceProvider, app.Lifetime.ApplicationStopping);
 await dbInitializer.EnsurePostgreSqlSerilogTableAsync(builder.Configuration, app.Lifetime.ApplicationStopping);
 
-// ✅ Middleware Pipeline
+// ✅ Middleware Pipeline (Endpoint'lerden ÖNCE olmalı)
 app.UseApiMiddleware(corsPolicyName);
+
+// ✅ Serilog Request Logging (Routing'den sonra route bilgisini loglamak için)
+app.UseSerilogRequestLogging();
 
 // ✅ Auth Endpoints (Vertical Slice Architecture)
 RegisterEndpoint.MapEndpoint(app);

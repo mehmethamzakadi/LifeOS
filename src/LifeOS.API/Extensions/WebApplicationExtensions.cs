@@ -111,11 +111,7 @@ public static class WebApplicationExtensions
             // HSTS (HTTP Strict Transport Security) - Production'da aktif
             app.UseHsts();
         }
-        else
-        {
-            // Development ortamında opsiyonel (HTTPS port varsa yönlendir)
-            app.UseHttpsRedirection();
-        }
+        // Development ortamında HTTPS redirection yapmıyoruz - HTTP ve HTTPS her ikisi de kullanılabilir
 
         return app;
     }
