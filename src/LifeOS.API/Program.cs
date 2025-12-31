@@ -20,6 +20,8 @@ using LifeOS.Application.Features.Categories.GetAllCategories;
 using LifeOS.Application.Features.Categories.SearchCategories;
 using LifeOS.Application.Features.Categories.GenerateCategoryDescription;
 using LifeOS.Application.Features.Dashboards.GetStatistics;
+using LifeOS.Application.Features.Dashboards.GetRecentActivities;
+using LifeOS.Application.Features.Dashboards.GetFinancialSummary;
 using LifeOS.Application.Features.Games.CreateGame;
 using LifeOS.Application.Features.Games.UpdateGame;
 using LifeOS.Application.Features.Games.DeleteGame;
@@ -197,6 +199,8 @@ UploadImageEndpoint.MapEndpoint(app);
 
 // ✅ Dashboards Endpoints (Vertical Slice Architecture)
 GetStatisticsEndpoint.MapEndpoint(app);
+GetRecentActivitiesEndpoint.MapEndpoint(app);
+GetFinancialSummaryEndpoint.MapEndpoint(app);
 
 await app.RunAsync();
 

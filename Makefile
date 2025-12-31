@@ -33,7 +33,9 @@ help:
 	@echo "  make dev          - Development ortamını başlat (build ile)"
 	@echo "  make dev-up        - Development ortamını başlat (build olmadan)"
 	@echo "  make dev-build    - Development servislerini rebuild et"
+	@echo "  make dev-rebuild  - API container'ı rebuild et (hot reload için)"
 	@echo "  make dev-logs     - Development loglarını izle"
+	@echo "  $(GREEN)🔥 Hot Reload:$(NC) Kod değişiklikleri otomatik algılanır!"
 	@echo ""
 	@echo "$(YELLOW)Production Ortamı:$(NC)"
 	@echo "  make prod         - Production ortamını başlat (build ile)"
@@ -98,6 +100,13 @@ dev-build:
 	@echo "$(YELLOW)Development servisleri build ediliyor...$(NC)"
 	$(COMPOSE_DEV) build --no-cache
 	@echo "$(GREEN)✓ Build tamamlandı$(NC)"
+	@echo "$(YELLOW)Not:$(NC) Hot reload aktif - kod değişiklikleri otomatik algılanacak"
+
+dev-rebuild:
+	@echo "$(YELLOW)API container'ı rebuild ediliyor (hot reload için)...$(NC)"
+	$(COMPOSE_DEV) build --no-cache lifeos.api
+	$(COMPOSE_DEV) up -d lifeos.api
+	@echo "$(GREEN)✓ API container yeniden başlatıldı$(NC)"
 
 dev-logs:
 	$(COMPOSE_DEV) logs -f

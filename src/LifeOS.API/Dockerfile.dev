@@ -1,0 +1,46 @@
+# ============================================
+# LifeOS.API - Development Dockerfile (Hot Reload)
+# ============================================
+# Bu Dockerfile development ortamı için hot reload desteği ile oluşturulmuştur.
+# dotnet watch kullanarak kod değişikliklerini otomatik olarak algılar ve uygulamayı yeniden başlatır.
+# ============================================
+
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS development
+WORKDIR /src
+
+# Merkezi paket versiyon yönetimi için gerekli dosyalar
+COPY ["Directory.Build.props", "./"]
+COPY ["Directory.Packages.props", "./"]
+
+# Proje dosyalarını kopyala (restore için)
+COPY ["src/LifeOS.API/LifeOS.API.csproj", "src/LifeOS.API/"]
+COPY ["src/LifeOS.Infrastructure/LifeOS.Infrastructure.csproj", "src/LifeOS.Infrastructure/"]
+COPY ["src/LifeOS.Application/LifeOS.Application.csproj", "src/LifeOS.Application/"]
+COPY ["src/LifeOS.Domain/LifeOS.Domain.csproj", "src/LifeOS.Domain/"]
+COPY ["src/LifeOS.Persistence/LifeOS.Persistence.csproj", "src/LifeOS.Persistence/"]
+
+# Restore dependencies
+RUN dotnet restore "./src/LifeOS.API/LifeOS.API.csproj"
+
+# Tüm source code'u kopyala (volume mount ile override edilecek)
+# Not: Development'ta source code volume mount ile override edilecek
+COPY . .
+
+WORKDIR "/src/src/LifeOS.API"
+
+# wwwroot/uploads klasörünü oluştur
+RUN mkdir -p /src/src/LifeOS.API/wwwroot/uploads && \
+    chmod -R 755 /src/src/LifeOS.API/wwwroot/uploads
+
+# Hot reload için dotnet watch kullan
+# DOTNET_WATCH_RESTART_ON_RUDE_EDIT: true - Tüm değişikliklerde restart
+# DOTNET_USE_POLLING_FILE_WATCHER: true - Docker volume'larında file watching için gerekli
+ENV DOTNET_WATCH_RESTART_ON_RUDE_EDIT=true
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+
+EXPOSE 8080
+
+# dotnet watch run ile başlat - hot reload aktif
+ENTRYPOINT ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://0.0.0.0:8080"]
+

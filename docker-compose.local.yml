@@ -49,14 +49,12 @@ services:
       start_period: 30s
 
   # ===========================================
-  # API Service - Development
+  # API Service - Development (Hot Reload)
   # ===========================================
   lifeos.api:
     build:
       context: .
-      dockerfile: src/LifeOS.API/Dockerfile
-      args:
-        - CONFIGURATION=Debug
+      dockerfile: src/LifeOS.API/Dockerfile.dev
     container_name: lifeos_api_dev
     restart: unless-stopped
     environment:
@@ -108,10 +106,26 @@ services:
     ports:
       - "6060:8080" # API endpoint
     volumes:
-      # Hot reload için appsettings mount
-      - ./src/LifeOS.API/appsettings.Development.json:/app/appsettings.Development.json:ro
+      # Hot reload için source code mount - tüm proje klasörünü mount et
+      # Build output'ları (bin/obj) named volume'da tutulacak, source code mount edilecek
+      - ./src:/src/src
+      # Root klasöründeki build props dosyalarını mount et
+      - ./Directory.Build.props:/src/Directory.Build.props:ro
+      - ./Directory.Packages.props:/src/Directory.Packages.props:ro
+      # Build output'ları için named volume (performans için - container içinde kalacak)
+      - lifeos_api_bin:/src/src/LifeOS.API/bin
+      - lifeos_api_obj:/src/src/LifeOS.API/obj
+      # Diğer projelerin build output'ları için de named volumes
+      - lifeos_infrastructure_bin:/src/src/LifeOS.Infrastructure/bin
+      - lifeos_infrastructure_obj:/src/src/LifeOS.Infrastructure/obj
+      - lifeos_application_bin:/src/src/LifeOS.Application/bin
+      - lifeos_application_obj:/src/src/LifeOS.Application/obj
+      - lifeos_domain_bin:/src/src/LifeOS.Domain/bin
+      - lifeos_domain_obj:/src/src/LifeOS.Domain/obj
+      - lifeos_persistence_bin:/src/src/LifeOS.Persistence/bin
+      - lifeos_persistence_obj:/src/src/LifeOS.Persistence/obj
       # Uploads klasörünü bağlıyoruz
-      - ./src/LifeOS.API/wwwroot/uploads:/app/wwwroot/uploads
+      - ./src/LifeOS.API/wwwroot/uploads:/src/src/LifeOS.API/wwwroot/uploads
     networks:
       - lifeos_local_net
     # Healthcheck devre dışı - curl/wget image'da yok
@@ -239,6 +253,26 @@ volumes:
     name: lifeos_client_node_modules
   lifeos_client_dist:
     name: lifeos_client_dist
+  lifeos_api_bin:
+    name: lifeos_api_bin
+  lifeos_api_obj:
+    name: lifeos_api_obj
+  lifeos_infrastructure_bin:
+    name: lifeos_infrastructure_bin
+  lifeos_infrastructure_obj:
+    name: lifeos_infrastructure_obj
+  lifeos_application_bin:
+    name: lifeos_application_bin
+  lifeos_application_obj:
+    name: lifeos_application_obj
+  lifeos_domain_bin:
+    name: lifeos_domain_bin
+  lifeos_domain_obj:
+    name: lifeos_domain_obj
+  lifeos_persistence_bin:
+    name: lifeos_persistence_bin
+  lifeos_persistence_obj:
+    name: lifeos_persistence_obj
 
 # ===========================================
 # Networks - Local Development
