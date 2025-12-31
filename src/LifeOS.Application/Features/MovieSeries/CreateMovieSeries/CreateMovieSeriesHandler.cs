@@ -25,7 +25,7 @@ public sealed class CreateMovieSeriesHandler
         var movieSeries = MovieSeriesEntity.Create(
             command.Title,
             command.CoverUrl,
-            command.GenreId,
+            command.MovieSeriesGenreId,
             command.WatchPlatformId,
             command.CurrentSeason,
             command.CurrentEpisode,
@@ -46,7 +46,7 @@ public sealed class CreateMovieSeriesHandler
                 movieSeries.Id,
                 movieSeries.Title,
                 movieSeries.CoverUrl,
-                movieSeries.GenreId,
+                movieSeries.MovieSeriesGenreId,
                 movieSeries.Genre.Name,
                 movieSeries.WatchPlatformId,
                 movieSeries.WatchPlatform.Name,

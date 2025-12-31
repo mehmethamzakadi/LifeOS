@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace LifeOS.Persistence.Migrations.PostgreSql
 {
     /// <inheritdoc />
-    public partial class AddReferenceDataTables : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -419,7 +419,7 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     CoverUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    GenreId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MovieSeriesGenreId = table.Column<Guid>(type: "uuid", nullable: false),
                     WatchPlatformId = table.Column<Guid>(type: "uuid", nullable: false),
                     CurrentSeason = table.Column<int>(type: "integer", nullable: true),
                     CurrentEpisode = table.Column<int>(type: "integer", nullable: true),
@@ -438,8 +438,8 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 {
                     table.PrimaryKey("PK_MovieSeries", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_MovieSeries_MovieSeriesGenres_GenreId",
-                        column: x => x.GenreId,
+                        name: "FK_MovieSeries_MovieSeriesGenres_MovieSeriesGenreId",
+                        column: x => x.MovieSeriesGenreId,
                         principalTable: "MovieSeriesGenres",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -519,9 +519,9 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 column: "Name");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MovieSeries_GenreId",
+                name: "IX_MovieSeries_MovieSeriesGenreId",
                 table: "MovieSeries",
-                column: "GenreId");
+                column: "MovieSeriesGenreId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MovieSeries_Status",

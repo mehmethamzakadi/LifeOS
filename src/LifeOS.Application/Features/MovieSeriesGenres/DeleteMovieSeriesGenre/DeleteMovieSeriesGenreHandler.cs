@@ -29,7 +29,7 @@ public sealed class DeleteMovieSeriesGenreHandler
 
         // Kullanımda mı kontrol et
         var isInUse = await _context.MovieSeries
-            .AnyAsync(x => x.GenreId == id && !x.IsDeleted, cancellationToken);
+            .AnyAsync(x => x.MovieSeriesGenreId == id && !x.IsDeleted, cancellationToken);
 
         if (isInUse)
             return ApiResultExtensions.Failure("Bu tür kullanımda olduğu için silinemez");

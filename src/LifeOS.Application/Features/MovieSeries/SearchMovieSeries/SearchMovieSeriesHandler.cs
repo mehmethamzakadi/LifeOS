@@ -59,7 +59,7 @@ public sealed class SearchMovieSeriesHandler
             Id = m.Id,
             Title = m.Title,
             CoverUrl = m.CoverUrl,
-            GenreId = m.GenreId,
+            MovieSeriesGenreId = m.MovieSeriesGenreId,
             GenreName = m.Genre.Name,
             WatchPlatformId = m.WatchPlatformId,
             WatchPlatformName = m.WatchPlatform.Name,

@@ -28,6 +28,14 @@ public sealed class CreateMovieSeriesValidator : AbstractValidator<CreateMovieSe
         RuleFor(m => m.PersonalNote)
             .MaximumLength(2000).WithMessage("Kişisel not en fazla 2000 karakter olabilir!")
             .When(m => !string.IsNullOrWhiteSpace(m.PersonalNote));
+
+        RuleFor(m => m.MovieSeriesGenreId)
+            .NotEmpty().WithMessage("Tür seçimi zorunludur!")
+            .NotEqual(Guid.Empty).WithMessage("Geçerli bir tür seçmelisiniz!");
+
+        RuleFor(m => m.WatchPlatformId)
+            .NotEmpty().WithMessage("İzleme platformu seçimi zorunludur!")
+            .NotEqual(Guid.Empty).WithMessage("Geçerli bir izleme platformu seçmelisiniz!");
     }
 }
 

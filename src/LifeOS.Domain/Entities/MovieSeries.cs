@@ -14,7 +14,7 @@ public sealed class MovieSeries : AggregateRoot
 
     public string Title { get; private set; } = default!;
     public string? CoverUrl { get; private set; }
-    public Guid GenreId { get; private set; }
+    public Guid MovieSeriesGenreId { get; private set; }
     public Guid WatchPlatformId { get; private set; }
     public int? CurrentSeason { get; private set; }
     public int? CurrentEpisode { get; private set; }
@@ -33,7 +33,7 @@ public sealed class MovieSeries : AggregateRoot
             Id = Guid.NewGuid(),
             Title = title,
             CoverUrl = coverUrl,
-            GenreId = genreId,
+            MovieSeriesGenreId = genreId,
             WatchPlatformId = watchPlatformId,
             CurrentSeason = currentSeason,
             CurrentEpisode = currentEpisode,
@@ -51,7 +51,7 @@ public sealed class MovieSeries : AggregateRoot
     {
         Title = title;
         CoverUrl = coverUrl;
-        GenreId = genreId;
+        MovieSeriesGenreId = genreId;
         WatchPlatformId = watchPlatformId;
         CurrentSeason = currentSeason;
         CurrentEpisode = currentEpisode;

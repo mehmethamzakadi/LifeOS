@@ -6,7 +6,7 @@ public sealed record UpdateMovieSeriesCommand(
     Guid Id,
     string Title,
     string? CoverUrl = null,
-    Guid GenreId = default,
+    Guid MovieSeriesGenreId = default,
     Guid WatchPlatformId = default,
     int? CurrentSeason = null,
     int? CurrentEpisode = null,

@@ -39,7 +39,7 @@ public sealed class GetMovieSeriesByIdHandler
             movieSeries.Id,
             movieSeries.Title,
             movieSeries.CoverUrl,
-            movieSeries.GenreId,
+            movieSeries.MovieSeriesGenreId,
             movieSeries.Genre.Name,
             movieSeries.WatchPlatformId,
             movieSeries.WatchPlatform.Name,

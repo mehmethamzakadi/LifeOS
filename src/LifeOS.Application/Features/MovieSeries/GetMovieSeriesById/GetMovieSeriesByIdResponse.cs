@@ -6,7 +6,7 @@ public sealed record GetMovieSeriesByIdResponse(
     Guid Id,
     string Title,
     string? CoverUrl,
-    Guid GenreId,
+    Guid MovieSeriesGenreId,
     string GenreName,
     Guid WatchPlatformId,
     string WatchPlatformName,

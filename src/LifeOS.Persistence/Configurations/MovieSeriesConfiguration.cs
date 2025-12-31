@@ -17,7 +17,7 @@ public class MovieSeriesConfiguration : BaseConfiguraiton<MovieSeries>
         builder.Property(x => x.CoverUrl)
             .HasMaxLength(500);
 
-        builder.Property(x => x.GenreId)
+        builder.Property(x => x.MovieSeriesGenreId)
             .IsRequired();
 
         builder.Property(x => x.WatchPlatformId)
@@ -39,7 +39,7 @@ public class MovieSeriesConfiguration : BaseConfiguraiton<MovieSeries>
         // Foreign Keys
         builder.HasOne(x => x.Genre)
             .WithMany(x => x.MovieSeries)
-            .HasForeignKey(x => x.GenreId)
+            .HasForeignKey(x => x.MovieSeriesGenreId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.WatchPlatform)
@@ -51,8 +51,8 @@ public class MovieSeriesConfiguration : BaseConfiguraiton<MovieSeries>
         builder.HasIndex(x => x.Title)
             .HasDatabaseName("IX_MovieSeries_Title");
 
-        builder.HasIndex(x => x.GenreId)
-            .HasDatabaseName("IX_MovieSeries_GenreId");
+        builder.HasIndex(x => x.MovieSeriesGenreId)
+            .HasDatabaseName("IX_MovieSeries_MovieSeriesGenreId");
 
         builder.HasIndex(x => x.WatchPlatformId)
             .HasDatabaseName("IX_MovieSeries_WatchPlatformId");

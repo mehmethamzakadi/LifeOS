@@ -38,7 +38,7 @@ public sealed class UpdateMovieSeriesHandler
         movieSeries.Update(
             command.Title,
             command.CoverUrl,
-            command.GenreId,
+            command.MovieSeriesGenreId,
             command.WatchPlatformId,
             command.CurrentSeason,
             command.CurrentEpisode,
@@ -59,7 +59,7 @@ public sealed class UpdateMovieSeriesHandler
                 movieSeries.Id,
                 movieSeries.Title,
                 movieSeries.CoverUrl,
-                movieSeries.GenreId,
+                movieSeries.MovieSeriesGenreId,
                 movieSeries.Genre.Name,
                 movieSeries.WatchPlatformId,
                 movieSeries.WatchPlatform.Name,

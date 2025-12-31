@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LifeOS.Persistence.Migrations.PostgreSql
 {
     [DbContext(typeof(LifeOSDbContext))]
-    [Migration("20251231094455_AddReferenceDataTables")]
-    partial class AddReferenceDataTables
+    [Migration("20251231130131_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -403,11 +403,11 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("GenreId")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<Guid>("MovieSeriesGenreId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("PersonalNote")
                         .HasMaxLength(2000)
@@ -441,8 +441,8 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GenreId")
-                        .HasDatabaseName("IX_MovieSeries_GenreId");
+                    b.HasIndex("MovieSeriesGenreId")
+                        .HasDatabaseName("IX_MovieSeries_MovieSeriesGenreId");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_MovieSeries_Status");
@@ -1103,7 +1103,7 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 {
                     b.HasOne("LifeOS.Domain.Entities.MovieSeriesGenre", "Genre")
                         .WithMany("MovieSeries")
-                        .HasForeignKey("GenreId")
+                        .HasForeignKey("MovieSeriesGenreId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

@@ -7,7 +7,7 @@ public sealed record SearchMovieSeriesResponse : BaseEntityResponse
 {
     public string Title { get; init; } = string.Empty;
     public string? CoverUrl { get; init; }
-    public Guid GenreId { get; init; }
+    public Guid MovieSeriesGenreId { get; init; }
     public string GenreName { get; init; } = string.Empty;
     public Guid WatchPlatformId { get; init; }
     public string WatchPlatformName { get; init; } = string.Empty;
