@@ -27,6 +27,22 @@ using LifeOS.Application.Features.Games.UpdateGame;
 using LifeOS.Application.Features.Games.DeleteGame;
 using LifeOS.Application.Features.Games.GetGameById;
 using LifeOS.Application.Features.Games.SearchGames;
+using LifeOS.Application.Features.GamePlatforms.CreateGamePlatform;
+using LifeOS.Application.Features.GamePlatforms.UpdateGamePlatform;
+using LifeOS.Application.Features.GamePlatforms.DeleteGamePlatform;
+using LifeOS.Application.Features.GamePlatforms.GetAllGamePlatforms;
+using LifeOS.Application.Features.GameStores.CreateGameStore;
+using LifeOS.Application.Features.GameStores.UpdateGameStore;
+using LifeOS.Application.Features.GameStores.DeleteGameStore;
+using LifeOS.Application.Features.GameStores.GetAllGameStores;
+using LifeOS.Application.Features.WatchPlatforms.CreateWatchPlatform;
+using LifeOS.Application.Features.WatchPlatforms.UpdateWatchPlatform;
+using LifeOS.Application.Features.WatchPlatforms.DeleteWatchPlatform;
+using LifeOS.Application.Features.WatchPlatforms.GetAllWatchPlatforms;
+using LifeOS.Application.Features.MovieSeriesGenres.CreateMovieSeriesGenre;
+using LifeOS.Application.Features.MovieSeriesGenres.UpdateMovieSeriesGenre;
+using LifeOS.Application.Features.MovieSeriesGenres.DeleteMovieSeriesGenre;
+using LifeOS.Application.Features.MovieSeriesGenres.GetAllMovieSeriesGenres;
 using LifeOS.Application.Features.MovieSeries.CreateMovieSeries;
 using LifeOS.Application.Features.MovieSeries.UpdateMovieSeries;
 using LifeOS.Application.Features.MovieSeries.DeleteMovieSeries;
@@ -172,6 +188,30 @@ UpdateGameEndpoint.MapEndpoint(app);
 DeleteGameEndpoint.MapEndpoint(app);
 GetGameByIdEndpoint.MapEndpoint(app);
 SearchGamesEndpoint.MapEndpoint(app);
+
+// ✅ GamePlatforms Endpoints (Vertical Slice Architecture)
+CreateGamePlatformEndpoint.MapEndpoint(app);
+UpdateGamePlatformEndpoint.MapEndpoint(app);
+DeleteGamePlatformEndpoint.MapEndpoint(app);
+GetAllGamePlatformsEndpoint.MapEndpoint(app);
+
+// ✅ GameStores Endpoints (Vertical Slice Architecture)
+CreateGameStoreEndpoint.MapEndpoint(app);
+UpdateGameStoreEndpoint.MapEndpoint(app);
+DeleteGameStoreEndpoint.MapEndpoint(app);
+GetAllGameStoresEndpoint.MapEndpoint(app);
+
+// ✅ WatchPlatforms Endpoints (Vertical Slice Architecture)
+CreateWatchPlatformEndpoint.MapEndpoint(app);
+UpdateWatchPlatformEndpoint.MapEndpoint(app);
+DeleteWatchPlatformEndpoint.MapEndpoint(app);
+GetAllWatchPlatformsEndpoint.MapEndpoint(app);
+
+// ✅ MovieSeriesGenres Endpoints (Vertical Slice Architecture)
+CreateMovieSeriesGenreEndpoint.MapEndpoint(app);
+UpdateMovieSeriesGenreEndpoint.MapEndpoint(app);
+DeleteMovieSeriesGenreEndpoint.MapEndpoint(app);
+GetAllMovieSeriesGenresEndpoint.MapEndpoint(app);
 
 // ✅ MovieSeries Endpoints (Vertical Slice Architecture)
 CreateMovieSeriesEndpoint.MapEndpoint(app);

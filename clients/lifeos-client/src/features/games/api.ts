@@ -21,8 +21,8 @@ export async function createGame(values: GameFormValues) {
   const response = await api.post<ApiResult>('/games', {
     Title: values.title,
     CoverUrl: values.coverUrl || null,
-    Platform: values.platform,
-    Store: values.store,
+    GamePlatformId: values.gamePlatformId,
+    GameStoreId: values.gameStoreId,
     Status: values.status,
     IsOwned: values.isOwned
   });
@@ -34,8 +34,8 @@ export async function updateGame(id: string, values: GameFormValues) {
     Id: id,
     Title: values.title,
     CoverUrl: values.coverUrl || null,
-    Platform: values.platform,
-    Store: values.store,
+    GamePlatformId: values.gamePlatformId,
+    GameStoreId: values.gameStoreId,
     Status: values.status,
     IsOwned: values.isOwned
   });

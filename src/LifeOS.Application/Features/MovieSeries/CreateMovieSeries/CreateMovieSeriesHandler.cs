@@ -25,8 +25,8 @@ public sealed class CreateMovieSeriesHandler
         var movieSeries = MovieSeriesEntity.Create(
             command.Title,
             command.CoverUrl,
-            command.Type,
-            command.Platform,
+            command.GenreId,
+            command.WatchPlatformId,
             command.CurrentSeason,
             command.CurrentEpisode,
             command.Status,
@@ -36,15 +36,20 @@ public sealed class CreateMovieSeriesHandler
         await _context.MovieSeries.AddAsync(movieSeries, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Cache invalidation
+        // Cache invalidation - MovieSeries entity'yi yeniden yükle
+        await _context.Entry(movieSeries).Reference(m => m.Genre).LoadAsync(cancellationToken);
+        await _context.Entry(movieSeries).Reference(m => m.WatchPlatform).LoadAsync(cancellationToken);
+
         await _cache.Add(
             CacheKeys.MovieSeries(movieSeries.Id),
             new GetMovieSeriesByIdResponse(
                 movieSeries.Id,
                 movieSeries.Title,
                 movieSeries.CoverUrl,
-                movieSeries.Type,
-                movieSeries.Platform,
+                movieSeries.GenreId,
+                movieSeries.Genre.Name,
+                movieSeries.WatchPlatformId,
+                movieSeries.WatchPlatform.Name,
                 movieSeries.CurrentSeason,
                 movieSeries.CurrentEpisode,
                 movieSeries.Status,

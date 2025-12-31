@@ -69,6 +69,34 @@ public static class Permissions
     public const string WalletTransactionsDelete = "WalletTransactions.Delete";
     public const string WalletTransactionsViewAll = "WalletTransactions.ViewAll";
 
+    // GamePlatform Management Permissions
+    public const string GamePlatformsCreate = "GamePlatforms.Create";
+    public const string GamePlatformsRead = "GamePlatforms.Read";
+    public const string GamePlatformsUpdate = "GamePlatforms.Update";
+    public const string GamePlatformsDelete = "GamePlatforms.Delete";
+    public const string GamePlatformsViewAll = "GamePlatforms.ViewAll";
+
+    // GameStore Management Permissions
+    public const string GameStoresCreate = "GameStores.Create";
+    public const string GameStoresRead = "GameStores.Read";
+    public const string GameStoresUpdate = "GameStores.Update";
+    public const string GameStoresDelete = "GameStores.Delete";
+    public const string GameStoresViewAll = "GameStores.ViewAll";
+
+    // WatchPlatform Management Permissions
+    public const string WatchPlatformsCreate = "WatchPlatforms.Create";
+    public const string WatchPlatformsRead = "WatchPlatforms.Read";
+    public const string WatchPlatformsUpdate = "WatchPlatforms.Update";
+    public const string WatchPlatformsDelete = "WatchPlatforms.Delete";
+    public const string WatchPlatformsViewAll = "WatchPlatforms.ViewAll";
+
+    // MovieSeriesGenre Management Permissions
+    public const string MovieSeriesGenresCreate = "MovieSeriesGenres.Create";
+    public const string MovieSeriesGenresRead = "MovieSeriesGenres.Read";
+    public const string MovieSeriesGenresUpdate = "MovieSeriesGenres.Update";
+    public const string MovieSeriesGenresDelete = "MovieSeriesGenres.Delete";
+    public const string MovieSeriesGenresViewAll = "MovieSeriesGenres.ViewAll";
+
     /// <summary>
     /// Tüm permission'ları liste olarak döndürür. Seed işlemleri için kullanılır.
     /// </summary>
@@ -104,7 +132,19 @@ public static class Permissions
             PersonalNotesCreate, PersonalNotesRead, PersonalNotesUpdate, PersonalNotesDelete, PersonalNotesViewAll,
 
             // WalletTransactions
-            WalletTransactionsCreate, WalletTransactionsRead, WalletTransactionsUpdate, WalletTransactionsDelete, WalletTransactionsViewAll
+            WalletTransactionsCreate, WalletTransactionsRead, WalletTransactionsUpdate, WalletTransactionsDelete, WalletTransactionsViewAll,
+
+            // GamePlatforms
+            GamePlatformsCreate, GamePlatformsRead, GamePlatformsUpdate, GamePlatformsDelete, GamePlatformsViewAll,
+
+            // GameStores
+            GameStoresCreate, GameStoresRead, GameStoresUpdate, GameStoresDelete, GameStoresViewAll,
+
+            // WatchPlatforms
+            WatchPlatformsCreate, WatchPlatformsRead, WatchPlatformsUpdate, WatchPlatformsDelete, WatchPlatformsViewAll,
+
+            // MovieSeriesGenres
+            MovieSeriesGenresCreate, MovieSeriesGenresRead, MovieSeriesGenresUpdate, MovieSeriesGenresDelete, MovieSeriesGenresViewAll
         };
     }
 

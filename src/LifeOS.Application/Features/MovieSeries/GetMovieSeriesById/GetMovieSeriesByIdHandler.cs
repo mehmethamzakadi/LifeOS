@@ -27,6 +27,8 @@ public sealed class GetMovieSeriesByIdHandler
             return ApiResultExtensions.Success(cacheValue, "Film/Dizi bilgisi başarıyla getirildi");
 
         var movieSeries = await _context.MovieSeries
+            .Include(m => m.Genre)
+            .Include(m => m.WatchPlatform)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
@@ -37,8 +39,10 @@ public sealed class GetMovieSeriesByIdHandler
             movieSeries.Id,
             movieSeries.Title,
             movieSeries.CoverUrl,
-            movieSeries.Type,
-            movieSeries.Platform,
+            movieSeries.GenreId,
+            movieSeries.Genre.Name,
+            movieSeries.WatchPlatformId,
+            movieSeries.WatchPlatform.Name,
             movieSeries.CurrentSeason,
             movieSeries.CurrentEpisode,
             movieSeries.Status,

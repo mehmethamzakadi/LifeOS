@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LifeOS.Persistence.Migrations.PostgreSql
 {
     [DbContext(typeof(LifeOSDbContext))]
-    [Migration("20251229181055_Init")]
-    partial class Init
+    [Migration("20251231094455_AddReferenceDataTables")]
+    partial class AddReferenceDataTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,54 +24,6 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("LifeOS.Domain.Entities.ActivityLog", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ActivityType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Details")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<Guid?>("EntityId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Timestamp")
-                        .HasDatabaseName("IX_ActivityLogs_Timestamp");
-
-                    b.HasIndex("EntityType", "EntityId")
-                        .HasDatabaseName("IX_ActivityLogs_Entity");
-
-                    b.HasIndex("UserId", "Timestamp")
-                        .HasDatabaseName("IX_ActivityLogs_UserId_Timestamp");
-
-                    b.ToTable("ActivityLogs", (string)null);
-                });
 
             modelBuilder.Entity("LifeOS.Domain.Entities.Book", b =>
                 {
@@ -230,6 +182,12 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("GamePlatformId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GameStoreId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -238,9 +196,6 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<int>("Platform")
-                        .HasColumnType("integer");
-
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -248,9 +203,6 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                         .HasColumnName("RowVersion");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Store")
                         .HasColumnType("integer");
 
                     b.Property<string>("Title")
@@ -266,11 +218,14 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GamePlatformId")
+                        .HasDatabaseName("IX_Games_GamePlatformId");
+
+                    b.HasIndex("GameStoreId")
+                        .HasDatabaseName("IX_Games_GameStoreId");
+
                     b.HasIndex("IsOwned")
                         .HasDatabaseName("IX_Games_IsOwned");
-
-                    b.HasIndex("Platform")
-                        .HasDatabaseName("IX_Games_Platform");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_Games_Status");
@@ -279,6 +234,92 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                         .HasDatabaseName("IX_Games_Title");
 
                     b.ToTable("Games");
+                });
+
+            modelBuilder.Entity("LifeOS.Domain.Entities.GamePlatform", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea")
+                        .HasColumnName("RowVersion");
+
+                    b.Property<Guid?>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_GamePlatforms_Name");
+
+                    b.ToTable("GamePlatforms");
+                });
+
+            modelBuilder.Entity("LifeOS.Domain.Entities.GameStore", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea")
+                        .HasColumnName("RowVersion");
+
+                    b.Property<Guid?>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_GameStores_Name");
+
+                    b.ToTable("GameStores");
                 });
 
             modelBuilder.Entity("LifeOS.Domain.Entities.Image", b =>
@@ -362,15 +403,15 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("GenreId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<string>("PersonalNote")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
-
-                    b.Property<int>("Platform")
-                        .HasColumnType("integer");
 
                     b.Property<int?>("Rating")
                         .HasColumnType("integer");
@@ -389,19 +430,19 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
                     b.Property<Guid?>("UpdatedById")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("WatchPlatformId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Platform")
-                        .HasDatabaseName("IX_MovieSeries_Platform");
+                    b.HasIndex("GenreId")
+                        .HasDatabaseName("IX_MovieSeries_GenreId");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_MovieSeries_Status");
@@ -409,20 +450,17 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                     b.HasIndex("Title")
                         .HasDatabaseName("IX_MovieSeries_Title");
 
-                    b.HasIndex("Type")
-                        .HasDatabaseName("IX_MovieSeries_Type");
+                    b.HasIndex("WatchPlatformId")
+                        .HasDatabaseName("IX_MovieSeries_WatchPlatformId");
 
                     b.ToTable("MovieSeries");
                 });
 
-            modelBuilder.Entity("LifeOS.Domain.Entities.OutboxMessage", b =>
+            modelBuilder.Entity("LifeOS.Domain.Entities.MovieSeriesGenre", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CreatedById")
                         .HasColumnType("uuid");
@@ -433,42 +471,19 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Error")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("IdempotencyKey")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime?>("NextRetryAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Payload")
+                    b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("RetryCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("bytea");
+                        .HasColumnType("bytea")
+                        .HasColumnName("RowVersion");
 
                     b.Property<Guid?>("UpdatedById")
                         .HasColumnType("uuid");
@@ -478,18 +493,10 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_OutboxMessages_CreatedAt");
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_MovieSeriesGenres_Name");
 
-                    b.HasIndex("IdempotencyKey")
-                        .IsUnique()
-                        .HasDatabaseName("IX_OutboxMessages_IdempotencyKey");
-
-                    b.HasIndex("ProcessedAt", "NextRetryAt")
-                        .HasDatabaseName("IX_OutboxMessages_Unprocessed")
-                        .HasFilter("\"ProcessedAt\" IS NULL");
-
-                    b.ToTable("OutboxMessages", (string)null);
+                    b.ToTable("MovieSeriesGenres");
                 });
 
             modelBuilder.Entity("LifeOS.Domain.Entities.Permission", b =>
@@ -1020,14 +1027,47 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                     b.ToTable("WalletTransactions");
                 });
 
-            modelBuilder.Entity("LifeOS.Domain.Entities.ActivityLog", b =>
+            modelBuilder.Entity("LifeOS.Domain.Entities.WatchPlatform", b =>
                 {
-                    b.HasOne("LifeOS.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
-                    b.Navigation("User");
+                    b.Property<Guid?>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea")
+                        .HasColumnName("RowVersion");
+
+                    b.Property<Guid?>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_WatchPlatforms_Name");
+
+                    b.ToTable("WatchPlatforms");
                 });
 
             modelBuilder.Entity("LifeOS.Domain.Entities.Category", b =>
@@ -1038,6 +1078,44 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("LifeOS.Domain.Entities.Game", b =>
+                {
+                    b.HasOne("LifeOS.Domain.Entities.GamePlatform", "GamePlatform")
+                        .WithMany("Games")
+                        .HasForeignKey("GamePlatformId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LifeOS.Domain.Entities.GameStore", "GameStore")
+                        .WithMany("Games")
+                        .HasForeignKey("GameStoreId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GamePlatform");
+
+                    b.Navigation("GameStore");
+                });
+
+            modelBuilder.Entity("LifeOS.Domain.Entities.MovieSeries", b =>
+                {
+                    b.HasOne("LifeOS.Domain.Entities.MovieSeriesGenre", "Genre")
+                        .WithMany("MovieSeries")
+                        .HasForeignKey("GenreId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("LifeOS.Domain.Entities.WatchPlatform", "WatchPlatform")
+                        .WithMany("MovieSeries")
+                        .HasForeignKey("WatchPlatformId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Genre");
+
+                    b.Navigation("WatchPlatform");
                 });
 
             modelBuilder.Entity("LifeOS.Domain.Entities.RolePermission", b =>
@@ -1081,6 +1159,21 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                     b.Navigation("Children");
                 });
 
+            modelBuilder.Entity("LifeOS.Domain.Entities.GamePlatform", b =>
+                {
+                    b.Navigation("Games");
+                });
+
+            modelBuilder.Entity("LifeOS.Domain.Entities.GameStore", b =>
+                {
+                    b.Navigation("Games");
+                });
+
+            modelBuilder.Entity("LifeOS.Domain.Entities.MovieSeriesGenre", b =>
+                {
+                    b.Navigation("MovieSeries");
+                });
+
             modelBuilder.Entity("LifeOS.Domain.Entities.Permission", b =>
                 {
                     b.Navigation("RolePermissions");
@@ -1096,6 +1189,11 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
             modelBuilder.Entity("LifeOS.Domain.Entities.User", b =>
                 {
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("LifeOS.Domain.Entities.WatchPlatform", b =>
+                {
+                    b.Navigation("MovieSeries");
                 });
 #pragma warning restore 612, 618
         }

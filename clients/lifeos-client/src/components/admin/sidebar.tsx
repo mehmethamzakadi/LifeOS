@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { FolderKanban, LayoutDashboard, Users, Shield, User, BookOpen, Gamepad2, Film, StickyNote, Wallet } from 'lucide-react';
+import { FolderKanban, LayoutDashboard, Users, Shield, User, BookOpen, Gamepad2, Film, StickyNote, Wallet, Settings, ShoppingBag, Monitor, Tags } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { usePermission } from '../../hooks/use-permission';
 import { Permissions } from '../../lib/permissions';
@@ -87,6 +87,30 @@ const menuGroups = [
         label: 'Roller & Yetkiler',
         icon: Shield,
         requiredPermission: Permissions.RolesViewAll as string | undefined
+      },
+      {
+        to: '/admin/game-platforms',
+        label: 'Oyun Platformları',
+        icon: Gamepad2,
+        requiredPermission: Permissions.GamePlatformsViewAll as string | undefined
+      },
+      {
+        to: '/admin/game-stores',
+        label: 'Oyun Mağazaları',
+        icon: ShoppingBag,
+        requiredPermission: Permissions.GameStoresViewAll as string | undefined
+      },
+      {
+        to: '/admin/watch-platforms',
+        label: 'İzleme Platformları',
+        icon: Monitor,
+        requiredPermission: Permissions.WatchPlatformsViewAll as string | undefined
+      },
+      {
+        to: '/admin/movie-series-genres',
+        label: 'Film/Dizi Türleri',
+        icon: Tags,
+        requiredPermission: Permissions.MovieSeriesGenresViewAll as string | undefined
       }
     ]
   }

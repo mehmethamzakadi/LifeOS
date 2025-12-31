@@ -45,11 +45,40 @@ public sealed class SearchMovieSeriesHandler
             return ApiResultExtensions.Success(cachedResponse, "Film/Diziler başarıyla getirildi");
         }
 
-        var query = _context.MovieSeries.AsNoTracking().AsQueryable();
+        var query = _context.MovieSeries
+            .Include(m => m.Genre)
+            .Include(m => m.WatchPlatform)
+            .AsNoTracking()
+            .AsQueryable();
         query = query.ToDynamic(request.DynamicQuery);
         var movieSeriesDynamic = await query.ToPaginateAsync(pagination.PageIndex, pagination.PageSize, cancellationToken);
 
-        PaginatedListResponse<SearchMovieSeriesResponse> response = _mapper.Map<PaginatedListResponse<SearchMovieSeriesResponse>>(movieSeriesDynamic);
+        // Manual mapping because AutoMapper can't handle navigation properties easily
+        var responseItems = movieSeriesDynamic.Items.Select(m => new SearchMovieSeriesResponse
+        {
+            Id = m.Id,
+            Title = m.Title,
+            CoverUrl = m.CoverUrl,
+            GenreId = m.GenreId,
+            GenreName = m.Genre.Name,
+            WatchPlatformId = m.WatchPlatformId,
+            WatchPlatformName = m.WatchPlatform.Name,
+            CurrentSeason = m.CurrentSeason,
+            CurrentEpisode = m.CurrentEpisode,
+            Status = m.Status,
+            Rating = m.Rating,
+            PersonalNote = m.PersonalNote,
+            CreatedDate = m.CreatedDate
+        }).ToList();
+
+        var response = new PaginatedListResponse<SearchMovieSeriesResponse>
+        {
+            Items = responseItems,
+            Index = movieSeriesDynamic.Index,
+            Size = movieSeriesDynamic.Size,
+            Count = movieSeriesDynamic.Count,
+            Pages = movieSeriesDynamic.Pages
+        };
         await _cacheService.Add(
             cacheKey,
             response,

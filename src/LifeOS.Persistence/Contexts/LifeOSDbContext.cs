@@ -70,7 +70,11 @@ namespace LifeOS.Persistence.Contexts
         public DbSet<RefreshSession> RefreshSessions { get; set; }
         public DbSet<Book> Books { get; set; }
         public DbSet<Game> Games { get; set; }
+        public DbSet<GamePlatform> GamePlatforms { get; set; }
+        public DbSet<GameStore> GameStores { get; set; }
         public DbSet<MovieSeries> MovieSeries { get; set; }
+        public DbSet<WatchPlatform> WatchPlatforms { get; set; }
+        public DbSet<MovieSeriesGenre> MovieSeriesGenres { get; set; }
         public DbSet<PersonalNote> PersonalNotes { get; set; }
         public DbSet<WalletTransaction> WalletTransactions { get; set; }
     }

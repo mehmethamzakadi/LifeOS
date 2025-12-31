@@ -38,23 +38,28 @@ public sealed class UpdateGameHandler
         game.Update(
             command.Title,
             command.CoverUrl,
-            command.Platform,
-            command.Store,
+            command.GamePlatformId,
+            command.GameStoreId,
             command.Status,
             command.IsOwned);
 
         _context.Games.Update(game);
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Cache invalidation
+        // Cache invalidation - Game entity'yi yeniden yükle
+        await _context.Entry(game).Reference(g => g.GamePlatform).LoadAsync(cancellationToken);
+        await _context.Entry(game).Reference(g => g.GameStore).LoadAsync(cancellationToken);
+
         await _cache.Add(
             CacheKeys.Game(game.Id),
             new GetGameByIdResponse(
                 game.Id,
                 game.Title,
                 game.CoverUrl,
-                game.Platform,
-                game.Store,
+                game.GamePlatformId,
+                game.GamePlatform.Name,
+                game.GameStoreId,
+                game.GameStore.Name,
                 game.Status,
                 game.IsOwned),
             DateTimeOffset.UtcNow.Add(CacheDurations.Game),

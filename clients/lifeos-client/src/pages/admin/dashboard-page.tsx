@@ -11,7 +11,6 @@ import {
   StickyNote,
   Wallet,
   TrendingUp,
-  TrendingDown,
   ArrowRight,
   Calendar,
   DollarSign,
@@ -269,9 +268,11 @@ export function DashboardPage() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name}: ${(percent * 100).toFixed(0)}%`
-                  }
+                  label={(props: any) => {
+                    const percent = props.percent as number;
+                    const name = props.name as string;
+                    return `${name}: ${(percent * 100).toFixed(0)}%`;
+                  }}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"

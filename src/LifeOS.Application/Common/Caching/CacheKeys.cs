@@ -68,6 +68,14 @@ public static class CacheKeys
     public static string PersonalNoteGridVersion() => "version:personalnote:grid";
 
     public static string WalletTransactionGridVersion() => "version:wallettransaction:grid";
+
+    public static string GamePlatformListVersion() => "version:gameplatform:list";
+
+    public static string GameStoreListVersion() => "version:gamestore:list";
+
+    public static string WatchPlatformListVersion() => "version:watchplatform:list";
+
+    public static string MovieSeriesGenreListVersion() => "version:movieseriesgenre:list";
     
     #endregion
 

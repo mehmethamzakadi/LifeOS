@@ -27,6 +27,8 @@ public sealed class GetGameByIdHandler
             return ApiResultExtensions.Success(cacheValue, "Oyun bilgisi başarıyla getirildi");
 
         var game = await _context.Games
+            .Include(g => g.GamePlatform)
+            .Include(g => g.GameStore)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
@@ -37,8 +39,10 @@ public sealed class GetGameByIdHandler
             game.Id,
             game.Title,
             game.CoverUrl,
-            game.Platform,
-            game.Store,
+            game.GamePlatformId,
+            game.GamePlatform.Name,
+            game.GameStoreId,
+            game.GameStore.Name,
             game.Status,
             game.IsOwned);
 

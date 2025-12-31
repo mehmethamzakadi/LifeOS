@@ -45,11 +45,37 @@ public sealed class SearchGamesHandler
             return ApiResultExtensions.Success(cachedResponse, "Oyunlar başarıyla getirildi");
         }
 
-        var query = _context.Games.AsNoTracking().AsQueryable();
+        var query = _context.Games
+            .Include(g => g.GamePlatform)
+            .Include(g => g.GameStore)
+            .AsNoTracking()
+            .AsQueryable();
         query = query.ToDynamic(request.DynamicQuery);
         var gamesDynamic = await query.ToPaginateAsync(pagination.PageIndex, pagination.PageSize, cancellationToken);
 
-        PaginatedListResponse<SearchGamesResponse> response = _mapper.Map<PaginatedListResponse<SearchGamesResponse>>(gamesDynamic);
+        // Manual mapping because AutoMapper can't handle navigation properties easily
+        var responseItems = gamesDynamic.Items.Select(g => new SearchGamesResponse
+        {
+            Id = g.Id,
+            Title = g.Title,
+            CoverUrl = g.CoverUrl,
+            GamePlatformId = g.GamePlatformId,
+            GamePlatformName = g.GamePlatform.Name,
+            GameStoreId = g.GameStoreId,
+            GameStoreName = g.GameStore.Name,
+            Status = g.Status,
+            IsOwned = g.IsOwned,
+            CreatedDate = g.CreatedDate
+        }).ToList();
+
+        var response = new PaginatedListResponse<SearchGamesResponse>
+        {
+            Items = responseItems,
+            Index = gamesDynamic.Index,
+            Size = gamesDynamic.Size,
+            Count = gamesDynamic.Count,
+            Pages = gamesDynamic.Pages
+        };
         await _cacheService.Add(
             cacheKey,
             response,

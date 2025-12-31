@@ -15,6 +15,11 @@ import { GamesPage } from '../pages/admin/games-page';
 import { MoviesPage } from '../pages/admin/movies-page';
 import { NotesPage } from '../pages/admin/notes-page';
 import { WalletPage } from '../pages/admin/wallet-page';
+import { ReferenceDataPage } from '../pages/admin/reference-data-page';
+import { GamePlatformsPage } from '../pages/admin/game-platforms-page';
+import { GameStoresPage } from '../pages/admin/game-stores-page';
+import { WatchPlatformsPage } from '../pages/admin/watch-platforms-page';
+import { MovieSeriesGenresPage } from '../pages/admin/movie-series-genres-page';
 import { ForbiddenPage } from '../pages/error/forbidden-page';
 import { Permissions } from '../lib/permissions';
 
@@ -122,6 +127,46 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredPermission={Permissions.WalletTransactionsViewAll}>
             <WalletPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'reference-data',
+        element: (
+          <ProtectedRoute>
+            <ReferenceDataPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'game-platforms',
+        element: (
+          <ProtectedRoute requiredPermission={Permissions.GamePlatformsViewAll}>
+            <GamePlatformsPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'game-stores',
+        element: (
+          <ProtectedRoute requiredPermission={Permissions.GameStoresViewAll}>
+            <GameStoresPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'watch-platforms',
+        element: (
+          <ProtectedRoute requiredPermission={Permissions.WatchPlatformsViewAll}>
+            <WatchPlatformsPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'movie-series-genres',
+        element: (
+          <ProtectedRoute requiredPermission={Permissions.MovieSeriesGenresViewAll}>
+            <MovieSeriesGenresPage />
           </ProtectedRoute>
         )
       }

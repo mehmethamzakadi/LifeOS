@@ -25,12 +25,28 @@ using LifeOS.Application.Features.Games.UpdateGame;
 using LifeOS.Application.Features.Games.DeleteGame;
 using LifeOS.Application.Features.Games.GetGameById;
 using LifeOS.Application.Features.Games.SearchGames;
+using LifeOS.Application.Features.GamePlatforms.CreateGamePlatform;
+using LifeOS.Application.Features.GamePlatforms.UpdateGamePlatform;
+using LifeOS.Application.Features.GamePlatforms.DeleteGamePlatform;
+using LifeOS.Application.Features.GamePlatforms.GetAllGamePlatforms;
+using LifeOS.Application.Features.GameStores.CreateGameStore;
+using LifeOS.Application.Features.GameStores.UpdateGameStore;
+using LifeOS.Application.Features.GameStores.DeleteGameStore;
+using LifeOS.Application.Features.GameStores.GetAllGameStores;
 using LifeOS.Application.Features.Images.UploadImage;
 using LifeOS.Application.Features.MovieSeries.CreateMovieSeries;
 using LifeOS.Application.Features.MovieSeries.UpdateMovieSeries;
 using LifeOS.Application.Features.MovieSeries.DeleteMovieSeries;
 using LifeOS.Application.Features.MovieSeries.GetMovieSeriesById;
 using LifeOS.Application.Features.MovieSeries.SearchMovieSeries;
+using LifeOS.Application.Features.MovieSeriesGenres.CreateMovieSeriesGenre;
+using LifeOS.Application.Features.MovieSeriesGenres.UpdateMovieSeriesGenre;
+using LifeOS.Application.Features.MovieSeriesGenres.DeleteMovieSeriesGenre;
+using LifeOS.Application.Features.MovieSeriesGenres.GetAllMovieSeriesGenres;
+using LifeOS.Application.Features.WatchPlatforms.CreateWatchPlatform;
+using LifeOS.Application.Features.WatchPlatforms.UpdateWatchPlatform;
+using LifeOS.Application.Features.WatchPlatforms.DeleteWatchPlatform;
+using LifeOS.Application.Features.WatchPlatforms.GetAllWatchPlatforms;
 using LifeOS.Application.Features.PersonalNotes.CreatePersonalNote;
 using LifeOS.Application.Features.PersonalNotes.UpdatePersonalNote;
 using LifeOS.Application.Features.PersonalNotes.DeletePersonalNote;
@@ -131,6 +147,18 @@ namespace LifeOS.Application
             services.AddScoped<GetGameByIdHandler>();
             services.AddScoped<SearchGamesHandler>();
 
+            // Register GamePlatforms feature handlers (Vertical Slice Architecture)
+            services.AddScoped<CreateGamePlatformHandler>();
+            services.AddScoped<UpdateGamePlatformHandler>();
+            services.AddScoped<DeleteGamePlatformHandler>();
+            services.AddScoped<GetAllGamePlatformsHandler>();
+
+            // Register GameStores feature handlers (Vertical Slice Architecture)
+            services.AddScoped<CreateGameStoreHandler>();
+            services.AddScoped<UpdateGameStoreHandler>();
+            services.AddScoped<DeleteGameStoreHandler>();
+            services.AddScoped<GetAllGameStoresHandler>();
+
             // Register Images feature handlers (Vertical Slice Architecture)
             services.AddScoped<UploadImageHandler>();
 
@@ -140,6 +168,18 @@ namespace LifeOS.Application
             services.AddScoped<DeleteMovieSeriesHandler>();
             services.AddScoped<GetMovieSeriesByIdHandler>();
             services.AddScoped<SearchMovieSeriesHandler>();
+
+            // Register MovieSeriesGenres feature handlers (Vertical Slice Architecture)
+            services.AddScoped<CreateMovieSeriesGenreHandler>();
+            services.AddScoped<UpdateMovieSeriesGenreHandler>();
+            services.AddScoped<DeleteMovieSeriesGenreHandler>();
+            services.AddScoped<GetAllMovieSeriesGenresHandler>();
+
+            // Register WatchPlatforms feature handlers (Vertical Slice Architecture)
+            services.AddScoped<CreateWatchPlatformHandler>();
+            services.AddScoped<UpdateWatchPlatformHandler>();
+            services.AddScoped<DeleteWatchPlatformHandler>();
+            services.AddScoped<GetAllWatchPlatformsHandler>();
 
             // Register PersonalNotes feature handlers (Vertical Slice Architecture)
             services.AddScoped<CreatePersonalNoteHandler>();

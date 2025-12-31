@@ -14,23 +14,27 @@ public sealed class MovieSeries : AggregateRoot
 
     public string Title { get; private set; } = default!;
     public string? CoverUrl { get; private set; }
-    public MovieSeriesType Type { get; private set; }
-    public MovieSeriesPlatform Platform { get; private set; }
+    public Guid GenreId { get; private set; }
+    public Guid WatchPlatformId { get; private set; }
     public int? CurrentSeason { get; private set; }
     public int? CurrentEpisode { get; private set; }
     public MovieSeriesStatus Status { get; private set; }
     public int? Rating { get; private set; }
     public string? PersonalNote { get; private set; }
 
-    public static MovieSeries Create(string title, string? coverUrl, MovieSeriesType type, MovieSeriesPlatform platform, int? currentSeason, int? currentEpisode, MovieSeriesStatus status, int? rating, string? personalNote)
+    // Navigation properties
+    public MovieSeriesGenre Genre { get; private set; } = null!;
+    public WatchPlatform WatchPlatform { get; private set; } = null!;
+
+    public static MovieSeries Create(string title, string? coverUrl, Guid genreId, Guid watchPlatformId, int? currentSeason, int? currentEpisode, MovieSeriesStatus status, int? rating, string? personalNote)
     {
         var movieSeries = new MovieSeries
         {
             Id = Guid.NewGuid(),
             Title = title,
             CoverUrl = coverUrl,
-            Type = type,
-            Platform = platform,
+            GenreId = genreId,
+            WatchPlatformId = watchPlatformId,
             CurrentSeason = currentSeason,
             CurrentEpisode = currentEpisode,
             Status = status,
@@ -43,12 +47,12 @@ public sealed class MovieSeries : AggregateRoot
         return movieSeries;
     }
 
-    public void Update(string title, string? coverUrl, MovieSeriesType type, MovieSeriesPlatform platform, int? currentSeason, int? currentEpisode, MovieSeriesStatus status, int? rating, string? personalNote)
+    public void Update(string title, string? coverUrl, Guid genreId, Guid watchPlatformId, int? currentSeason, int? currentEpisode, MovieSeriesStatus status, int? rating, string? personalNote)
     {
         Title = title;
         CoverUrl = coverUrl;
-        Type = type;
-        Platform = platform;
+        GenreId = genreId;
+        WatchPlatformId = watchPlatformId;
         CurrentSeason = currentSeason;
         CurrentEpisode = currentEpisode;
         Status = status;

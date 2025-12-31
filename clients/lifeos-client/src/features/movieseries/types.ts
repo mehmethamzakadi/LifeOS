@@ -1,17 +1,5 @@
 import { PaginatedListResponse } from '../../types/api';
 
-export enum MovieSeriesType {
-  Movie = 0,
-  Series = 1
-}
-
-export enum MovieSeriesPlatform {
-  Netflix = 0,
-  Prime = 1,
-  Disney = 2,
-  Local = 3
-}
-
 export enum MovieSeriesStatus {
   ToWatch = 0,
   Watching = 1,
@@ -22,8 +10,10 @@ export interface MovieSeries {
   id: string;
   title: string;
   coverUrl?: string;
-  type: MovieSeriesType;
-  platform: MovieSeriesPlatform;
+  movieSeriesGenreId: string;
+  movieSeriesGenreName: string;
+  watchPlatformId: string;
+  watchPlatformName: string;
   currentSeason?: number;
   currentEpisode?: number;
   status: MovieSeriesStatus;
@@ -37,8 +27,8 @@ export type MovieSeriesListResponse = PaginatedListResponse<MovieSeries>;
 export interface MovieSeriesFormValues {
   title: string;
   coverUrl?: string;
-  type: MovieSeriesType;
-  platform: MovieSeriesPlatform;
+  movieSeriesGenreId: string;
+  watchPlatformId: string;
   currentSeason?: number;
   currentEpisode?: number;
   status: MovieSeriesStatus;
@@ -54,22 +44,10 @@ export interface MovieSeriesTableFilters {
     field: string;
     dir: 'asc' | 'desc';
   };
-  type?: MovieSeriesType;
-  platform?: MovieSeriesPlatform;
+  movieSeriesGenreId?: string;
+  watchPlatformId?: string;
   status?: MovieSeriesStatus;
 }
-
-export const MovieSeriesTypeLabels: Record<MovieSeriesType, string> = {
-  [MovieSeriesType.Movie]: 'Film',
-  [MovieSeriesType.Series]: 'Dizi'
-};
-
-export const MovieSeriesPlatformLabels: Record<MovieSeriesPlatform, string> = {
-  [MovieSeriesPlatform.Netflix]: 'Netflix',
-  [MovieSeriesPlatform.Prime]: 'Prime Video',
-  [MovieSeriesPlatform.Disney]: 'Disney+',
-  [MovieSeriesPlatform.Local]: 'Yerel'
-};
 
 export const MovieSeriesStatusLabels: Record<MovieSeriesStatus, string> = {
   [MovieSeriesStatus.ToWatch]: 'İzlenecek',

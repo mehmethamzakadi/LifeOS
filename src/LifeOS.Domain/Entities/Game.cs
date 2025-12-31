@@ -14,20 +14,24 @@ public sealed class Game : AggregateRoot
 
     public string Title { get; private set; } = default!;
     public string? CoverUrl { get; private set; }
-    public GamePlatform Platform { get; private set; }
-    public GameStore Store { get; private set; }
+    public Guid GamePlatformId { get; private set; }
+    public Guid GameStoreId { get; private set; }
     public GameStatus Status { get; private set; }
     public bool IsOwned { get; private set; }
 
-    public static Game Create(string title, string? coverUrl, GamePlatform platform, GameStore store, GameStatus status, bool isOwned)
+    // Navigation properties
+    public GamePlatform GamePlatform { get; private set; } = null!;
+    public GameStore GameStore { get; private set; } = null!;
+
+    public static Game Create(string title, string? coverUrl, Guid gamePlatformId, Guid gameStoreId, GameStatus status, bool isOwned)
     {
         var game = new Game
         {
             Id = Guid.NewGuid(),
             Title = title,
             CoverUrl = coverUrl,
-            Platform = platform,
-            Store = store,
+            GamePlatformId = gamePlatformId,
+            GameStoreId = gameStoreId,
             Status = status,
             IsOwned = isOwned,
             CreatedDate = DateTime.UtcNow
@@ -37,12 +41,12 @@ public sealed class Game : AggregateRoot
         return game;
     }
 
-    public void Update(string title, string? coverUrl, GamePlatform platform, GameStore store, GameStatus status, bool isOwned)
+    public void Update(string title, string? coverUrl, Guid gamePlatformId, Guid gameStoreId, GameStatus status, bool isOwned)
     {
         Title = title;
         CoverUrl = coverUrl;
-        Platform = platform;
-        Store = store;
+        GamePlatformId = gamePlatformId;
+        GameStoreId = gameStoreId;
         Status = status;
         IsOwned = isOwned;
         UpdatedDate = DateTime.UtcNow;

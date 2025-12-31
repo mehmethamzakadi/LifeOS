@@ -70,6 +70,18 @@ namespace LifeOS.Infrastructure
                 };
             });
 
+            // Authorization - AddAuthentication'dan hemen sonra olmalı
+            services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+            services.AddAuthorization(options =>
+            {
+                // Permission'lar için policy'ler oluştur
+                foreach (var permission in Permissions.GetAllPermissions())
+                {
+                    options.AddPolicy(permission, policy =>
+                        policy.Requirements.Add(new PermissionRequirement(permission)));
+                }
+            });
+
             var redisConnectionString = configuration.GetConnectionString("RedisCache");
             IConnectionMultiplexer? connectionMultiplexer = null;
 
@@ -130,18 +142,6 @@ namespace LifeOS.Infrastructure
             .AddPolicyHandler(GetRetryPolicy(ollamaOptions));
 
             services.AddScoped<IAiService, AiService>();
-
-            // Authorization
-            services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
-            services.AddAuthorization(options =>
-            {
-                // Permission'lar için policy'ler oluştur
-                foreach (var permission in Permissions.GetAllPermissions())
-                {
-                    options.AddPolicy(permission, policy =>
-                        policy.Requirements.Add(new PermissionRequirement(permission)));
-                }
-            });
 
             // Register log cleanup background service
             services.AddHostedService<LogCleanupService>();

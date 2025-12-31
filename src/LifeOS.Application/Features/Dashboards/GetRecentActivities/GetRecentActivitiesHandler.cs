@@ -31,6 +31,7 @@ public sealed class GetRecentActivitiesHandler
 
         // Son 5 oyun
         var recentGames = await _context.Games
+            .Include(g => g.GamePlatform)
             .Where(g => !g.IsDeleted)
             .OrderByDescending(g => g.CreatedDate)
             .Take(5)
@@ -38,12 +39,13 @@ public sealed class GetRecentActivitiesHandler
                 g.Id,
                 "game",
                 g.Title,
-                g.Platform.ToString(),
+                g.GamePlatform.Name,
                 g.CreatedDate))
             .ToListAsync(cancellationToken);
 
         // Son 5 film/dizi
         var recentMovies = await _context.MovieSeries
+            .Include(m => m.Genre)
             .Where(m => !m.IsDeleted)
             .OrderByDescending(m => m.CreatedDate)
             .Take(5)
@@ -51,7 +53,7 @@ public sealed class GetRecentActivitiesHandler
                 m.Id,
                 "movie",
                 m.Title,
-                m.Type.ToString(),
+                m.Genre.Name,
                 m.CreatedDate))
             .ToListAsync(cancellationToken);
 

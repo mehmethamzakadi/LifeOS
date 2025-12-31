@@ -5,8 +5,8 @@ namespace LifeOS.Application.Features.MovieSeries.CreateMovieSeries;
 public sealed record CreateMovieSeriesCommand(
     string Title,
     string? CoverUrl = null,
-    MovieSeriesType Type = MovieSeriesType.Movie,
-    MovieSeriesPlatform Platform = MovieSeriesPlatform.Netflix,
+    Guid GenreId = default,
+    Guid WatchPlatformId = default,
     int? CurrentSeason = null,
     int? CurrentEpisode = null,
     MovieSeriesStatus Status = MovieSeriesStatus.ToWatch,

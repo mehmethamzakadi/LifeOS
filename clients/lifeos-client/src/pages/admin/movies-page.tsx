@@ -5,7 +5,11 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { createMovieSeries, updateMovieSeries, deleteMovieSeries, fetchMovieSeries } from '../../features/movieseries/api';
-import { MovieSeries, MovieSeriesFormValues, MovieSeriesType, MovieSeriesStatus, MovieSeriesPlatform, MovieSeriesTypeLabels, MovieSeriesStatusLabels, MovieSeriesPlatformLabels } from '../../features/movieseries/types';
+import { MovieSeries, MovieSeriesFormValues, MovieSeriesStatus, MovieSeriesStatusLabels } from '../../features/movieseries/types';
+import { getAllWatchPlatforms } from '../../features/watchplatforms/api';
+import { getAllMovieSeriesGenres } from '../../features/movieseriesgenres/api';
+import { WatchPlatform } from '../../features/watchplatforms/types';
+import { MovieSeriesGenre } from '../../features/movieseriesgenres/types';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -27,8 +31,8 @@ import { handleApiError, showApiResponseError } from '../../lib/api-error';
 const movieSeriesSchema = z.object({
   title: z.string().min(2, 'Başlık en az 2 karakter olmalıdır').max(200, 'Başlık en fazla 200 karakter olabilir'),
   coverUrl: z.string().url('Geçerli bir URL girin').optional().or(z.literal('')),
-  type: z.nativeEnum(MovieSeriesType),
-  platform: z.nativeEnum(MovieSeriesPlatform),
+  movieSeriesGenreId: z.string().uuid('Geçerli bir tür seçin'),
+  watchPlatformId: z.string().uuid('Geçerli bir platform seçin'),
   currentSeason: z.number().min(1).optional().or(z.literal('')),
   currentEpisode: z.number().min(1).optional().or(z.literal('')),
   status: z.nativeEnum(MovieSeriesStatus),
@@ -46,7 +50,7 @@ export function MoviesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingMovie, setEditingMovie] = useState<MovieSeries | null>(null);
   const [movieToDelete, setMovieToDelete] = useState<MovieSeries | null>(null);
-  const [selectedType, setSelectedType] = useState<MovieSeriesType | 'all'>('all');
+  const [selectedGenre, setSelectedGenre] = useState<string | 'all'>('all');
 
   const { data, isLoading } = useQuery({
     queryKey: ['movieseries', pageIndex, pageSize, searchTerm],
@@ -58,13 +62,23 @@ export function MoviesPage() {
     })
   });
 
+  const { data: watchPlatforms } = useQuery({
+    queryKey: ['watch-platforms'],
+    queryFn: getAllWatchPlatforms
+  });
+
+  const { data: movieSeriesGenres } = useQuery({
+    queryKey: ['movie-series-genres'],
+    queryFn: getAllMovieSeriesGenres
+  });
+
   const formMethods = useForm<MovieSeriesFormSchema>({
     resolver: zodResolver(movieSeriesSchema),
     defaultValues: {
       title: '',
       coverUrl: '',
-      type: MovieSeriesType.Movie,
-      platform: MovieSeriesPlatform.Netflix,
+      movieSeriesGenreId: '',
+      watchPlatformId: '',
       currentSeason: undefined,
       currentEpisode: undefined,
       status: MovieSeriesStatus.ToWatch,
@@ -78,8 +92,8 @@ export function MoviesPage() {
       formMethods.reset({
         title: editingMovie.title,
         coverUrl: editingMovie.coverUrl || '',
-        type: editingMovie.type,
-        platform: editingMovie.platform,
+        movieSeriesGenreId: editingMovie.movieSeriesGenreId,
+        watchPlatformId: editingMovie.watchPlatformId,
         currentSeason: editingMovie.currentSeason,
         currentEpisode: editingMovie.currentEpisode,
         status: editingMovie.status,
@@ -90,8 +104,8 @@ export function MoviesPage() {
       formMethods.reset({
         title: '',
         coverUrl: '',
-        type: MovieSeriesType.Movie,
-        platform: MovieSeriesPlatform.Netflix,
+        movieSeriesGenreId: movieSeriesGenres?.[0]?.id || '',
+        watchPlatformId: watchPlatforms?.[0]?.id || '',
         currentSeason: undefined,
         currentEpisode: undefined,
         status: MovieSeriesStatus.ToWatch,
@@ -99,7 +113,7 @@ export function MoviesPage() {
         personalNote: ''
       });
     }
-  }, [editingMovie, formMethods]);
+  }, [editingMovie, formMethods, movieSeriesGenres, watchPlatforms]);
 
   const createMutation = useMutation({
     mutationFn: createMovieSeries,
@@ -149,8 +163,8 @@ export function MoviesPage() {
     const formData: MovieSeriesFormValues = {
       title: values.title,
       coverUrl: values.coverUrl || undefined,
-      type: values.type,
-      platform: values.platform,
+      movieSeriesGenreId: values.movieSeriesGenreId,
+      watchPlatformId: values.watchPlatformId,
       currentSeason: values.currentSeason || undefined,
       currentEpisode: values.currentEpisode || undefined,
       status: values.status,
@@ -166,9 +180,9 @@ export function MoviesPage() {
 
   const filteredMovies = useMemo(() => {
     if (!data?.items) return [];
-    if (selectedType === 'all') return data.items;
-    return data.items.filter(movie => movie.type === selectedType);
-  }, [data, selectedType]);
+    if (selectedGenre === 'all') return data.items;
+    return data.items.filter(movie => movie.movieSeriesGenreId === selectedGenre);
+  }, [data, selectedGenre]);
 
   return (
     <div className="space-y-6">
@@ -200,25 +214,9 @@ export function MoviesPage() {
                 <DialogDescription>İzlediğiniz film veya diziyi ekleyin.</DialogDescription>
               </DialogHeader>
               <form id="create-movie-form" onSubmit={onSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="movie-title">Başlık *</Label>
-                    <Input id="movie-title" placeholder="Film/Dizi adı" {...formMethods.register('title')} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="movie-type">Tür</Label>
-                    <select
-                      id="movie-type"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      {...formMethods.register('type', { valueAsNumber: true })}
-                    >
-                      {Object.entries(MovieSeriesTypeLabels).map(([key, label]) => (
-                        <option key={key} value={key}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="movie-title">Başlık *</Label>
+                  <Input id="movie-title" placeholder="Film/Dizi adı" {...formMethods.register('title')} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="movie-cover">Kapak URL</Label>
@@ -229,19 +227,35 @@ export function MoviesPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="movie-platform">Platform</Label>
+                    <Label htmlFor="movie-genre">Tür</Label>
                     <select
-                      id="movie-platform"
+                      id="movie-genre"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      {...formMethods.register('platform', { valueAsNumber: true })}
+                      {...formMethods.register('movieSeriesGenreId')}
                     >
-                      {Object.entries(MovieSeriesPlatformLabels).map(([key, label]) => (
-                        <option key={key} value={key}>
-                          {label}
+                      {movieSeriesGenres?.map(genre => (
+                        <option key={genre.id} value={genre.id}>
+                          {genre.name}
                         </option>
                       ))}
                     </select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="movie-platform">Platform</Label>
+                    <select
+                      id="movie-platform"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      {...formMethods.register('watchPlatformId')}
+                    >
+                      {watchPlatforms?.map(platform => (
+                        <option key={platform.id} value={platform.id}>
+                          {platform.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="movie-status">Durum</Label>
                     <select
@@ -257,7 +271,7 @@ export function MoviesPage() {
                     </select>
                   </div>
                 </div>
-                {formMethods.watch('type') === MovieSeriesType.Series && (
+                {movieSeriesGenres?.find(g => g.id === formMethods.watch('movieSeriesGenreId'))?.name === 'Dizi' && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="movie-season">Sezon</Label>
@@ -315,28 +329,23 @@ export function MoviesPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex gap-2">
               <Button
-                variant={selectedType === 'all' ? 'default' : 'outline'}
+                variant={selectedGenre === 'all' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSelectedType('all')}
+                onClick={() => setSelectedGenre('all')}
               >
                 Tümü
               </Button>
-              <Button
-                variant={selectedType === MovieSeriesType.Movie ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedType(MovieSeriesType.Movie)}
-              >
-                <Film className="h-4 w-4 mr-2" />
-                Filmler
-              </Button>
-              <Button
-                variant={selectedType === MovieSeriesType.Series ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedType(MovieSeriesType.Series)}
-              >
-                <Tv className="h-4 w-4 mr-2" />
-                Diziler
-              </Button>
+              {movieSeriesGenres?.map(genre => (
+                <Button
+                  key={genre.id}
+                  variant={selectedGenre === genre.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedGenre(genre.id)}
+                >
+                  {genre.name === 'Film' ? <Film className="h-4 w-4 mr-2" /> : <Tv className="h-4 w-4 mr-2" />}
+                  {genre.name}
+                </Button>
+              ))}
             </div>
             <Input
               placeholder="Film/Dizi ara..."
@@ -359,12 +368,12 @@ export function MoviesPage() {
                       <div className="flex-1">
                         <CardTitle className="text-lg">{movie.title}</CardTitle>
                         <div className="flex items-center gap-2 mt-2">
-                          {movie.type === MovieSeriesType.Movie ? (
+                          {movie.movieSeriesGenreName === 'Film' ? (
                             <Film className="h-4 w-4 text-primary" />
                           ) : (
                             <Tv className="h-4 w-4 text-primary" />
                           )}
-                          <Badge variant="secondary">{MovieSeriesTypeLabels[movie.type]}</Badge>
+                          <Badge variant="secondary">{movie.movieSeriesGenreName}</Badge>
                           <Badge variant="outline">{MovieSeriesStatusLabels[movie.status]}</Badge>
                         </div>
                       </div>
@@ -395,9 +404,9 @@ export function MoviesPage() {
                       />
                     )}
                     <div className="text-sm text-muted-foreground">
-                      <span>{MovieSeriesPlatformLabels[movie.platform]}</span>
+                      <span>{movie.watchPlatformName}</span>
                     </div>
-                    {movie.type === MovieSeriesType.Series && (movie.currentSeason || movie.currentEpisode) && (
+                    {movie.movieSeriesGenreName === 'Dizi' && (movie.currentSeason || movie.currentEpisode) && (
                       <div className="text-sm">
                         Sezon {movie.currentSeason || '?'}, Bölüm {movie.currentEpisode || '?'}
                       </div>
@@ -431,25 +440,9 @@ export function MoviesPage() {
             <DialogDescription>Film/Dizi bilgilerini güncelleyin.</DialogDescription>
           </DialogHeader>
           <form id="edit-movie-form" onSubmit={onSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-movie-title">Başlık *</Label>
-                <Input id="edit-movie-title" {...formMethods.register('title')} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-movie-type">Tür</Label>
-                <select
-                  id="edit-movie-type"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  {...formMethods.register('type', { valueAsNumber: true })}
-                >
-                  {Object.entries(MovieSeriesTypeLabels).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-movie-title">Başlık *</Label>
+              <Input id="edit-movie-title" {...formMethods.register('title')} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-movie-cover">Kapak URL</Label>
@@ -460,19 +453,35 @@ export function MoviesPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-movie-platform">Platform</Label>
+                <Label htmlFor="edit-movie-genre">Tür</Label>
                 <select
-                  id="edit-movie-platform"
+                  id="edit-movie-genre"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  {...formMethods.register('platform', { valueAsNumber: true })}
+                  {...formMethods.register('movieSeriesGenreId')}
                 >
-                  {Object.entries(MovieSeriesPlatformLabels).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
+                  {movieSeriesGenres?.map(genre => (
+                    <option key={genre.id} value={genre.id}>
+                      {genre.name}
                     </option>
                   ))}
                 </select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-movie-platform">Platform</Label>
+                <select
+                  id="edit-movie-platform"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  {...formMethods.register('watchPlatformId')}
+                >
+                  {watchPlatforms?.map(platform => (
+                    <option key={platform.id} value={platform.id}>
+                      {platform.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-movie-status">Durum</Label>
                 <select
@@ -488,7 +497,7 @@ export function MoviesPage() {
                 </select>
               </div>
             </div>
-            {formMethods.watch('type') === MovieSeriesType.Series && (
+            {movieSeriesGenres?.find(g => g.id === formMethods.watch('movieSeriesGenreId'))?.name === 'Dizi' && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-movie-season">Sezon</Label>

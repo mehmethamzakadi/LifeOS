@@ -48,13 +48,37 @@ public class LogCleanupService : BackgroundService
                 var delay = next3AM - now;
 
                 _logger.LogInformation("Next log cleanup scheduled for: {NextRun}", next3AM);
-                await Task.Delay(delay, stoppingToken);
+                try
+                {
+                    await Task.Delay(delay, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Normal shutdown - log ve çık
+                    _logger.LogInformation("LogCleanupService is stopping");
+                    break;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Normal shutdown
+                _logger.LogInformation("LogCleanupService is stopping");
+                break;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during log cleanup");
                 // Hata durumunda yeniden denemeden önce 1 saat bekle
-                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    // Normal shutdown
+                    _logger.LogInformation("LogCleanupService is stopping");
+                    break;
+                }
             }
         }
     }

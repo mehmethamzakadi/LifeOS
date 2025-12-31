@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace LifeOS.Persistence.Migrations.PostgreSql
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class AddReferenceDataTables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -67,16 +67,11 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 });
 
             migrationBuilder.CreateTable(
-                name: "Games",
+                name: "GamePlatforms",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    CoverUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    Platform = table.Column<int>(type: "integer", nullable: false),
-                    Store = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    IsOwned = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
@@ -87,7 +82,26 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Games", x => x.Id);
+                    table.PrimaryKey("PK_GamePlatforms", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GameStores",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GameStores", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -114,19 +128,11 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 });
 
             migrationBuilder.CreateTable(
-                name: "MovieSeries",
+                name: "MovieSeriesGenres",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    CoverUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    Type = table.Column<int>(type: "integer", nullable: false),
-                    Platform = table.Column<int>(type: "integer", nullable: false),
-                    CurrentSeason = table.Column<int>(type: "integer", nullable: true),
-                    CurrentEpisode = table.Column<int>(type: "integer", nullable: true),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    Rating = table.Column<int>(type: "integer", nullable: true),
-                    PersonalNote = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
@@ -137,33 +143,7 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MovieSeries", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OutboxMessages",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    IdempotencyKey = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
-                    EventType = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    Payload = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ProcessedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    RetryCount = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    Error = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    NextRetryAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
-                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
-                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OutboxMessages", x => x.Id);
+                    table.PrimaryKey("PK_MovieSeriesGenres", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -320,6 +300,61 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 });
 
             migrationBuilder.CreateTable(
+                name: "WatchPlatforms",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WatchPlatforms", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Games",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    CoverUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    GamePlatformId = table.Column<Guid>(type: "uuid", nullable: false),
+                    GameStoreId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    IsOwned = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Games", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Games_GamePlatforms_GamePlatformId",
+                        column: x => x.GamePlatformId,
+                        principalTable: "GamePlatforms",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Games_GameStores_GameStoreId",
+                        column: x => x.GameStoreId,
+                        principalTable: "GameStores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RolePermissions",
                 columns: table => new
                 {
@@ -342,30 +377,6 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                         principalTable: "Roles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ActivityLogs",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ActivityType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    EntityType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    EntityId = table.Column<Guid>(type: "uuid", nullable: true),
-                    Title = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    Details = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ActivityLogs", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ActivityLogs_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -401,20 +412,44 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ActivityLogs_Entity",
-                table: "ActivityLogs",
-                columns: new[] { "EntityType", "EntityId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ActivityLogs_Timestamp",
-                table: "ActivityLogs",
-                column: "Timestamp");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ActivityLogs_UserId_Timestamp",
-                table: "ActivityLogs",
-                columns: new[] { "UserId", "Timestamp" });
+            migrationBuilder.CreateTable(
+                name: "MovieSeries",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    CoverUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    GenreId = table.Column<Guid>(type: "uuid", nullable: false),
+                    WatchPlatformId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CurrentSeason = table.Column<int>(type: "integer", nullable: true),
+                    CurrentEpisode = table.Column<int>(type: "integer", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Rating = table.Column<int>(type: "integer", nullable: true),
+                    PersonalNote = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "bytea", rowVersion: true, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    UpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    DeletedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MovieSeries", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MovieSeries_MovieSeriesGenres_GenreId",
+                        column: x => x.GenreId,
+                        principalTable: "MovieSeriesGenres",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MovieSeries_WatchPlatforms_WatchPlatformId",
+                        column: x => x.WatchPlatformId,
+                        principalTable: "WatchPlatforms",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Books_Author",
@@ -449,14 +484,24 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 column: "ParentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_GamePlatforms_Name",
+                table: "GamePlatforms",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Games_GamePlatformId",
+                table: "Games",
+                column: "GamePlatformId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Games_GameStoreId",
+                table: "Games",
+                column: "GameStoreId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Games_IsOwned",
                 table: "Games",
                 column: "IsOwned");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Games_Platform",
-                table: "Games",
-                column: "Platform");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Games_Status",
@@ -469,9 +514,14 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 column: "Title");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MovieSeries_Platform",
+                name: "IX_GameStores_Name",
+                table: "GameStores",
+                column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MovieSeries_GenreId",
                 table: "MovieSeries",
-                column: "Platform");
+                column: "GenreId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MovieSeries_Status",
@@ -484,26 +534,14 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 column: "Title");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MovieSeries_Type",
+                name: "IX_MovieSeries_WatchPlatformId",
                 table: "MovieSeries",
-                column: "Type");
+                column: "WatchPlatformId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OutboxMessages_CreatedAt",
-                table: "OutboxMessages",
-                column: "CreatedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OutboxMessages_IdempotencyKey",
-                table: "OutboxMessages",
-                column: "IdempotencyKey",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OutboxMessages_Unprocessed",
-                table: "OutboxMessages",
-                columns: new[] { "ProcessedAt", "NextRetryAt" },
-                filter: "\"ProcessedAt\" IS NULL");
+                name: "IX_MovieSeriesGenres_Name",
+                table: "MovieSeriesGenres",
+                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Permissions_Module_Type",
@@ -626,14 +664,16 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 name: "IX_WalletTransactions_Type",
                 table: "WalletTransactions",
                 column: "Type");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WatchPlatforms_Name",
+                table: "WatchPlatforms",
+                column: "Name");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ActivityLogs");
-
             migrationBuilder.DropTable(
                 name: "Books");
 
@@ -650,9 +690,6 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
                 name: "MovieSeries");
 
             migrationBuilder.DropTable(
-                name: "OutboxMessages");
-
-            migrationBuilder.DropTable(
                 name: "PersonalNotes");
 
             migrationBuilder.DropTable(
@@ -666,6 +703,18 @@ namespace LifeOS.Persistence.Migrations.PostgreSql
 
             migrationBuilder.DropTable(
                 name: "WalletTransactions");
+
+            migrationBuilder.DropTable(
+                name: "GamePlatforms");
+
+            migrationBuilder.DropTable(
+                name: "GameStores");
+
+            migrationBuilder.DropTable(
+                name: "MovieSeriesGenres");
+
+            migrationBuilder.DropTable(
+                name: "WatchPlatforms");
 
             migrationBuilder.DropTable(
                 name: "Permissions");

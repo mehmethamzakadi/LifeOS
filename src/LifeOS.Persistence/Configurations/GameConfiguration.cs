@@ -17,13 +17,11 @@ public class GameConfiguration : BaseConfiguraiton<Game>
         builder.Property(x => x.CoverUrl)
             .HasMaxLength(500);
 
-        builder.Property(x => x.Platform)
-            .IsRequired()
-            .HasConversion<int>();
+        builder.Property(x => x.GamePlatformId)
+            .IsRequired();
 
-        builder.Property(x => x.Store)
-            .IsRequired()
-            .HasConversion<int>();
+        builder.Property(x => x.GameStoreId)
+            .IsRequired();
 
         builder.Property(x => x.Status)
             .IsRequired()
@@ -33,12 +31,26 @@ public class GameConfiguration : BaseConfiguraiton<Game>
             .IsRequired()
             .HasDefaultValue(false);
 
+        // Foreign Keys
+        builder.HasOne(x => x.GamePlatform)
+            .WithMany(x => x.Games)
+            .HasForeignKey(x => x.GamePlatformId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.GameStore)
+            .WithMany(x => x.Games)
+            .HasForeignKey(x => x.GameStoreId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Indexler
         builder.HasIndex(x => x.Title)
             .HasDatabaseName("IX_Games_Title");
 
-        builder.HasIndex(x => x.Platform)
-            .HasDatabaseName("IX_Games_Platform");
+        builder.HasIndex(x => x.GamePlatformId)
+            .HasDatabaseName("IX_Games_GamePlatformId");
+
+        builder.HasIndex(x => x.GameStoreId)
+            .HasDatabaseName("IX_Games_GameStoreId");
 
         builder.HasIndex(x => x.Status)
             .HasDatabaseName("IX_Games_Status");

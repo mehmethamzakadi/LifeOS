@@ -6,6 +6,8 @@
 
 ---
 
+Migration: dotnet ef migrations add AddReferenceDataTables --project src/LifeOS.Persistence --startup-project src/LifeOS.API --output-dir Migrations/PostgreSql --context LifeOSDbContext
+
 ## 📋 İçindekiler
 
 1. [Genel Bakış](#1-genel-bakış)

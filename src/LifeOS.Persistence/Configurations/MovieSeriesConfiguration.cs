@@ -17,13 +17,11 @@ public class MovieSeriesConfiguration : BaseConfiguraiton<MovieSeries>
         builder.Property(x => x.CoverUrl)
             .HasMaxLength(500);
 
-        builder.Property(x => x.Type)
-            .IsRequired()
-            .HasConversion<int>();
+        builder.Property(x => x.GenreId)
+            .IsRequired();
 
-        builder.Property(x => x.Platform)
-            .IsRequired()
-            .HasConversion<int>();
+        builder.Property(x => x.WatchPlatformId)
+            .IsRequired();
 
         builder.Property(x => x.CurrentSeason);
 
@@ -38,15 +36,26 @@ public class MovieSeriesConfiguration : BaseConfiguraiton<MovieSeries>
         builder.Property(x => x.PersonalNote)
             .HasMaxLength(2000);
 
+        // Foreign Keys
+        builder.HasOne(x => x.Genre)
+            .WithMany(x => x.MovieSeries)
+            .HasForeignKey(x => x.GenreId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.WatchPlatform)
+            .WithMany(x => x.MovieSeries)
+            .HasForeignKey(x => x.WatchPlatformId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Indexler
         builder.HasIndex(x => x.Title)
             .HasDatabaseName("IX_MovieSeries_Title");
 
-        builder.HasIndex(x => x.Type)
-            .HasDatabaseName("IX_MovieSeries_Type");
+        builder.HasIndex(x => x.GenreId)
+            .HasDatabaseName("IX_MovieSeries_GenreId");
 
-        builder.HasIndex(x => x.Platform)
-            .HasDatabaseName("IX_MovieSeries_Platform");
+        builder.HasIndex(x => x.WatchPlatformId)
+            .HasDatabaseName("IX_MovieSeries_WatchPlatformId");
 
         builder.HasIndex(x => x.Status)
             .HasDatabaseName("IX_MovieSeries_Status");

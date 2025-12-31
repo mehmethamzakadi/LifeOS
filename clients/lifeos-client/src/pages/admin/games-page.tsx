@@ -5,7 +5,11 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { createGame, updateGame, deleteGame, fetchGames } from '../../features/games/api';
-import { Game, GameFormValues, GamePlatform, GameStatus, GameStore, GamePlatformLabels, GameStatusLabels, GameStoreLabels } from '../../features/games/types';
+import { Game, GameFormValues, GameStatus, GameStatusLabels } from '../../features/games/types';
+import { getAllGamePlatforms } from '../../features/gameplatforms/api';
+import { getAllGameStores } from '../../features/gamestores/api';
+import { GamePlatform } from '../../features/gameplatforms/types';
+import { GameStore } from '../../features/gamestores/types';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -27,8 +31,8 @@ import { handleApiError, showApiResponseError } from '../../lib/api-error';
 const gameSchema = z.object({
   title: z.string().min(2, 'Oyun adı en az 2 karakter olmalıdır').max(200, 'Oyun adı en fazla 200 karakter olabilir'),
   coverUrl: z.string().url('Geçerli bir URL girin').optional().or(z.literal('')),
-  platform: z.nativeEnum(GamePlatform),
-  store: z.nativeEnum(GameStore),
+  gamePlatformId: z.string().uuid('Geçerli bir platform seçin'),
+  gameStoreId: z.string().uuid('Geçerli bir mağaza seçin'),
   status: z.nativeEnum(GameStatus),
   isOwned: z.boolean()
 });
@@ -43,7 +47,7 @@ export function GamesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [gameToDelete, setGameToDelete] = useState<Game | null>(null);
-  const [selectedPlatform, setSelectedPlatform] = useState<GamePlatform | 'all'>('all');
+  const [selectedPlatform, setSelectedPlatform] = useState<string | 'all'>('all');
 
   const { data, isLoading } = useQuery({
     queryKey: ['games', pageIndex, pageSize, searchTerm],
@@ -55,13 +59,23 @@ export function GamesPage() {
     })
   });
 
+  const { data: gamePlatforms } = useQuery({
+    queryKey: ['game-platforms'],
+    queryFn: getAllGamePlatforms
+  });
+
+  const { data: gameStores } = useQuery({
+    queryKey: ['game-stores'],
+    queryFn: getAllGameStores
+  });
+
   const formMethods = useForm<GameFormSchema>({
     resolver: zodResolver(gameSchema),
     defaultValues: {
       title: '',
       coverUrl: '',
-      platform: GamePlatform.PC,
-      store: GameStore.Steam,
+      gamePlatformId: '',
+      gameStoreId: '',
       status: GameStatus.Backlog,
       isOwned: false
     }
@@ -72,8 +86,8 @@ export function GamesPage() {
       formMethods.reset({
         title: editingGame.title,
         coverUrl: editingGame.coverUrl || '',
-        platform: editingGame.platform,
-        store: editingGame.store,
+        gamePlatformId: editingGame.gamePlatformId,
+        gameStoreId: editingGame.gameStoreId,
         status: editingGame.status,
         isOwned: editingGame.isOwned
       });
@@ -82,13 +96,13 @@ export function GamesPage() {
       formMethods.reset({
         title: '',
         coverUrl: '',
-        platform: GamePlatform.PC,
-        store: GameStore.Steam,
+        gamePlatformId: gamePlatforms?.[0]?.id || '',
+        gameStoreId: gameStores?.[0]?.id || '',
         status: GameStatus.Backlog,
         isOwned: false
       });
     }
-  }, [editingGame, isCreateOpen, formMethods]);
+  }, [editingGame, isCreateOpen, formMethods, gamePlatforms, gameStores]);
 
   const createMutation = useMutation({
     mutationFn: createGame,
@@ -103,8 +117,8 @@ export function GamesPage() {
       formMethods.reset({
         title: '',
         coverUrl: '',
-        platform: GamePlatform.PC,
-        store: GameStore.Steam,
+        gamePlatformId: gamePlatforms?.[0]?.id || '',
+        gameStoreId: gameStores?.[0]?.id || '',
         status: GameStatus.Backlog,
         isOwned: false
       });
@@ -146,8 +160,8 @@ export function GamesPage() {
     const formData: GameFormValues = {
       title: values.title,
       coverUrl: values.coverUrl || undefined,
-      platform: values.platform,
-      store: values.store,
+      gamePlatformId: values.gamePlatformId,
+      gameStoreId: values.gameStoreId,
       status: values.status,
       isOwned: values.isOwned
     };
@@ -161,15 +175,12 @@ export function GamesPage() {
   const filteredGames = useMemo(() => {
     if (!data?.items) return [];
     if (selectedPlatform === 'all') return data.items;
-    return data.items.filter(game => game.platform === selectedPlatform);
+    return data.items.filter(game => game.gamePlatformId === selectedPlatform);
   }, [data, selectedPlatform]);
 
   const platforms = [
     { value: 'all' as const, label: 'Tümü' },
-    ...Object.entries(GamePlatformLabels).map(([key, label]) => ({
-      value: Number(key) as GamePlatform,
-      label
-    }))
+    ...(gamePlatforms || []).map(p => ({ value: p.id, label: p.name }))
   ];
 
   return (
@@ -191,8 +202,8 @@ export function GamesPage() {
                 formMethods.reset({
                   title: '',
                   coverUrl: '',
-                  platform: GamePlatform.PC,
-                  store: GameStore.Steam,
+                  gamePlatformId: gamePlatforms?.[0]?.id || '',
+                  gameStoreId: gameStores?.[0]?.id || '',
                   status: GameStatus.Backlog,
                   isOwned: false
                 });
@@ -227,11 +238,11 @@ export function GamesPage() {
                     <select
                       id="game-platform"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      {...formMethods.register('platform', { valueAsNumber: true })}
+                      {...formMethods.register('gamePlatformId')}
                     >
-                      {Object.entries(GamePlatformLabels).map(([key, label]) => (
-                        <option key={key} value={key}>
-                          {label}
+                      {gamePlatforms?.map(platform => (
+                        <option key={platform.id} value={platform.id}>
+                          {platform.name}
                         </option>
                       ))}
                     </select>
@@ -241,11 +252,11 @@ export function GamesPage() {
                     <select
                       id="game-store"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      {...formMethods.register('store', { valueAsNumber: true })}
+                      {...formMethods.register('gameStoreId')}
                     >
-                      {Object.entries(GameStoreLabels).map(([key, label]) => (
-                        <option key={key} value={key}>
-                          {label}
+                      {gameStores?.map(store => (
+                        <option key={store.id} value={store.id}>
+                          {store.name}
                         </option>
                       ))}
                     </select>
@@ -328,7 +339,7 @@ export function GamesPage() {
                       <div className="flex-1">
                         <CardTitle className="text-lg">{game.title}</CardTitle>
                         <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary">{GamePlatformLabels[game.platform]}</Badge>
+                          <Badge variant="secondary">{game.gamePlatformName}</Badge>
                           <Badge variant="outline">{GameStatusLabels[game.status]}</Badge>
                           {game.isOwned && <Badge variant="default">Sahip</Badge>}
                         </div>
@@ -361,7 +372,7 @@ export function GamesPage() {
                     )}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Gamepad2 className="h-4 w-4" />
-                      <span>{GameStoreLabels[game.store]}</span>
+                      <span>{game.gameStoreName}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -398,11 +409,11 @@ export function GamesPage() {
                 <select
                   id="edit-game-platform"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  {...formMethods.register('platform', { valueAsNumber: true })}
+                  {...formMethods.register('gamePlatformId')}
                 >
-                  {Object.entries(GamePlatformLabels).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
+                  {gamePlatforms?.map(platform => (
+                    <option key={platform.id} value={platform.id}>
+                      {platform.name}
                     </option>
                   ))}
                 </select>
@@ -412,11 +423,11 @@ export function GamesPage() {
                 <select
                   id="edit-game-store"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  {...formMethods.register('store', { valueAsNumber: true })}
+                  {...formMethods.register('gameStoreId')}
                 >
-                  {Object.entries(GameStoreLabels).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
+                  {gameStores?.map(store => (
+                    <option key={store.id} value={store.id}>
+                      {store.name}
                     </option>
                   ))}
                 </select>

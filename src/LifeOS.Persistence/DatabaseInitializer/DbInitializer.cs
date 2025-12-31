@@ -37,7 +37,11 @@ public sealed class DbInitializer : IDbInitializer
                 new RolePermissionSeeder(context, scope.ServiceProvider.GetRequiredService<ILogger<RolePermissionSeeder>>()),
                 new UserSeeder(context, scope.ServiceProvider.GetRequiredService<ILogger<UserSeeder>>()),
                 new UserRoleSeeder(context, scope.ServiceProvider.GetRequiredService<ILogger<UserRoleSeeder>>()),
-                new CategorySeeder(context, scope.ServiceProvider.GetRequiredService<ILogger<CategorySeeder>>())
+                new CategorySeeder(context, scope.ServiceProvider.GetRequiredService<ILogger<CategorySeeder>>()),
+                new GamePlatformSeeder(context, scope.ServiceProvider.GetRequiredService<ILogger<GamePlatformSeeder>>()),
+                new GameStoreSeeder(context, scope.ServiceProvider.GetRequiredService<ILogger<GameStoreSeeder>>()),
+                new WatchPlatformSeeder(context, scope.ServiceProvider.GetRequiredService<ILogger<WatchPlatformSeeder>>()),
+                new MovieSeriesGenreSeeder(context, scope.ServiceProvider.GetRequiredService<ILogger<MovieSeriesGenreSeeder>>())
             };
 
             // Order'a göre sırala ve çalıştır

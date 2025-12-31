@@ -38,8 +38,8 @@ public sealed class UpdateMovieSeriesHandler
         movieSeries.Update(
             command.Title,
             command.CoverUrl,
-            command.Type,
-            command.Platform,
+            command.GenreId,
+            command.WatchPlatformId,
             command.CurrentSeason,
             command.CurrentEpisode,
             command.Status,
@@ -49,15 +49,20 @@ public sealed class UpdateMovieSeriesHandler
         _context.MovieSeries.Update(movieSeries);
         await _context.SaveChangesAsync(cancellationToken);
 
-        // Cache invalidation
+        // Cache invalidation - MovieSeries entity'yi yeniden yükle
+        await _context.Entry(movieSeries).Reference(m => m.Genre).LoadAsync(cancellationToken);
+        await _context.Entry(movieSeries).Reference(m => m.WatchPlatform).LoadAsync(cancellationToken);
+
         await _cache.Add(
             CacheKeys.MovieSeries(movieSeries.Id),
             new GetMovieSeriesByIdResponse(
                 movieSeries.Id,
                 movieSeries.Title,
                 movieSeries.CoverUrl,
-                movieSeries.Type,
-                movieSeries.Platform,
+                movieSeries.GenreId,
+                movieSeries.Genre.Name,
+                movieSeries.WatchPlatformId,
+                movieSeries.WatchPlatform.Name,
                 movieSeries.CurrentSeason,
                 movieSeries.CurrentEpisode,
                 movieSeries.Status,

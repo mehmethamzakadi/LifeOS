@@ -6,8 +6,10 @@ public sealed record GetGameByIdResponse(
     Guid Id,
     string Title,
     string? CoverUrl,
-    GamePlatform Platform,
-    GameStore Store,
+    Guid GamePlatformId,
+    string GamePlatformName,
+    Guid GameStoreId,
+    string GameStoreName,
     GameStatus Status,
     bool IsOwned);
 
