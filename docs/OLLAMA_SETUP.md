@@ -22,8 +22,8 @@ docker volume inspect lifeos_ollama_local
 ### Yöntem 1: Manuel Yükleme (Önerilen)
 
 ```bash
-# qwen2.5:7b modelini yükle (yaklaşık 4-5 GB, 5-10 dakika sürebilir)
-docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
+# qwen2.5:1.5b modelini yükle (yaklaşık 4-5 GB, 5-10 dakika sürebilir)
+docker exec lifeos_ollama_dev ollama pull qwen2.5:1.5b
 
 # Daha küçük alternatif model (yaklaşık 2 GB, daha hızlı)
 docker exec lifeos_ollama_dev ollama pull qwen2.5:3b
@@ -31,7 +31,7 @@ docker exec lifeos_ollama_dev ollama pull qwen2.5:3b
 
 ### Yöntem 2: Daha Küçük Model Kullanma
 
-Eğer `qwen2.5:7b` çok büyükse, daha küçük bir model kullanabilirsiniz:
+Eğer `qwen2.5:1.5b` çok büyükse, daha küçük bir model kullanabilirsiniz:
 
 1. `appsettings.Development.json` veya `docker-compose.local.yml` dosyasında `ModelId`'yi değiştirin:
    ```json
@@ -73,17 +73,17 @@ Eğer model silinmişse veya yeni bir model denemek isterseniz:
 
 ```bash
 # Mevcut modeli sil (opsiyonel)
-docker exec lifeos_ollama_dev ollama rm qwen2.5:7b
+docker exec lifeos_ollama_dev ollama rm qwen2.5:1.5b
 
 # Yeni modeli yükle
-docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:1.5b
 ```
 
 ## 📊 Model Boyutları ve Öneriler
 
 | Model | Boyut | Önerilen Kullanım |
 |-------|-------|-------------------|
-| `qwen2.5:7b` | ~4-5 GB | Production, yüksek kalite |
+| `qwen2.5:1.5b` | ~4-5 GB | Production, yüksek kalite |
 | `qwen2.5:3b` | ~2 GB | Development, hızlı test |
 | `qwen2.5:1.5b` | ~1 GB | Hızlı test, düşük kaynak |
 
@@ -93,7 +93,7 @@ docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
 
 **Hata:**
 ```
-"error": "model 'qwen2.5:7b' not found"
+"error": "model 'qwen2.5:1.5b' not found"
 ```
 
 **Çözüm:**
@@ -102,7 +102,7 @@ docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
 docker ps | grep ollama
 
 # 2. Modeli yükle
-docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:1.5b
 
 # 3. Yüklü modelleri kontrol et
 docker exec lifeos_ollama_dev ollama list
@@ -120,7 +120,7 @@ docker volume inspect lifeos_ollama_local
 docker-compose -f docker-compose.local.yml restart ollama
 
 # Modeli tekrar yükle
-docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:1.5b
 ```
 
 ## 💡 Best Practices

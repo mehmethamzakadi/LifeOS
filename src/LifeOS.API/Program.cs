@@ -18,6 +18,7 @@ using LifeOS.Application.Features.Categories.DeleteCategory;
 using LifeOS.Application.Features.Categories.GetCategoryById;
 using LifeOS.Application.Features.Categories.GetAllCategories;
 using LifeOS.Application.Features.Categories.SearchCategories;
+using LifeOS.Application.Features.Categories.GenerateCategoryDescription;
 using LifeOS.Application.Features.Dashboards.GetStatistics;
 using LifeOS.Application.Features.Games.CreateGame;
 using LifeOS.Application.Features.Games.UpdateGame;
@@ -161,6 +162,7 @@ DeleteCategoryEndpoint.MapEndpoint(app);
 GetCategoryByIdEndpoint.MapEndpoint(app);
 GetAllCategoriesEndpoint.MapEndpoint(app);
 SearchCategoriesEndpoint.MapEndpoint(app);
+GenerateCategoryDescriptionEndpoint.MapEndpoint(app);
 
 // ✅ Games Endpoints (Vertical Slice Architecture)
 CreateGameEndpoint.MapEndpoint(app);

@@ -32,6 +32,7 @@ public sealed class BulkDeleteRolesHandler
             {
                 var role = await _context.Roles
                     .Include(r => r.UserRoles)
+                        .ThenInclude(ur => ur.User)
                     .FirstOrDefaultAsync(r => r.Id == roleId && !r.IsDeleted, cancellationToken);
 
                 if (role == null)
@@ -48,7 +49,8 @@ public sealed class BulkDeleteRolesHandler
                     continue;
                 }
 
-                if (role.UserRoles.Any(ur => !ur.IsDeleted))
+                // Sadece aktif (silinmemiş) kullanıcılara atanmış rolleri kontrol et
+                if (role.UserRoles.Any(ur => !ur.IsDeleted && ur.User != null && !ur.User.IsDeleted))
                 {
                     errors.Add($"'{role.Name}' rolüne atanmış aktif kullanıcılar bulunmaktadır");
                     failedCount++;

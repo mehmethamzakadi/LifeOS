@@ -77,7 +77,8 @@ export function WalletPage() {
         category: editingTransaction.category,
         transactionDate: editingTransaction.transactionDate.split('T')[0]
       });
-    } else {
+    } else if (isCreateOpen) {
+      // Dialog açıldığında formu reset et
       formMethods.reset({
         title: '',
         amount: 0,
@@ -86,7 +87,7 @@ export function WalletPage() {
         transactionDate: new Date().toISOString().split('T')[0]
       });
     }
-  }, [editingTransaction, formMethods]);
+  }, [editingTransaction, isCreateOpen, formMethods]);
 
   const createMutation = useMutation({
     mutationFn: createWalletTransaction,
@@ -97,6 +98,14 @@ export function WalletPage() {
       }
       toast.success(result.message || 'İşlem eklendi');
       setIsCreateOpen(false);
+      // Formu reset et
+      formMethods.reset({
+        title: '',
+        amount: 0,
+        type: TransactionType.Income,
+        category: TransactionCategory.Other,
+        transactionDate: new Date().toISOString().split('T')[0]
+      });
       queryClient.invalidateQueries({ queryKey: ['wallettransactions'] });
     },
     onError: (error) => handleApiError(error, 'İşlem eklenemedi')
@@ -223,8 +232,15 @@ export function WalletPage() {
             open={isCreateOpen}
             onOpenChange={(open) => {
               setIsCreateOpen(open);
-              if (!open && !editingTransaction) {
-                formMethods.reset();
+              if (open) {
+                // Dialog açıldığında formu reset et
+                formMethods.reset({
+                  title: '',
+                  amount: 0,
+                  type: TransactionType.Income,
+                  category: TransactionCategory.Other,
+                  transactionDate: new Date().toISOString().split('T')[0]
+                });
               }
             }}
           >

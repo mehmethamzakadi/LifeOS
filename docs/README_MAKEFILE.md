@@ -167,7 +167,7 @@ make.bat shell-client
 ## 🤖 Ollama AI İşlemleri
 
 ```bash
-# Model yükle (varsayılan: qwen2.5:7b)
+# Model yükle (varsayılan: qwen2.5:1.5b)
 make pull-ollama
 make.bat pull-ollama
 

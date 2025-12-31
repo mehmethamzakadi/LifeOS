@@ -23,7 +23,6 @@ import { Badge } from '../../components/ui/badge';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { handleApiError, showApiResponseError } from '../../lib/api-error';
-import { cn } from '../../lib/utils';
 
 const gameSchema = z.object({
   title: z.string().min(2, 'Oyun adı en az 2 karakter olmalıdır').max(200, 'Oyun adı en fazla 200 karakter olabilir'),
@@ -78,7 +77,8 @@ export function GamesPage() {
         status: editingGame.status,
         isOwned: editingGame.isOwned
       });
-    } else {
+    } else if (isCreateOpen) {
+      // Dialog açıldığında formu reset et
       formMethods.reset({
         title: '',
         coverUrl: '',
@@ -88,7 +88,7 @@ export function GamesPage() {
         isOwned: false
       });
     }
-  }, [editingGame, formMethods]);
+  }, [editingGame, isCreateOpen, formMethods]);
 
   const createMutation = useMutation({
     mutationFn: createGame,
@@ -99,6 +99,15 @@ export function GamesPage() {
       }
       toast.success(result.message || 'Oyun eklendi');
       setIsCreateOpen(false);
+      // Formu reset et
+      formMethods.reset({
+        title: '',
+        coverUrl: '',
+        platform: GamePlatform.PC,
+        store: GameStore.Steam,
+        status: GameStatus.Backlog,
+        isOwned: false
+      });
       queryClient.invalidateQueries({ queryKey: ['games'] });
     },
     onError: (error) => handleApiError(error, 'Oyun eklenemedi')
@@ -177,8 +186,16 @@ export function GamesPage() {
             open={isCreateOpen}
             onOpenChange={(open) => {
               setIsCreateOpen(open);
-              if (!open && !editingGame) {
-                formMethods.reset();
+              if (open) {
+                // Dialog açıldığında formu reset et
+                formMethods.reset({
+                  title: '',
+                  coverUrl: '',
+                  platform: GamePlatform.PC,
+                  store: GameStore.Steam,
+                  status: GameStatus.Backlog,
+                  isOwned: false
+                });
               }
             }}
           >

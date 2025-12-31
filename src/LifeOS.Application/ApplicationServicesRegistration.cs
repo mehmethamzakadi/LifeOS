@@ -16,6 +16,7 @@ using LifeOS.Application.Features.Categories.DeleteCategory;
 using LifeOS.Application.Features.Categories.GetCategoryById;
 using LifeOS.Application.Features.Categories.GetAllCategories;
 using LifeOS.Application.Features.Categories.SearchCategories;
+using LifeOS.Application.Features.Categories.GenerateCategoryDescription;
 using LifeOS.Application.Features.Dashboards.GetStatistics;
 using LifeOS.Application.Features.Games.CreateGame;
 using LifeOS.Application.Features.Games.UpdateGame;
@@ -114,6 +115,7 @@ namespace LifeOS.Application
             services.AddScoped<GetCategoryByIdHandler>();
             services.AddScoped<GetAllCategoriesHandler>();
             services.AddScoped<SearchCategoriesHandler>();
+            services.AddScoped<GenerateCategoryDescriptionHandler>();
 
             // Register Dashboards feature handlers (Vertical Slice Architecture)
             services.AddScoped<GetStatisticsHandler>();

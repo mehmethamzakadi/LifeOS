@@ -67,7 +67,7 @@ help:
 	@echo "  make shell-client - Client container'ına shell aç (dev)"
 	@echo ""
 	@echo "$(YELLOW)Ollama AI:$(NC)"
-	@echo "  make pull-ollama MODEL=<model-name>  - Ollama modelini yükle (varsayılan: qwen2.5:7b)"
+	@echo "  make pull-ollama MODEL=<model-name>  - Ollama modelini yükle (varsayılan: qwen2.5:1.5b)"
 	@echo "  make list-ollama                     - Yüklü Ollama modellerini listele"
 	@echo ""
 	@echo "$(YELLOW)Temizleme:$(NC)"
@@ -266,7 +266,7 @@ shell-client:
 # Ollama AI İşlemleri
 # ============================================
 pull-ollama:
-	@MODEL=$${MODEL:-qwen2.5:7b}; \
+	@MODEL=$${MODEL:-qwen2.5:1.5b}; \
 	echo "$(YELLOW)Ollama modeli yükleniyor: $$MODEL$(NC)"; \
 	docker exec -it lifeos_ollama_dev ollama pull $$MODEL || \
 		echo "$(RED)Model yüklenemedi. Ollama container çalışıyor mu?$(NC)"

@@ -198,7 +198,7 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up --build -d
 docker compose -f docker-compose.local.yml up --build -d
 
 # Ollama modelini yükle (ilk kez - AI özellikleri için opsiyonel)
-docker exec -it lifeos_ollama_dev ollama pull qwen2.5:7b
+docker exec -it lifeos_ollama_dev ollama pull qwen2.5:1.5b
 
 # Logları izle
 docker compose -f docker-compose.local.yml logs -f lifeos.api
@@ -226,7 +226,7 @@ docker compose -f docker-compose.local.yml ps
 docker-compose -f docker-compose.local.yml up -d postgresdb redis.cache rabbitmq seq ollama
 
 # Ollama modelini yükle (ilk kez)
-docker exec -it lifeos_ollama_dev ollama pull qwen2.5:7b
+docker exec -it lifeos_ollama_dev ollama pull qwen2.5:1.5b
 ```
 
 #### 2. Backend'i Çalıştır
@@ -310,7 +310,7 @@ cp .env.example .env.production
 | `RabbitMQOptions__UserName`                             | RabbitMQ kullanıcı            | `lifeos`                                                          |
 | `RabbitMQOptions__Password`                             | RabbitMQ şifre                | -                                                                  |
 | `OllamaOptions__Endpoint`                               | Ollama API endpoint           | `http://localhost:11434`                                           |
-| `OllamaOptions__ModelId`                                | Ollama model ID               | `qwen2.5:7b`                                                       |
+| `OllamaOptions__ModelId`                                | Ollama model ID               | `qwen2.5:1.5b`                                                       |
 | `OllamaOptions__TimeoutMinutes`                         | HTTP timeout (dakika)         | `2`                                                                |
 | `OllamaOptions__RetryCount`                             | Retry sayısı                  | `3`                                                                |
 | `OllamaOptions__RetryDelaySeconds`                      | Retry gecikmesi (saniye)      | `2`                                                                |
@@ -514,10 +514,10 @@ Ollama servisi Docker container'ında çalışmaktadır ve AI özellikleri için
 docker exec lifeos_ollama_dev ollama list
 
 # Yeni model yükle
-docker exec lifeos_ollama_dev ollama pull qwen2.5:7b
+docker exec lifeos_ollama_dev ollama pull qwen2.5:1.5b
 
 # Model sil
-docker exec lifeos_ollama_dev ollama rm qwen2.5:7b
+docker exec lifeos_ollama_dev ollama rm qwen2.5:1.5b
 ```
 
 API Endpoint: `http://localhost:11434`

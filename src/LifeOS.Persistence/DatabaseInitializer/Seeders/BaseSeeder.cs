@@ -47,24 +47,29 @@ public abstract class BaseSeeder : ISeeder
 
     /// <summary>
     /// Entity'nin veritabanında olup olmadığını kontrol eder
+    /// Soft delete edilmiş kayıtları da kontrol eder (IgnoreQueryFilters)
     /// </summary>
     protected async Task<bool> ExistsAsync<TEntity>(Guid id, CancellationToken cancellationToken) 
         where TEntity : class
     {
         return await Context.Set<TEntity>()
+            .IgnoreQueryFilters()
             .AnyAsync(e => EF.Property<Guid>(e, "Id") == id, cancellationToken);
     }
 
     /// <summary>
     /// Toplu veri eklemek için yardımcı metod
     /// Sadece mevcut olmayanları ekler (idempotent)
+    /// Soft delete edilmiş kayıtları da kontrol eder (IgnoreQueryFilters)
     /// </summary>
     protected async Task AddRangeIfNotExistsAsync<TEntity>(
         IEnumerable<TEntity> entities,
         Func<TEntity, Guid> idSelector,
         CancellationToken cancellationToken) where TEntity : class
     {
+        // IgnoreQueryFilters kullanarak soft delete edilmiş kayıtları da kontrol et
         var existingIds = await Context.Set<TEntity>()
+            .IgnoreQueryFilters()
             .Select(e => EF.Property<Guid>(e, "Id"))
             .ToHashSetAsync(cancellationToken);
 

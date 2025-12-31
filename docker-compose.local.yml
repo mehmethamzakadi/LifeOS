@@ -91,7 +91,7 @@ services:
       Serilog__SeqUrl: http://seq:80
       # Ollama AI
       OllamaOptions__Endpoint: http://ollama:11434
-      OllamaOptions__ModelId: qwen2.5:7b
+      OllamaOptions__ModelId: qwen2.5:1.5b
       OllamaOptions__ApiKey: ollama
       OllamaOptions__TimeoutMinutes: 2
       OllamaOptions__RetryCount: 3

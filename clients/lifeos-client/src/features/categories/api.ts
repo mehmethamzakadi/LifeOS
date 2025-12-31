@@ -70,8 +70,15 @@ export async function getAllCategories(): Promise<Category[]> {
 }
 
 export async function generateCategoryDescription(categoryName: string): Promise<string> {
-  const response = await api.get<{ description: string }>('/categories/generate-description', {
+  const response = await api.get<ApiResult<{ description: string }>>('/categories/generate-description', {
     params: { categoryName }
   });
-  return response.data.description;
+  
+  const result = normalizeApiResult<{ description: string }>(response.data);
+  
+  if (!result.success || !result.data) {
+    throw new Error(result.message || 'Açıklama üretilemedi');
+  }
+  
+  return result.data.description;
 }

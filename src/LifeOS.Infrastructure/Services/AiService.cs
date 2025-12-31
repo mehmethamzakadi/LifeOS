@@ -9,7 +9,7 @@ using System.Net.Http.Json;
 namespace LifeOS.Infrastructure.Services;
 
 /// <summary>
-/// Ollama (Qwen 2.5:7b) kullanarak yapay zeka destekli içerik üretme servisi.
+/// Ollama (Qwen 2.5:1.5b) kullanarak yapay zeka destekli içerik üretme servisi.
 /// Best practices: IHttpClientFactory, retry policy, logging, proper error handling.
 /// </summary>
 public sealed class AiService : IAiService
@@ -70,7 +70,7 @@ public sealed class AiService : IAiService
                 if (response.StatusCode == HttpStatusCode.NotFound && errorContent.Contains("not found"))
                 {
                     var friendlyMessage = $"Ollama modeli '{options.ModelId}' bulunamadı. " +
-                        $"Lütfen modeli yükleyin: docker exec baseproject_ollama_dev ollama pull {options.ModelId}";
+                        $"Lütfen modeli yükleyin: docker exec lifeos_ollama_dev ollama pull {options.ModelId}";
 
                     throw new HttpRequestException(
                         friendlyMessage,

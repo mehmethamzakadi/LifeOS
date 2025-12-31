@@ -20,6 +20,7 @@ public sealed class DeleteRoleHandler
     {
         var role = await _context.Roles
             .Include(r => r.UserRoles)
+                .ThenInclude(ur => ur.User)
             .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted, cancellationToken);
 
         if (role == null)
@@ -28,7 +29,8 @@ public sealed class DeleteRoleHandler
         if (role.NormalizedName == "ADMIN")
             return ApiResultExtensions.Failure("Admin rolü silinemez!");
 
-        if (role.UserRoles.Any(ur => !ur.IsDeleted))
+        // Sadece aktif (silinmemiş) kullanıcılara atanmış rolleri kontrol et
+        if (role.UserRoles.Any(ur => !ur.IsDeleted && ur.User != null && !ur.User.IsDeleted))
             return ApiResultExtensions.Failure("Bu role atanmış aktif kullanıcılar bulunmaktadır. Önce kullanıcılardan bu rolü kaldırmalısınız.");
 
         role.Delete();

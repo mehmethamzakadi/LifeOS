@@ -105,7 +105,8 @@ export function BooksPage() {
         startDate: formatDateForInput(editingBook.startDate),
         endDate: formatDateForInput(editingBook.endDate)
       });
-    } else {
+    } else if (isCreateOpen) {
+      // Dialog açıldığında formu reset et
       formMethods.reset({
         title: '',
         author: '',
@@ -118,7 +119,7 @@ export function BooksPage() {
         endDate: ''
       });
     }
-  }, [editingBook, formMethods]);
+  }, [editingBook, isCreateOpen, formMethods]);
 
   const createMutation = useMutation({
     mutationFn: createBook,
@@ -129,6 +130,18 @@ export function BooksPage() {
       }
       toast.success(result.message || 'Kitap eklendi');
       setIsCreateOpen(false);
+      // Formu reset et
+      formMethods.reset({
+        title: '',
+        author: '',
+        coverUrl: '',
+        totalPages: 0,
+        currentPage: 0,
+        status: BookStatus.ToRead,
+        rating: undefined,
+        startDate: '',
+        endDate: ''
+      });
       queryClient.invalidateQueries({ queryKey: ['books'] });
     },
     onError: (error) => handleApiError(error, 'Kitap eklenemedi')
@@ -221,8 +234,19 @@ export function BooksPage() {
               open={isCreateOpen}
               onOpenChange={(open) => {
                 setIsCreateOpen(open);
-                if (!open && !editingBook) {
-                  formMethods.reset();
+                if (open) {
+                  // Dialog açıldığında formu reset et
+                  formMethods.reset({
+                    title: '',
+                    author: '',
+                    coverUrl: '',
+                    totalPages: 0,
+                    currentPage: 0,
+                    status: BookStatus.ToRead,
+                    rating: undefined,
+                    startDate: '',
+                    endDate: ''
+                  });
                 }
               }}
             >
