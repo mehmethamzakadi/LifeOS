@@ -378,6 +378,20 @@ nano deploy/nginx/default.conf
 
 ### 3. Docker Compose ile Build ve Deploy
 
+**ÖNEMLİ:** Sisteminizde `docker compose` (plugin) veya `docker-compose` (standalone) kurulu olabilir. Önce hangi komutun çalıştığını kontrol edin:
+
+```bash
+# Hangi komut çalışıyor kontrol et
+docker compose version  # Plugin versiyonu
+# VEYA
+docker-compose --version  # Standalone versiyonu
+
+# Veya kontrol script'ini kullan
+bash scripts/check-docker-compose.sh
+```
+
+**Plugin Versiyonu (`docker compose` - önerilen):**
+
 ```bash
 cd /opt/lifeos
 
@@ -390,6 +404,23 @@ docker compose -f docker-compose.prod.yml up -d --build
 # Logları takip et
 docker compose -f docker-compose.prod.yml logs -f
 ```
+
+**Standalone Versiyonu (`docker-compose` - tire ile):**
+
+```bash
+cd /opt/lifeos
+
+# Docker Compose dosyasını kontrol et
+docker-compose -f docker-compose.prod.yml config
+
+# İlk build ve deploy (tüm servisleri başlatır)
+docker-compose -f docker-compose.prod.yml up -d --build
+
+# Logları takip et
+docker-compose -f docker-compose.prod.yml logs -f
+```
+
+> 💡 **Not:** Bu dokümantasyonda `docker compose` (plugin) kullanılmıştır. Eğer sisteminizde `docker-compose` (standalone) kuruluysa, tüm komutlarda `docker compose` yerine `docker-compose` kullanın.
 
 ### 4. Servis Durumunu Kontrol Etme
 

@@ -62,11 +62,27 @@ check_docker() {
 
 check_docker_compose() {
     print_info "Docker Compose kurulumunu kontrol ediliyor..."
-    if ! command -v docker compose &> /dev/null; then
+    
+    # Docker Compose komutunu belirle
+    if docker compose version &> /dev/null 2>&1; then
+        DOCKER_COMPOSE_CMD="docker compose"
+        print_success "Docker Compose mevcut (plugin)"
+        docker compose version
+    elif command -v docker-compose &> /dev/null && docker-compose --version &> /dev/null 2>&1; then
+        DOCKER_COMPOSE_CMD="docker-compose"
+        print_success "Docker Compose mevcut (standalone)"
+        docker-compose --version
+    else
         print_error "Docker Compose kurulu değil!"
+        print_info "Lütfen Docker Compose'u kurun:"
+        print_info "  sudo apt install -y docker-compose-plugin  # Plugin (önerilen)"
+        print_info "  VEYA"
+        print_info "  sudo apt install -y docker-compose  # Standalone"
         exit 1
     fi
-    print_success "Docker Compose kurulu"
+    
+    # Global değişken olarak export et (script içinde kullanmak için)
+    export DOCKER_COMPOSE_CMD
 }
 
 check_env_file() {
@@ -108,19 +124,19 @@ check_ssl_certificates() {
 
 stop_existing_containers() {
     print_info "Mevcut container'lar durduruluyor..."
-    docker compose -f docker-compose.prod.yml down 2>/dev/null || true
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml down 2>/dev/null || true
     print_success "Mevcut container'lar durduruldu"
 }
 
 build_images() {
     print_info "Docker image'ları build ediliyor..."
-    docker compose -f docker-compose.prod.yml build --no-cache
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build --no-cache
     print_success "Docker image'ları build edildi"
 }
 
 start_services() {
     print_info "Servisler başlatılıyor..."
-    docker compose -f docker-compose.prod.yml up -d
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d
     print_success "Servisler başlatıldı"
 }
 
@@ -131,7 +147,7 @@ wait_for_health() {
     attempt=0
     
     while [ $attempt -lt $max_attempts ]; do
-        if docker compose -f docker-compose.prod.yml ps | grep -q "healthy"; then
+        if $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps 2>/dev/null | grep -q "healthy"; then
             print_success "Servisler sağlıklı durumda"
             return 0
         fi
@@ -147,22 +163,22 @@ wait_for_health() {
 
 show_status() {
     print_info "Container durumları:"
-    docker compose -f docker-compose.prod.yml ps
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps
     
     echo
     print_info "Health check sonuçları:"
-    docker compose -f docker-compose.prod.yml ps --format json 2>/dev/null | \
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps --format json 2>/dev/null | \
         grep -o '"Health":"[^"]*"' || echo "Health check bilgisi alınamadı"
 }
 
 show_logs_command() {
     echo
     print_info "Logları görüntülemek için:"
-    echo "  docker compose -f docker-compose.prod.yml logs -f"
+    echo "  $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs -f"
     echo
     print_info "Belirli bir servisin loglarını görmek için:"
-    echo "  docker compose -f docker-compose.prod.yml logs -f lifeos.api"
-    echo "  docker compose -f docker-compose.prod.yml logs -f nginx"
+    echo "  $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs -f lifeos.api"
+    echo "  $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs -f nginx"
 }
 
 # Ana işlem

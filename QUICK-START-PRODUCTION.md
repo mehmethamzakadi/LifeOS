@@ -82,11 +82,18 @@ chmod 600 /opt/lifeos/deploy/nginx/ssl/*.pem
 ```bash
 cd /opt/lifeos
 
-# Deployment script'ini çalıştır
+# Önce hangi Docker Compose komutunun çalıştığını kontrol et
+docker compose version 2>/dev/null || docker-compose --version
+
+# Deployment script'ini çalıştır (önerilen)
 bash scripts/deploy-production.sh
 
 # VEYA manuel olarak:
+# Plugin versiyonu (docker compose):
 docker compose -f docker-compose.prod.yml up -d --build
+
+# Standalone versiyonu (docker-compose):
+docker-compose -f docker-compose.prod.yml up -d --build
 ```
 
 ### 7️⃣ Kontrol Et

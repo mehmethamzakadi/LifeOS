@@ -142,9 +142,20 @@ if [ ! -f ".env" ]; then
     print_info "Lütfen .env dosyasını oluşturun: cp .env.production.example .env"
 fi
 
-# Docker Compose kontrolü
-if ! command -v docker compose &> /dev/null && ! command -v docker-compose &> /dev/null; then
+# Docker Compose kontrolü ve komut belirleme
+print_info "Docker Compose kontrol ediliyor..."
+if docker compose version &> /dev/null 2>&1; then
+    DOCKER_COMPOSE_CMD="docker compose"
+    print_success "Docker Compose mevcut (plugin)"
+elif command -v docker-compose &> /dev/null && docker-compose --version &> /dev/null 2>&1; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+    print_success "Docker Compose mevcut (standalone)"
+else
     print_error "Docker Compose bulunamadı!"
+    print_info "Lütfen Docker Compose'u kurun:"
+    print_info "  sudo apt install -y docker-compose-plugin  # Plugin (önerilen)"
+    print_info "  VEYA"
+    print_info "  sudo apt install -y docker-compose  # Standalone"
     exit 1
 fi
 
@@ -156,22 +167,22 @@ if [ "$SERVICE" = "all" ]; then
     # Tüm servisleri güncelle
     if [ "$FORCE_BUILD" = "true" ] || [ "$FORCE_BUILD" = "force" ]; then
         print_info "Force rebuild yapılıyor..."
-        docker compose -f docker-compose.prod.yml build --no-cache
-        docker compose -f docker-compose.prod.yml up -d --build
+        $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build --no-cache
+        $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build
     else
         print_info "Normal rebuild yapılıyor..."
-        docker compose -f docker-compose.prod.yml build
-        docker compose -f docker-compose.prod.yml up -d --build
+        $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build
+        $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --build
     fi
 else
     # Sadece belirli servisi güncelle
     print_info "Sadece $SERVICE servisi güncelleniyor..."
     if [ "$FORCE_BUILD" = "true" ] || [ "$FORCE_BUILD" = "force" ]; then
-        docker compose -f docker-compose.prod.yml build --no-cache $SERVICE
+        $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build --no-cache $SERVICE
     else
-        docker compose -f docker-compose.prod.yml build $SERVICE
+        $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml build $SERVICE
     fi
-    docker compose -f docker-compose.prod.yml up -d --no-deps $SERVICE
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d --no-deps $SERVICE
 fi
 
 print_success "Servisler güncellendi"
@@ -179,17 +190,17 @@ print_success "Servisler güncellendi"
 # Durum kontrolü
 echo
 print_info "Container durumları:"
-docker compose -f docker-compose.prod.yml ps
+$DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps
 
 echo
 print_info "Health check'ler kontrol ediliyor..."
 sleep 5
 
 # Health check
-UNHEALTHY=$(docker compose -f docker-compose.prod.yml ps --format json 2>/dev/null | grep -i '"Health":"unhealthy"' || true)
+UNHEALTHY=$($DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps --format json 2>/dev/null | grep -i '"Health":"unhealthy"' || true)
 if [ -n "$UNHEALTHY" ]; then
     print_warning "Bazı container'lar unhealthy durumda!"
-    docker compose -f docker-compose.prod.yml ps | grep -i unhealthy
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps | grep -i unhealthy
 else
     print_success "Tüm container'lar sağlıklı görünüyor"
 fi
@@ -198,8 +209,8 @@ echo
 print_success "Güncelleme tamamlandı!"
 echo
 print_info "Logları görüntülemek için:"
-echo "  docker compose -f docker-compose.prod.yml logs -f"
+echo "  $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs -f"
 echo
 print_info "Belirli bir servisin loglarını görmek için:"
-echo "  docker compose -f docker-compose.prod.yml logs -f $SERVICE"
+echo "  $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs -f $SERVICE"
 
