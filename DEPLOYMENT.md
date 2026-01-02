@@ -524,39 +524,215 @@ htop
 
 ## 🔄 Güncelleme (Update) İşlemi
 
+GitHub'a push yaptıktan sonra sunucuda güncellemeleri çekmek için aşağıdaki yöntemleri kullanabilirsiniz.
+
+> 💡 **Hızlı Güncelleme:** Otomatik update script'i kullanmak için: `bash scripts/update-production.sh`
+
 ### 1. Yeni Versiyonu Çekme
+
+#### Yöntem 1: Git Pull (Önerilen)
+
+```bash
+# Sunucuya SSH ile bağlan
+ssh lifeos@your-server-ip  # veya root@your-server-ip
+
+# Proje dizinine git
+cd /opt/lifeos
+
+# Mevcut değişiklikleri kontrol et (varsa)
+git status
+
+# Eğer local değişiklikler varsa, önce kaydet veya geri al
+# ÖNEMLİ: .env dosyası gibi local değişiklikler korunmalı!
+git stash  # Geçici olarak sakla (isteğe bağlı)
+
+# GitHub'dan güncellemeleri çek
+git pull origin main  # veya production branch
+
+# Eğer stash kullandıysanız geri al
+git stash pop  # (isteğe bağlı)
+```
+
+#### Yöntem 2: Belirli Branch'i Çekme
 
 ```bash
 cd /opt/lifeos
 
-# Git ile güncelleme
-git pull origin main  # veya production branch
+# Mevcut branch'i kontrol et
+git branch
 
-# Veya yeni dosyaları aktarın (SCP ile)
+# Farklı bir branch'e geç
+git checkout production  # örnek branch adı
+
+# Güncellemeleri çek
+git pull origin production
 ```
 
-### 2. Servisleri Yeniden Build ve Deploy
+#### Yöntem 3: Force Pull (Dikkatli Kullanın!)
+
+Eğer local değişiklikler ile conflict varsa ve GitHub'daki versiyonu kullanmak istiyorsanız:
 
 ```bash
-# Sadece değişen servisleri rebuild et
-docker compose -f docker-compose.prod.yml up -d --build
+cd /opt/lifeos
 
-# Veya tüm servisleri yeniden başlat (downtime olur)
+# ÖNEMLİ: Bu komut local değişiklikleri SİLER!
+git fetch origin
+git reset --hard origin/main  # veya origin/production
+```
+
+**⚠️ UYARI:** Bu komut local değişiklikleri (`.env` dosyası hariç, çünkü gitignore'da) siler. Kullanmadan önce yedek alın!
+
+### 2. Git Authentication (İlk Kurulum)
+
+Eğer private repository kullanıyorsanız, sunucuda authentication yapılandırmanız gerekebilir:
+
+#### SSH Key Yöntemi (Önerilen)
+
+```bash
+# Sunucuda SSH key oluştur (eğer yoksa)
+ssh-keygen -t ed25519 -C "server@yourdomain.com"
+cat ~/.ssh/id_ed25519.pub
+
+# Bu public key'i GitHub hesabınıza ekleyin:
+# GitHub > Settings > SSH and GPG keys > New SSH key
+
+# SSH key'i test et
+ssh -T git@github.com
+
+# Repository'yi SSH URL ile clone et (eğer HTTPS ile clone ettiyseniz)
+cd /opt/lifeos
+git remote set-url origin git@github.com:mehmethamzakadi/LifeOS.git
+```
+
+#### HTTPS Personal Access Token
+
+```bash
+# GitHub'da Personal Access Token oluşturun:
+# GitHub > Settings > Developer settings > Personal access tokens > Tokens (classic)
+
+# Git credential helper kullan
+git config --global credential.helper store
+
+# İlk pull'da token ile authenticate olun
+git pull
+# Username: your-github-username
+# Password: your-personal-access-token
+```
+
+### 3. Servisleri Yeniden Build ve Deploy
+
+Güncellemeleri çektikten sonra servisleri yeniden deploy etmeniz gerekir:
+
+#### Yöntem 1: Basit Güncelleme (Downtime Olabilir)
+
+```bash
+cd /opt/lifeos
+
+# Tüm servisleri durdur, rebuild et ve başlat
 docker compose -f docker-compose.prod.yml down
 docker compose -f docker-compose.prod.yml up -d --build
+
+# Logları kontrol et
+docker compose -f docker-compose.prod.yml logs -f
 ```
 
-### 3. Zero-Downtime Güncelleme (Önerilen)
+#### Yöntem 2: Zero-Downtime Güncelleme (Önerilen)
 
 ```bash
-# Yeni image'ları build et
+cd /opt/lifeos
+
+# Yeni image'ları build et (container'ları durdurmadan)
 docker compose -f docker-compose.prod.yml build
 
-# Rolling update (API için)
+# API servisini rolling update ile güncelle
 docker compose -f docker-compose.prod.yml up -d --no-deps --build lifeos.api
+
+# Client servisini güncelle (eğer değiştiyse)
+docker compose -f docker-compose.prod.yml up -d --no-deps --build lifeos.client
 
 # Health check'leri kontrol et
 docker compose -f docker-compose.prod.yml ps
+
+# Logları izle
+docker compose -f docker-compose.prod.yml logs -f lifeos.api
+```
+
+#### Yöntem 3: Sadece Değişen Servisleri Güncelle
+
+```bash
+cd /opt/lifeos
+
+# Sadece API değiştiyse
+docker compose -f docker-compose.prod.yml build lifeos.api
+docker compose -f docker-compose.prod.yml up -d --no-deps lifeos.api
+
+# Sadece Client değiştiyse
+docker compose -f docker-compose.prod.yml build lifeos.client
+docker compose -f docker-compose.prod.yml up -d --no-deps lifeos.client
+```
+
+### 4. Otomatik Güncelleme Script'i
+
+Daha kolay güncelleme için bir script kullanabilirsiniz:
+
+```bash
+# Update script oluştur
+cat > /opt/lifeos/update.sh << 'EOF'
+#!/bin/bash
+set -e
+
+cd /opt/lifeos
+
+echo "GitHub'dan güncellemeler çekiliyor..."
+git pull origin main
+
+echo "Docker image'ları build ediliyor..."
+docker compose -f docker-compose.prod.yml build
+
+echo "Servisler güncelleniyor..."
+docker compose -f docker-compose.prod.yml up -d --build
+
+echo "Güncelleme tamamlandı!"
+docker compose -f docker-compose.prod.yml ps
+EOF
+
+chmod +x /opt/lifeos/update.sh
+
+# Kullanımı:
+# /opt/lifeos/update.sh
+```
+
+### 5. Güncelleme Sonrası Kontroller
+
+```bash
+# Container durumlarını kontrol et
+docker compose -f docker-compose.prod.yml ps
+
+# Health check'leri kontrol et
+curl http://localhost/health
+curl https://yourdomain.com/health
+
+# Logları kontrol et
+docker compose -f docker-compose.prod.yml logs --tail=50 lifeos.api
+
+# Hata var mı kontrol et
+docker compose -f docker-compose.prod.yml ps | grep -i unhealthy
+```
+
+### 6. Rollback (Geri Alma)
+
+Eğer güncelleme sonrası sorun çıkarsa:
+
+```bash
+cd /opt/lifeos
+
+# Önceki commit'e geri dön
+git log --oneline -10  # Son 10 commit'i göster
+git checkout <commit-hash>  # Önceki çalışan commit hash'ini kullan
+
+# Servisleri yeniden build et
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ---

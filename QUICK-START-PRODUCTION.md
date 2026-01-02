@@ -143,8 +143,12 @@ docker compose -f docker-compose.prod.yml ps
 # Servisleri yeniden başlat
 docker compose -f docker-compose.prod.yml restart
 
-# Yeni versiyonu deploy et
-git pull
+# Yeni versiyonu deploy et (Önerilen: Script kullan)
+bash scripts/update-production.sh
+
+# VEYA manuel olarak:
+cd /opt/lifeos
+git pull origin main
 docker compose -f docker-compose.prod.yml up -d --build
 
 # Disk kullanımı
