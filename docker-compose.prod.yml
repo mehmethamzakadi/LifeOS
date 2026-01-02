@@ -131,6 +131,8 @@ services:
         ssl=false
       # JWT Security
       TokenOptions__SecurityKey: ${TOKEN_SECURITY_KEY}
+      TokenOptions__Audience: ${APP_URL:-http://45.143.4.244}
+      TokenOptions__Issuer: ${APP_URL:-http://45.143.4.244}
       # Seq Logging
       Serilog__WriteTo__1__Args__serverUrl: http://seq:80
       # CORS Policy (Production'da sadece kendi domaininden gelen isteklere izin ver)
