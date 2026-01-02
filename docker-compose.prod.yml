@@ -36,7 +36,7 @@ services:
       context: ./clients/lifeos-client
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=${VITE_API_URL:-https://api.yourdomain.com}
+        - VITE_API_URL=${VITE_API_URL:-http://45.143.4.244/api}
     container_name: lifeos_client_prod
     restart: always
     expose:
