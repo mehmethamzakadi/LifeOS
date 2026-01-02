@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 
 # Domain ve email
 DOMAIN="liferegistry.app"
-EMAIL="${CERTBOT_EMAIL:-your-email@example.com}"
+EMAIL="${CERTBOT_EMAIL:-info@liferegistry.app}"
 PROJECT_DIR="/opt/lifeos"
 
 echo -e "${GREEN}========================================${NC}"
