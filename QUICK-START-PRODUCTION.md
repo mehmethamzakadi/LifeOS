@@ -21,7 +21,7 @@ bash scripts/setup-server.sh
 ```bash
 # Git ile (Önerilen)
 cd /opt
-git clone https://github.com/yourusername/LifeOS.git lifeos
+git clone https://github.com/mehmethamzakadi/LifeOS.git lifeos
 cd lifeos
 
 # VEYA SCP ile

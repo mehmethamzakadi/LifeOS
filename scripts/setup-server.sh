@@ -58,43 +58,137 @@ print_success "Temel paketler yüklendi"
 print_info "Docker kurulumu kontrol ediliyor..."
 if command -v docker &> /dev/null; then
     print_warning "Docker zaten kurulu"
+    docker --version
 else
     print_info "Docker yükleniyor..."
     
     # Eski Docker versiyonlarını kaldır
     apt remove -y docker docker-engine docker.io containerd runc 2>/dev/null || true
     
+    # Eski Docker repository dosyalarını temizle
+    rm -f /etc/apt/sources.list.d/docker*.list 2>/dev/null || true
+    rm -f /etc/apt/keyrings/docker.gpg 2>/dev/null || true
+    
     # Docker için gerekli paketler
-    apt install -y ca-certificates gnupg lsb-release
+    apt install -y ca-certificates curl gnupg lsb-release
     
-    # Docker GPG key
-    mkdir -p /etc/apt/keyrings
+    # Ubuntu kod adını al
+    UBUNTU_CODENAME=$(lsb_release -cs)
+    ARCH=$(dpkg --print-architecture)
+    
+    print_info "Ubuntu versiyonu: $UBUNTU_CODENAME, Mimari: $ARCH"
+    
+    # Docker GPG key (daha güvenli yöntem)
+    print_info "Docker GPG key ekleniyor..."
+    install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
     
-    # Docker repository
+    # Docker repository ekle
+    print_info "Docker repository ekleniyor..."
     echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-      $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+      "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      ${UBUNTU_CODENAME} stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
     
-    # Docker yükle
-    apt update
-    apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    
-    # Docker servisi
-    systemctl start docker
-    systemctl enable docker
-    
-    print_success "Docker yüklendi"
+    # Paket listelerini güncelle
+    print_info "Paket listeleri güncelleniyor..."
+    if ! apt update 2>&1 | tee /tmp/docker-apt-update.log; then
+        print_error "apt update başarısız oldu!"
+        print_warning "Hata logları:"
+        tail -20 /tmp/docker-apt-update.log
+        
+        # Eski repository dosyasını temizle ve tekrar dene
+        print_info "Repository dosyası temizleniyor ve alternatif yöntem deneniyor..."
+        rm -f /etc/apt/sources.list.d/docker.list
+        
+        # Ubuntu'nun kendi repository'sinden kur (alternatif)
+        print_info "Ubuntu repository'sinden Docker yükleniyor (docker.io)..."
+        apt update
+        if apt install -y docker.io docker-compose; then
+            systemctl start docker
+            systemctl enable docker
+            
+            if command -v docker &> /dev/null; then
+                print_success "Docker docker.io paketinden yüklendi"
+            else
+                print_error "Docker kurulumu başarısız oldu!"
+                print_info "Lütfen manuel olarak kurun: https://docs.docker.com/engine/install/ubuntu/"
+                exit 1
+            fi
+        else
+            print_error "Docker kurulumu başarısız oldu!"
+            print_info "Lütfen manuel olarak kurun: https://docs.docker.com/engine/install/ubuntu/"
+            exit 1
+        fi
+    else
+        # Docker yükle
+        print_info "Docker paketleri yükleniyor..."
+        if apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; then
+            # Docker servisi
+            systemctl start docker
+            systemctl enable docker
+            
+            # Kurulumu test et
+            if docker --version &> /dev/null; then
+                print_success "Docker yüklendi"
+                docker --version
+            else
+                print_error "Docker yüklendi ama çalışmıyor!"
+                exit 1
+            fi
+        else
+            print_error "Docker paketleri yüklenemedi!"
+            print_info "Repository dosyası temizleniyor ve alternatif yöntem deneniyor..."
+            rm -f /etc/apt/sources.list.d/docker.list
+            
+            # Alternatif: Ubuntu'nun kendi repository'sinden kur
+            print_info "Ubuntu repository'sinden Docker yükleniyor (docker.io)..."
+            apt update
+            if apt install -y docker.io docker-compose; then
+                systemctl start docker
+                systemctl enable docker
+                
+                if command -v docker &> /dev/null; then
+                    print_success "Docker docker.io paketinden yüklendi"
+                else
+                    print_error "Docker kurulumu başarısız oldu!"
+                    print_info "Lütfen manuel olarak kurun: https://docs.docker.com/engine/install/ubuntu/"
+                    exit 1
+                fi
+            else
+                print_error "Docker kurulumu başarısız oldu!"
+                print_info "Lütfen manuel olarak kurun: https://docs.docker.com/engine/install/ubuntu/"
+                exit 1
+            fi
+        fi
+    fi
 fi
 
 # 4. Docker Compose kontrolü
 print_info "Docker Compose kontrol ediliyor..."
-if docker compose version &> /dev/null; then
-    print_success "Docker Compose mevcut"
+if docker compose version &> /dev/null 2>&1; then
+    print_success "Docker Compose mevcut (plugin)"
     docker compose version
+elif command -v docker-compose &> /dev/null && docker-compose --version &> /dev/null 2>&1; then
+    print_warning "Docker Compose mevcut (standalone)"
+    docker-compose --version
+    print_info "Not: Docker Compose plugin kullanmanız önerilir, ancak standalone versiyon da çalışır"
 else
-    print_error "Docker Compose kurulu değil!"
-    exit 1
+    print_warning "Docker Compose bulunamadı, yükleniyor..."
+    
+    # Docker Compose'u yükle
+    apt update
+    if apt install -y docker-compose-plugin 2>/dev/null; then
+        print_success "Docker Compose plugin yüklendi"
+        docker compose version
+    elif apt install -y docker-compose 2>/dev/null; then
+        print_success "Docker Compose (standalone) yüklendi"
+        docker-compose --version
+    else
+        print_error "Docker Compose yüklenemedi!"
+        print_info "Uygulama docker-compose komutuyla çalışacak, plugin kurulumu için manuel yükleme yapın"
+        print_info "Detaylar: https://docs.docker.com/compose/install/"
+    fi
 fi
 
 # 5. Firewall (UFW) Yapılandırması

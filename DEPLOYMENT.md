@@ -563,7 +563,57 @@ docker compose -f docker-compose.prod.yml ps
 
 ## 🛑 Sorun Giderme
 
-### 1. Container'lar Başlamıyor
+### 1. Docker Kurulum Hatası (404 Not Found)
+
+Eğer Docker kurulumu sırasında "404 Not Found" veya "unable to fetch some archives" hatası alıyorsanız:
+
+**Çözüm 1: Script otomatik olarak alternatif yöntemi dener**
+
+Setup script'i artık otomatik olarak alternatif kurulum yöntemini dener. Eğer hata devam ederse:
+
+```bash
+# Eski Docker repository dosyalarını temizle
+sudo rm -f /etc/apt/sources.list.d/docker*.list
+sudo rm -f /etc/apt/keyrings/docker.gpg
+
+# Ubuntu repository'sinden kur (alternatif yöntem)
+sudo apt update
+sudo apt install -y docker.io docker-compose
+
+# Docker servisini başlat
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Kurulumu test et
+docker --version
+```
+
+**Çözüm 2: Manuel Docker kurulumu**
+
+```bash
+# Docker'ın resmi kurulum script'ini kullan
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Docker Compose'u yükle
+sudo apt install -y docker-compose-plugin
+```
+
+**Çözüm 3: Network/DNS sorunları**
+
+```bash
+# DNS çözümlemesini test et
+nslookup download.docker.com
+
+# Proxy kullanıyorsanız, apt proxy ayarlarını kontrol edin
+cat /etc/apt/apt.conf.d/*proxy*
+
+# Eğer proxy kullanıyorsanız, curl için de ayarlayın
+export http_proxy=http://proxy-server:port
+export https_proxy=http://proxy-server:port
+```
+
+### 2. Container'lar Başlamıyor
 
 ```bash
 # Logları kontrol et
