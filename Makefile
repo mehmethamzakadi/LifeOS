@@ -135,6 +135,11 @@ prod-up:
 
 prod-build:
 	@echo "$(YELLOW)Production servisleri build ediliyor...$(NC)"
+	@if [ ! -f .env ]; then \
+		echo "$(RED)✗ HATA: .env dosyası bulunamadı!$(NC)"; \
+		echo "$(YELLOW)Production için .env dosyası oluşturun: cp .env.example .env$(NC)"; \
+		exit 1; \
+	fi
 	$(COMPOSE_PROD) build --no-cache
 	@echo "$(GREEN)✓ Build tamamlandı$(NC)"
 
