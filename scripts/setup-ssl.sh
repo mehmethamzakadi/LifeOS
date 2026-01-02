@@ -25,7 +25,7 @@ echo -e "${GREEN}========================================${NC}"
 echo ""
 
 # 1. Certbot kurulumunu kontrol et
-echo -e "${YELLOW}[1/7] Certbot kurulumunu kontrol ediliyor...${NC}"
+echo -e "${YELLOW}[1/5] Certbot kurulumunu kontrol ediliyor...${NC}"
 if ! command -v certbot &> /dev/null; then
     echo -e "${RED}Certbot bulunamadı. Kuruluyor...${NC}"
     sudo apt update
@@ -35,7 +35,7 @@ else
 fi
 
 # 2. DNS kontrolü
-echo -e "${YELLOW}[2/7] DNS kaydını kontrol ediliyor...${NC}"
+echo -e "${YELLOW}[2/5] DNS kaydını kontrol ediliyor...${NC}"
 DNS_IP=$(dig +short $DOMAIN | tail -n1)
 EXPECTED_IP="45.143.4.244"
 
@@ -53,53 +53,53 @@ else
     echo -e "${GREEN}✓ DNS kaydı doğru ($DNS_IP)${NC}"
 fi
 
-# 3. Mevcut container'ları durdur
-echo -e "${YELLOW}[3/7] Mevcut container'lar durduruluyor...${NC}"
+# 3. Port 80'i kullanan servisleri durdur
+echo -e "${YELLOW}[3/5] Port 80'i kullanan servisler durduruluyor...${NC}"
 cd "$PROJECT_DIR" || exit 1
+
+# Docker container'ları durdur
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml down 2>/dev/null || true
-echo -e "${GREEN}✓ Container'lar durduruldu${NC}"
 
-# 4. Geçici Nginx container'ı oluştur
-echo -e "${YELLOW}[4/7] Geçici Nginx container'ı oluşturuluyor...${NC}"
-sudo mkdir -p /tmp/certbot-nginx
-sudo mkdir -p /var/www/certbot
-sudo chmod -R 755 /var/www/certbot
+# Port 80'i kullanan tüm Docker container'larını durdur
+ALL_CONTAINERS=$(sudo docker ps -q 2>/dev/null || true)
+for container in $ALL_CONTAINERS; do
+    if sudo docker port "$container" 2>/dev/null | grep -q ":80->"; then
+        CONTAINER_NAME=$(sudo docker ps --format "{{.Names}}" --filter "id=$container" 2>/dev/null || echo "$container")
+        echo -e "${YELLOW}  Port 80 kullanan container durduruluyor: $CONTAINER_NAME${NC}"
+        sudo docker stop "$container" 2>/dev/null || true
+    fi
+done
 
-sudo tee /tmp/certbot-nginx/default.conf > /dev/null <<EOF
-server {
-    listen 80;
-    server_name $DOMAIN www.$DOMAIN;
-    
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-    
-    location / {
-        return 200 "Certbot verification in progress...";
-        add_header Content-Type text/plain;
-    }
-}
-EOF
+# Sistem Nginx'ini durdur (eğer çalışıyorsa)
+if sudo systemctl is-active --quiet nginx 2>/dev/null; then
+    echo -e "${YELLOW}  Sistem Nginx durduruluyor...${NC}"
+    sudo systemctl stop nginx 2>/dev/null || true
+fi
 
-# Eski geçici container'ı temizle
-sudo docker stop certbot-nginx 2>/dev/null || true
-sudo docker rm certbot-nginx 2>/dev/null || true
+# Port 80'i kullanan diğer process'leri kontrol et
+PORT80_PID=$(sudo lsof -ti:80 2>/dev/null || true)
+if [ -n "$PORT80_PID" ]; then
+    echo -e "${YELLOW}  Port 80'i kullanan process'ler bulundu (PID: $PORT80_PID)${NC}"
+    echo -e "${YELLOW}  Bu process'leri durdurmak için sudo gerekiyor...${NC}"
+    echo "$PORT80_PID" | xargs -r sudo kill -9 2>/dev/null || true
+    sleep 2
+fi
 
-# Yeni geçici container'ı başlat
-sudo docker run -d \
-  --name certbot-nginx \
-  -p 80:80 \
-  -v /tmp/certbot-nginx:/etc/nginx/conf.d:ro \
-  -v /var/www/certbot:/var/www/certbot \
-  nginx:alpine
+# Port 80'in boş olduğunu kontrol et
+if sudo lsof -ti:80 >/dev/null 2>&1; then
+    echo -e "${RED}✗ Port 80 hala kullanımda! Lütfen manuel olarak kontrol edin:${NC}"
+    echo -e "${YELLOW}  sudo lsof -i:80${NC}"
+    echo -e "${YELLOW}  sudo netstat -tlnp | grep :80${NC}"
+    exit 1
+fi
 
-sleep 2
-echo -e "${GREEN}✓ Geçici Nginx container'ı başlatıldı${NC}"
+echo -e "${GREEN}✓ Port 80 boşaltıldı${NC}"
 
-# 5. SSL sertifikası oluştur
-echo -e "${YELLOW}[5/7] SSL sertifikası oluşturuluyor...${NC}"
+# 4. SSL sertifikası oluştur (standalone mod - kendi web server'ını başlatır)
+echo -e "${YELLOW}[4/5] SSL sertifikası oluşturuluyor...${NC}"
 echo -e "${YELLOW}  Email: $EMAIL${NC}"
 echo -e "${YELLOW}  Domain: $DOMAIN, www.$DOMAIN${NC}"
+echo -e "${YELLOW}  Not: Certbot standalone modu kendi web server'ını başlatacak${NC}"
 
 sudo certbot certonly \
   --standalone \
@@ -111,21 +111,14 @@ sudo certbot certonly \
   --non-interactive \
   --expand || {
     echo -e "${RED}✗ Sertifika oluşturma başarısız!${NC}"
-    sudo docker stop certbot-nginx
-    sudo docker rm certbot-nginx
+    echo -e "${YELLOW}  Lütfen port 80'in boş olduğundan emin olun: sudo lsof -i:80${NC}"
     exit 1
   }
 
 echo -e "${GREEN}✓ SSL sertifikası oluşturuldu${NC}"
 
-# 6. Geçici container'ı durdur
-echo -e "${YELLOW}[6/7] Geçici container temizleniyor...${NC}"
-sudo docker stop certbot-nginx
-sudo docker rm certbot-nginx
-echo -e "${GREEN}✓ Geçici container temizlendi${NC}"
-
-# 7. Sertifikaları proje klasörüne kopyala
-echo -e "${YELLOW}[7/7] Sertifikalar proje klasörüne kopyalanıyor...${NC}"
+# 5. Sertifikaları proje klasörüne kopyala
+echo -e "${YELLOW}[5/5] Sertifikalar proje klasörüne kopyalanıyor...${NC}"
 mkdir -p "$PROJECT_DIR/deploy/nginx/ssl"
 mkdir -p "$PROJECT_DIR/deploy/nginx/certbot"
 
