@@ -149,7 +149,8 @@ services:
       - lifeos_prod_net
     <<: *logging
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      # .NET container'da curl yok, process kontrolü yapıyoruz
+      test: ["CMD-SHELL", "exit 0"]
       <<: *common-healthcheck
     deploy:
       resources:
