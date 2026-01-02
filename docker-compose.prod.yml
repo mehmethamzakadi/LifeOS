@@ -73,8 +73,8 @@ services:
       - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       # SSL sertifikaları için (Let's Encrypt kullanılıyorsa)
-      # - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
-      # - ./deploy/nginx/certbot:/var/www/certbot:ro
+      - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
+      - ./deploy/nginx/certbot:/var/www/certbot:ro
     depends_on:
       lifeos.api:
         condition: service_healthy
