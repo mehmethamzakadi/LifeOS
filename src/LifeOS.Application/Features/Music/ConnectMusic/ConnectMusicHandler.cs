@@ -57,24 +57,17 @@ public sealed class ConnectMusicHandler
             _logger.LogInformation("ConnectMusic: User profile alındı. SpotifyUserId: {SpotifyUserId}, UserId: {UserId}", 
                 userProfile.Id, userId);
 
-            // Mevcut bağlantıyı kontrol et - IsDeleted durumundan bağımsız (unique constraint için)
+            // Mevcut aktif bağlantıyı kontrol et (soft delete filter otomatik uygulanır)
+            // Partial unique index sayesinde sadece aktif kayıtlar unique olacak
             var existingConnection = await _context.MusicConnections
-                .FirstOrDefaultAsync(c => c.UserId == userId.Value, cancellationToken);
+                .FirstOrDefaultAsync(c => c.UserId == userId.Value && !c.IsDeleted, cancellationToken);
 
             var expiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
 
             if (existingConnection != null)
             {
-                if (existingConnection.IsDeleted)
-                {
-                    _logger.LogInformation("ConnectMusic: Silinmiş bağlantı bulundu, restore ediliyor. UserId: {UserId}", userId);
-                    // Silinmiş bağlantıyı restore et
-                    existingConnection.Restore();
-                }
-                else
-                {
-                    _logger.LogInformation("ConnectMusic: Mevcut bağlantı güncelleniyor. UserId: {UserId}", userId);
-                }
+                _logger.LogInformation("ConnectMusic: Mevcut bağlantı güncelleniyor. UserId: {UserId}, ConnectionId: {ConnectionId}", 
+                    userId, existingConnection.Id);
                 
                 // Mevcut bağlantıyı güncelle
                 existingConnection.UpdateTokens(
@@ -87,18 +80,43 @@ public sealed class ConnectMusicHandler
             }
             else
             {
-                _logger.LogInformation("ConnectMusic: Yeni bağlantı oluşturuluyor. UserId: {UserId}", userId);
-                // Yeni bağlantı oluştur
-                var connection = MusicConnection.Create(
-                    userId.Value,
-                    _tokenEncryptionService.Encrypt(tokenResponse.AccessToken),
-                    _tokenEncryptionService.Encrypt(tokenResponse.RefreshToken),
-                    expiresAt,
-                    userProfile.Id,
-                    userProfile.DisplayName,
-                    userProfile.Email);
+                // Aktif bağlantı yok - yeni oluştur veya silinmiş olanı restore et
+                // Soft delete filter nedeniyle silinmiş kayıtları görmek için filter'ı kaldırmalıyız
+                var deletedConnection = await _context.MusicConnections
+                    .IgnoreQueryFilters() // Soft delete filter'ı bypass et
+                    .FirstOrDefaultAsync(c => c.UserId == userId.Value && c.IsDeleted, cancellationToken);
 
-                await _context.MusicConnections.AddAsync(connection, cancellationToken);
+                if (deletedConnection != null)
+                {
+                    _logger.LogInformation("ConnectMusic: Silinmiş bağlantı bulundu, restore ediliyor. UserId: {UserId}, ConnectionId: {ConnectionId}", 
+                        userId, deletedConnection.Id);
+                    
+                    // Silinmiş bağlantıyı restore et
+                    deletedConnection.Restore();
+                    deletedConnection.UpdateTokens(
+                        _tokenEncryptionService.Encrypt(tokenResponse.AccessToken),
+                        _tokenEncryptionService.Encrypt(tokenResponse.RefreshToken),
+                        expiresAt);
+                    deletedConnection.Activate();
+                    
+                    _context.MusicConnections.Update(deletedConnection);
+                }
+                else
+                {
+                    _logger.LogInformation("ConnectMusic: Yeni bağlantı oluşturuluyor. UserId: {UserId}", userId);
+                    
+                    // Yeni bağlantı oluştur
+                    var connection = MusicConnection.Create(
+                        userId.Value,
+                        _tokenEncryptionService.Encrypt(tokenResponse.AccessToken),
+                        _tokenEncryptionService.Encrypt(tokenResponse.RefreshToken),
+                        expiresAt,
+                        userProfile.Id,
+                        userProfile.DisplayName,
+                        userProfile.Email);
+
+                    await _context.MusicConnections.AddAsync(connection, cancellationToken);
+                }
             }
 
             await _context.SaveChangesAsync(cancellationToken);

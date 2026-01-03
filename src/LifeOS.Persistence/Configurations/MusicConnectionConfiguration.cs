@@ -44,8 +44,11 @@ public class MusicConnectionConfiguration : BaseConfiguraiton<MusicConnection>
             .HasDefaultValue(true);
 
         // Indexes
+        // Partial unique index: Sadece silinmemiş kayıtlar için UserId unique olmalı
+        // Bu sayede soft delete ile uyumlu çalışır - silinmiş kayıtlar unique constraint'i ihlal etmez
         builder.HasIndex(x => x.UserId)
             .IsUnique()
+            .HasFilter("\"IsDeleted\" = false")
             .HasDatabaseName("IX_MusicConnections_UserId");
 
         builder.HasIndex(x => x.SpotifyUserId)
