@@ -16,7 +16,7 @@ export function MusicPage() {
   const [searchedArtist, setSearchedArtist] = useState<string>('');
 
   // Artist analysis
-  const { data: artistAnalysis, isLoading: isLoadingArtist, refetch: refetchArtist } = useQuery({
+  const { data: artistAnalysis, isLoading: isLoadingArtist } = useQuery({
     queryKey: ['music-artist-analysis', searchedArtist],
     queryFn: () => analyzeArtist(searchedArtist),
     enabled: searchedArtist.length > 0,
@@ -394,7 +394,7 @@ export function MusicPage() {
                               ? 'default'
                               : track.valenceDescription === 'Dengeli'
                               ? 'secondary'
-                              : 'destructive'
+                              : 'outline'
                           }
                         >
                           {track.valenceDescription}
