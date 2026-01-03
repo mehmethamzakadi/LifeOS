@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Music, Link2, Unlink, Loader2, Play, Pause, Heart, BarChart3, Wifi, WifiOff, XCircle, Sparkles, Globe } from 'lucide-react';
-import { getConnectionStatus, getAuthorizationUrl, disconnectMusic, getCurrentTrack, getSavedTracks, getListeningStats, saveTrack, deleteSavedTrack, generateMoodPlaylist } from '../../features/music/api';
-import { MoodPlaylist } from '../../features/music/types';
+import { Music, Link2, Unlink, Loader2, Play, Pause, Heart, BarChart3, Wifi, WifiOff, XCircle, TrendingUp } from 'lucide-react';
+import { getConnectionStatus, getAuthorizationUrl, disconnectMusic, getCurrentTrack, getSavedTracks, getListeningStats, saveTrack, deleteSavedTrack, analyzeVibe } from '../../features/music/api';
 import { useMusicSignalR } from '../../hooks/use-music-signalr';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
@@ -13,9 +12,7 @@ import { handleApiError } from '../../lib/api-error';
 export function MusicPage() {
   const queryClient = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-  const [selectedMood, setSelectedMood] = useState<string>('');
-  const [selectedLanguage, setSelectedLanguage] = useState<'turkish' | 'foreign' | 'mixed'>('mixed');
-  const [moodPlaylist, setMoodPlaylist] = useState<MoodPlaylist | null>(null);
+  const [vibeTimeRange, setVibeTimeRange] = useState<'short_term' | 'medium_term' | 'long_term'>('short_term');
 
   // Connection status
   const { data: connectionStatus, isLoading: isLoadingStatus } = useQuery({
@@ -88,40 +85,20 @@ export function MusicPage() {
     }
   };
 
-  // Generate mood playlist mutation
-  const generateMoodPlaylistMutation = useMutation({
-    mutationFn: () => generateMoodPlaylist(selectedMood, selectedLanguage, 30),
-    onSuccess: (data) => {
-      setMoodPlaylist(data);
-      toast.success(`${selectedMood} ruh haline özel playlist oluşturuldu!`);
-    },
-    onError: (error) => {
-      handleApiError(error);
-    }
-  });
-
-  const handleGeneratePlaylist = () => {
-    if (!selectedMood) {
-      toast.error('Lütfen bir ruh hali seçin');
-      return;
-    }
-    generateMoodPlaylistMutation.mutate();
-  };
-
-  const moods = [
-    { value: 'mutlu', label: '😊 Mutlu', color: 'bg-yellow-100 hover:bg-yellow-200 text-yellow-800' },
-    { value: 'üzgün', label: '😢 Üzgün', color: 'bg-blue-100 hover:bg-blue-200 text-blue-800' },
-    { value: 'enerjik', label: '⚡ Enerjik', color: 'bg-red-100 hover:bg-red-200 text-red-800' },
-    { value: 'sakin', label: '🧘 Sakin', color: 'bg-green-100 hover:bg-green-200 text-green-800' },
-    { value: 'romantik', label: '💕 Romantik', color: 'bg-pink-100 hover:bg-pink-200 text-pink-800' },
-    { value: 'nostaljik', label: '🎭 Nostaljik', color: 'bg-purple-100 hover:bg-purple-200 text-purple-800' }
-  ];
 
   // Listening stats
   const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['music-stats', selectedPeriod],
     queryFn: () => getListeningStats(selectedPeriod),
     enabled: connectionStatus?.isConnected === true
+  });
+
+  // Vibe analysis
+  const { data: vibeAnalysis, isLoading: isLoadingVibe } = useQuery({
+    queryKey: ['music-vibe', vibeTimeRange],
+    queryFn: () => analyzeVibe(vibeTimeRange),
+    enabled: connectionStatus?.isConnected === true,
+    retry: 1
   });
 
   // Connect mutation
@@ -337,6 +314,103 @@ export function MusicPage() {
         </Card>
       )}
 
+      {/* Vibe Check - Ruh Hali Analizi */}
+      {connectionStatus?.isConnected && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Ruh Hali Analizi
+            </CardTitle>
+            <CardDescription>
+              Dinlediğiniz müziklere göre ruh halinizi analiz ediyoruz
+              <div className="flex gap-2 mt-2">
+                {(['short_term', 'medium_term', 'long_term'] as const).map((range) => (
+                  <Button
+                    key={range}
+                    variant={vibeTimeRange === range ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setVibeTimeRange(range)}
+                    disabled={isLoadingVibe}
+                  >
+                    {range === 'short_term' ? 'Son 4 Hafta' : range === 'medium_term' ? 'Son 6 Ay' : 'Tüm Zamanlar'}
+                  </Button>
+                ))}
+              </div>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingVibe ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : vibeAnalysis ? (
+              <div className="space-y-6">
+                {/* Mood Title & Icon */}
+                <div className="text-center py-4 bg-muted rounded-lg">
+                  <div className="text-4xl mb-2">{vibeAnalysis.moodIcon}</div>
+                  <h3 className="text-lg font-semibold">{vibeAnalysis.moodTitle}</h3>
+                  {vibeAnalysis.topGenre && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      En çok dinlenen: {vibeAnalysis.topGenre}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {vibeAnalysis.analyzedTracksCount} şarkı analiz edildi
+                  </p>
+                </div>
+
+                {/* Progress Bars */}
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Enerji Seviyesi</span>
+                      <span className="text-sm text-muted-foreground">{vibeAnalysis.energyLevel}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3">
+                      <div
+                        className="bg-red-500 h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${vibeAnalysis.energyLevel}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Mutluluk Seviyesi</span>
+                      <span className="text-sm text-muted-foreground">{vibeAnalysis.happinessLevel}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3">
+                      <div
+                        className="bg-yellow-500 h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${vibeAnalysis.happinessLevel}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Dans Edilebilirlik</span>
+                      <span className="text-sm text-muted-foreground">{vibeAnalysis.danceabilityLevel}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3">
+                      <div
+                        className="bg-purple-500 h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${vibeAnalysis.danceabilityLevel}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Analiz yapılamadı. Biraz daha müzik dinleyin.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats */}
       {stats && (
         <div className="grid gap-4 md:grid-cols-2">
@@ -460,129 +534,6 @@ export function MusicPage() {
         </div>
       )}
 
-      {/* AI Mood Playlist Generator */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            Ruh Haline Göre Playlist Oluştur
-          </CardTitle>
-          <CardDescription>
-            AI destekli yapay zeka ile ruh halinize özel kişiselleştirilmiş playlist oluşturun
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Mood Selection */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">Ruh Haliniz</label>
-            <div className="grid grid-cols-3 gap-2">
-              {moods.map((mood) => (
-                <Button
-                  key={mood.value}
-                  variant={selectedMood === mood.value ? 'default' : 'outline'}
-                  className={selectedMood === mood.value ? '' : mood.color}
-                  onClick={() => setSelectedMood(mood.value)}
-                  size="sm"
-                >
-                  {mood.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Language Selection */}
-          <div>
-            <label className="text-sm font-medium mb-2 flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              Dil Tercihi
-            </label>
-            <div className="flex gap-2">
-              <Button
-                variant={selectedLanguage === 'turkish' ? 'default' : 'outline'}
-                onClick={() => setSelectedLanguage('turkish')}
-                size="sm"
-              >
-                🇹🇷 Türkçe
-              </Button>
-              <Button
-                variant={selectedLanguage === 'foreign' ? 'default' : 'outline'}
-                onClick={() => setSelectedLanguage('foreign')}
-                size="sm"
-              >
-                🌍 Yabancı
-              </Button>
-              <Button
-                variant={selectedLanguage === 'mixed' ? 'default' : 'outline'}
-                onClick={() => setSelectedLanguage('mixed')}
-                size="sm"
-              >
-                🌐 Karışık
-              </Button>
-            </div>
-          </div>
-
-          {/* Generate Button */}
-          <Button
-            onClick={handleGeneratePlaylist}
-            disabled={!selectedMood || generateMoodPlaylistMutation.isPending}
-            className="w-full"
-            size="lg"
-          >
-            {generateMoodPlaylistMutation.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Oluşturuluyor...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Playlist Oluştur
-              </>
-            )}
-          </Button>
-
-          {/* Generated Playlist */}
-          {moodPlaylist && (
-            <div className="mt-6 space-y-4">
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-sm font-medium mb-1">📝 {moodPlaylist.description}</p>
-                <p className="text-xs text-muted-foreground">
-                  {moodPlaylist.tracks.length} şarkı • {moodPlaylist.mood} ruh hali
-                </p>
-              </div>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {moodPlaylist.tracks.map((track, index) => (
-                  <div key={track.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                    <span className="text-muted-foreground text-sm w-6">{index + 1}</span>
-                    {track.album?.images?.[0] && (
-                      <img
-                        src={track.album.images[0].url}
-                        alt={track.album.name}
-                        className="w-12 h-12 rounded object-cover"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{track.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {track.artists.map(a => a.name).join(', ')}
-                      </p>
-                    </div>
-                    {track.externalUrl && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => window.open(track.externalUrl, '_blank')}
-                      >
-                        <Play className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

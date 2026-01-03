@@ -82,30 +82,13 @@ export interface ListeningStats {
   mostListenedGenre?: string;
 }
 
-export interface MoodPlaylist {
-  tracks: PlaylistTrack[];
-  mood: string;
-  description: string;
-}
-
-export interface PlaylistTrack {
-  id: string;
-  name: string;
-  artists: PlaylistArtist[];
-  album?: PlaylistAlbum;
-  durationMs: number;
-  previewUrl?: string;
-  externalUrl?: string;
-}
-
-export interface PlaylistArtist {
-  id: string;
-  name: string;
-}
-
-export interface PlaylistAlbum {
-  id: string;
-  name: string;
-  images: SpotifyImage[];
+export interface VibeAnalysis {
+  moodTitle: string;
+  moodIcon: string;
+  energyLevel: number; // 0-100
+  happinessLevel: number; // 0-100
+  danceabilityLevel: number; // 0-100
+  topGenre?: string;
+  analyzedTracksCount: number;
 }
 

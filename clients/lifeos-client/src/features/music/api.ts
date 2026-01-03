@@ -8,7 +8,7 @@ import {
   SavedTrack,
   Playlist,
   ListeningStats,
-  MoodPlaylist
+  VibeAnalysis
 } from './types';
 
 export async function getConnectionStatus(): Promise<MusicConnectionStatus> {
@@ -110,19 +110,12 @@ export async function getListeningStats(period: 'daily' | 'weekly' | 'monthly' =
   };
 }
 
-export async function generateMoodPlaylist(
-  mood: string,
-  languagePreference: 'turkish' | 'foreign' | 'mixed' = 'mixed',
-  limit: number = 30
-): Promise<MoodPlaylist> {
-  const response = await api.post<ApiResult<MoodPlaylist>>('/music/generate-mood-playlist', {
-    mood,
-    languagePreference,
-    limit
-  });
-  const result = normalizeApiResult<MoodPlaylist>(response.data);
+
+export async function analyzeVibe(timeRange: 'short_term' | 'medium_term' | 'long_term' = 'short_term'): Promise<VibeAnalysis> {
+  const response = await api.get<ApiResult<VibeAnalysis>>(`/music/analyze-vibe?timeRange=${timeRange}`);
+  const result = normalizeApiResult<VibeAnalysis>(response.data);
   if (!result.success || !result.data) {
-    throw new Error(result.message || 'Playlist oluşturulamadı');
+    throw new Error(result.message || 'Ruh hali analizi yapılamadı');
   }
   return result.data;
 }
