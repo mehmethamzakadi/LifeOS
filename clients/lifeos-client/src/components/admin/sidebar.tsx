@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { FolderKanban, LayoutDashboard, Users, Shield, User, BookOpen, Gamepad2, Film, StickyNote, Wallet, Settings, ShoppingBag, Monitor, Tags } from 'lucide-react';
+import { FolderKanban, LayoutDashboard, Users, Shield, User, BookOpen, Gamepad2, Film, StickyNote, Wallet, Settings, ShoppingBag, Monitor, Tags, Music } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { usePermission } from '../../hooks/use-permission';
 import { Permissions } from '../../lib/permissions';
@@ -51,6 +51,12 @@ const menuGroups = [
         label: 'Notlar',
         icon: StickyNote,
         requiredPermission: Permissions.PersonalNotesViewAll as string | undefined
+      },
+      {
+        to: '/admin/music',
+        label: 'Müzik',
+        icon: Music,
+        requiredPermission: undefined // Herkes erişebilir
       }
     ]
   },

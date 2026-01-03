@@ -84,6 +84,15 @@ using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using LifeOS.Application.Features.Music.GetMusicAuthorizationUrl;
+using LifeOS.Application.Features.Music.ConnectMusic;
+using LifeOS.Application.Features.Music.GetConnectionStatus;
+using LifeOS.Application.Features.Music.DisconnectMusic;
+using LifeOS.Application.Features.Music.GetCurrentTrack;
+using LifeOS.Application.Features.Music.GetSavedTracks;
+using LifeOS.Application.Features.Music.SaveTrack;
+using LifeOS.Application.Features.Music.DeleteSavedTrack;
+using LifeOS.Application.Features.Music.GetListeningStats;
 
 
 namespace LifeOS.Application
@@ -119,6 +128,17 @@ namespace LifeOS.Application
             services.AddScoped<GetBookByIdHandler>();
             services.AddScoped<GetBookByIsbnHandler>();
             services.AddScoped<SearchBooksHandler>();
+
+            // Register Music feature handlers (Vertical Slice Architecture)
+            services.AddScoped<GetMusicAuthorizationUrlHandler>();
+            services.AddScoped<ConnectMusicHandler>();
+            services.AddScoped<GetConnectionStatusHandler>();
+            services.AddScoped<DisconnectMusicHandler>();
+            services.AddScoped<GetCurrentTrackHandler>();
+            services.AddScoped<GetSavedTracksHandler>();
+            services.AddScoped<SaveTrackHandler>();
+            services.AddScoped<DeleteSavedTrackHandler>();
+            services.AddScoped<GetListeningStatsHandler>();
 
             // Register Auths feature handlers (Vertical Slice Architecture)
             services.AddScoped<RegisterHandler>();

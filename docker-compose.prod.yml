@@ -150,6 +150,14 @@ services:
       BookServiceOptions__RetryCount: "2"
       BookServiceOptions__RetryDelaySeconds: "1"
       BookServiceOptions__PrimaryApiSource: OpenLibrary
+      # Spotify Options (Production)
+      SpotifyOptions__ClientId: "${SPOTIFY_CLIENT_ID}"
+      SpotifyOptions__ClientSecret: "${SPOTIFY_CLIENT_SECRET}"
+      SpotifyOptions__RedirectUri: "${SPOTIFY_REDIRECT_URI:-https://liferegistry.app/music/callback}"
+      SpotifyOptions__ApiBaseUrl: "https://api.spotify.com/v1"
+      SpotifyOptions__AccountsBaseUrl: "https://accounts.spotify.com"
+      SpotifyOptions__TimeoutSeconds: "30"
+      SpotifyOptions__TokenRefreshMarginSeconds: "300"
       # CORS Policy (Production'da sadece kendi domaininden gelen isteklere izin ver)
       # .NET Core array format: Cors:AllowedOrigins:0 -> Cors__AllowedOrigins__0
       Cors__AllowedOrigins__0: "${APP_URL:-http://45.143.4.244}"

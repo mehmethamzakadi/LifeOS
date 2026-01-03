@@ -35,6 +35,7 @@ namespace LifeOS.Infrastructure
             services.Configure<ImageStorageOptions>(configuration.GetSection(ImageStorageOptions.SectionName));
             services.Configure<Options.OllamaOptions>(configuration.GetSection(Options.OllamaOptions.SectionName));
             services.Configure<Options.BookServiceOptions>(configuration.GetSection(Options.BookServiceOptions.SectionName));
+            services.Configure<Options.SpotifyOptions>(configuration.GetSection(Options.SpotifyOptions.SectionName));
 
             // Custom Password Hasher for User entity
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -170,6 +171,31 @@ namespace LifeOS.Infrastructure
 
             services.AddScoped<Domain.Services.IBookService, BookService>();
 
+            // Spotify Service - Best practices: IHttpClientFactory + Polly retry policy
+            var spotifyOptions = configuration.GetSection(Options.SpotifyOptions.SectionName).Get<Options.SpotifyOptions>()
+                ?? throw new InvalidOperationException("Spotify ayarları yapılandırılmalıdır.");
+
+            // Spotify Web API HttpClient
+            var spotifyApiBaseAddress = spotifyOptions.ApiBaseUrl.TrimEnd('/') + "/";
+            services.AddHttpClient("SpotifyApiClient", client =>
+            {
+                client.BaseAddress = new Uri(spotifyApiBaseAddress);
+                client.Timeout = TimeSpan.FromSeconds(spotifyOptions.TimeoutSeconds);
+            })
+            .AddPolicyHandler(GetSpotifyRetryPolicy());
+
+            // Spotify Accounts API HttpClient (OAuth için)
+            var spotifyAccountsBaseAddress = spotifyOptions.AccountsBaseUrl.TrimEnd('/') + "/";
+            services.AddHttpClient("SpotifyAccountsClient", client =>
+            {
+                client.BaseAddress = new Uri(spotifyAccountsBaseAddress);
+                client.Timeout = TimeSpan.FromSeconds(spotifyOptions.TimeoutSeconds);
+            })
+            .AddPolicyHandler(GetSpotifyRetryPolicy());
+
+            services.AddScoped<Domain.Services.ISpotifyApiService, SpotifyApiService>();
+            services.AddScoped<Application.Abstractions.ISpotifyTokenEncryptionService, SpotifyTokenEncryptionService>();
+
             // Register log cleanup background service
             services.AddHostedService<LogCleanupService>();
 
@@ -209,6 +235,25 @@ namespace LifeOS.Infrastructure
                     retryCount: options.RetryCount,
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(
                         Math.Pow(2, retryAttempt) * options.RetryDelaySeconds), // Exponential backoff
+                    onRetry: (outcome, timespan, retryCount, context) =>
+                    {
+                        // Logging için (opsiyonel - ILogger inject edilebilir)
+                        // Burada sadece policy tanımlanıyor, logging servis içinde yapılıyor
+                    });
+        }
+
+        /// <summary>
+        /// Spotify API için retry policy oluşturur.
+        /// Best practice: Transient hatalar için exponential backoff retry.
+        /// </summary>
+        private static IAsyncPolicy<HttpResponseMessage> GetSpotifyRetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError() // 5xx ve 408 (Request Timeout) hatalarını yakalar
+                .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests) // 429 Rate Limit
+                .WaitAndRetryAsync(
+                    retryCount: 2,
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), // Exponential backoff
                     onRetry: (outcome, timespan, retryCount, context) =>
                     {
                         // Logging için (opsiyonel - ILogger inject edilebilir)

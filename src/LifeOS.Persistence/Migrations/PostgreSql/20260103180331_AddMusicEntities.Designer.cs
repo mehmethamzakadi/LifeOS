@@ -3,6 +3,7 @@ using System;
 using LifeOS.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LifeOS.Persistence.Migrations.PostgreSql
 {
     [DbContext(typeof(LifeOSDbContext))]
-    partial class LifeOSDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260103180331_AddMusicEntities")]
+    partial class AddMusicEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

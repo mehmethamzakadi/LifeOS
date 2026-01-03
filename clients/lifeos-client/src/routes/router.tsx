@@ -20,6 +20,8 @@ import { GamePlatformsPage } from '../pages/admin/game-platforms-page';
 import { GameStoresPage } from '../pages/admin/game-stores-page';
 import { WatchPlatformsPage } from '../pages/admin/watch-platforms-page';
 import { MovieSeriesGenresPage } from '../pages/admin/movie-series-genres-page';
+import { MusicPage } from '../pages/admin/music-page';
+import { MusicCallbackPage } from '../pages/public/music-callback-page';
 import { ForbiddenPage } from '../pages/error/forbidden-page';
 import { Permissions } from '../lib/permissions';
 
@@ -39,6 +41,10 @@ export const router = createBrowserRouter([
       {
         path: 'register',
         element: <RegisterPage />
+      },
+      {
+        path: 'music/callback',
+        element: <MusicCallbackPage />
       }
     ]
   },
@@ -167,6 +173,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredPermission={Permissions.MovieSeriesGenresViewAll}>
             <MovieSeriesGenresPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: 'music',
+        element: (
+          <ProtectedRoute>
+            <MusicPage />
           </ProtectedRoute>
         )
       }

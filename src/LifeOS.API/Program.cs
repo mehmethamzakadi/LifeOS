@@ -81,6 +81,15 @@ using LifeOS.Application.Features.WalletTransactions.DeleteWalletTransaction;
 using LifeOS.Application.Features.WalletTransactions.GetWalletTransactionById;
 using LifeOS.Application.Features.WalletTransactions.SearchWalletTransactions;
 using LifeOS.Application.Features.Images.UploadImage;
+using LifeOS.Application.Features.Music.GetMusicAuthorizationUrl;
+using LifeOS.Application.Features.Music.ConnectMusic;
+using LifeOS.Application.Features.Music.GetConnectionStatus;
+using LifeOS.Application.Features.Music.DisconnectMusic;
+using LifeOS.Application.Features.Music.GetCurrentTrack;
+using LifeOS.Application.Features.Music.GetSavedTracks;
+using LifeOS.Application.Features.Music.SaveTrack;
+using LifeOS.Application.Features.Music.DeleteSavedTrack;
+using LifeOS.Application.Features.Music.GetListeningStats;
 using LifeOS.Infrastructure;
 using LifeOS.Persistence;
 using LifeOS.Persistence.DatabaseInitializer;
@@ -243,6 +252,17 @@ UploadImageEndpoint.MapEndpoint(app);
 GetStatisticsEndpoint.MapEndpoint(app);
 GetRecentActivitiesEndpoint.MapEndpoint(app);
 GetFinancialSummaryEndpoint.MapEndpoint(app);
+
+// ✅ Music Endpoints (Vertical Slice Architecture)
+GetMusicAuthorizationUrlEndpoint.MapEndpoint(app);
+ConnectMusicEndpoint.MapEndpoint(app);
+GetConnectionStatusEndpoint.MapEndpoint(app);
+DisconnectMusicEndpoint.MapEndpoint(app);
+GetCurrentTrackEndpoint.MapEndpoint(app);
+GetSavedTracksEndpoint.MapEndpoint(app);
+SaveTrackEndpoint.MapEndpoint(app);
+DeleteSavedTrackEndpoint.MapEndpoint(app);
+GetListeningStatsEndpoint.MapEndpoint(app);
 
 await app.RunAsync();
 

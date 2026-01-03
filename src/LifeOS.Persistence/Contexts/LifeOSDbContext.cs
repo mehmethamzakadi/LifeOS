@@ -77,5 +77,8 @@ namespace LifeOS.Persistence.Contexts
         public DbSet<MovieSeriesGenre> MovieSeriesGenres { get; set; }
         public DbSet<PersonalNote> PersonalNotes { get; set; }
         public DbSet<WalletTransaction> WalletTransactions { get; set; }
+        public DbSet<MusicConnection> MusicConnections { get; set; }
+        public DbSet<SavedTrack> SavedTracks { get; set; }
+        public DbSet<MusicListeningHistory> MusicListeningHistory { get; set; }
     }
 }
