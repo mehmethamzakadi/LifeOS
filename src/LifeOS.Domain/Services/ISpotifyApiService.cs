@@ -59,6 +59,31 @@ public interface ISpotifyApiService
     /// Track detaylarını getirir
     /// </summary>
     Task<SpotifyTrackResponse> GetTrackAsync(string accessToken, string trackId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Şarkı önerileri getirir (Recommendations API)
+    /// </summary>
+    Task<SpotifyRecommendationsResponse> GetRecommendationsAsync(
+        string accessToken,
+        List<string>? seedTracks = null,
+        List<string>? seedArtists = null,
+        List<string>? seedGenres = null,
+        double? targetValence = null,
+        double? targetEnergy = null,
+        double? targetDanceability = null,
+        double? minTempo = null,
+        double? maxTempo = null,
+        string? market = null,
+        int limit = 20,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Şarkıların audio features bilgilerini getirir
+    /// </summary>
+    Task<List<SpotifyAudioFeaturesResponse>> GetAudioFeaturesAsync(
+        string accessToken,
+        List<string> trackIds,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -240,5 +265,31 @@ public sealed record SpotifyTrackResponse
     public string? PreviewUrl { get; init; }
     public string? ExternalUrl { get; init; }
     public List<string> Genres { get; init; } = new();
+}
+
+/// <summary>
+/// Spotify recommendations response
+/// </summary>
+public sealed record SpotifyRecommendationsResponse
+{
+    public List<SpotifyTrackItem> Tracks { get; init; } = new();
+}
+
+/// <summary>
+/// Spotify audio features response
+/// </summary>
+public sealed record SpotifyAudioFeaturesResponse
+{
+    public string Id { get; init; } = default!;
+    public double Valence { get; init; } // 0.0-1.0 (pozitiflik/neşe)
+    public double Energy { get; init; } // 0.0-1.0 (enerji seviyesi)
+    public double Danceability { get; init; } // 0.0-1.0 (dans edilebilirlik)
+    public double Tempo { get; init; } // BPM
+    public int Key { get; init; } // -1 (no key) to 11
+    public int Mode { get; init; } // 0 (minor) or 1 (major)
+    public double Acousticness { get; init; } // 0.0-1.0
+    public double Instrumentalness { get; init; } // 0.0-1.0
+    public double Liveness { get; init; } // 0.0-1.0
+    public double Speechiness { get; init; } // 0.0-1.0
 }
 

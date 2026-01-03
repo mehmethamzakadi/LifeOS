@@ -252,3 +252,53 @@ internal sealed class SpotifyTrackDto
     public SpotifyExternalUrlsDto? ExternalUrls { get; set; }
 }
 
+// Recommendations DTOs
+internal sealed class SpotifyRecommendationsDto
+{
+    [JsonPropertyName("tracks")]
+    public List<SpotifyTrackItemDto>? Tracks { get; set; }
+}
+
+// Audio Features DTOs
+internal sealed class SpotifyAudioFeaturesDto
+{
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
+    [JsonPropertyName("valence")]
+    public double Valence { get; set; }
+
+    [JsonPropertyName("energy")]
+    public double Energy { get; set; }
+
+    [JsonPropertyName("danceability")]
+    public double Danceability { get; set; }
+
+    [JsonPropertyName("tempo")]
+    public double Tempo { get; set; }
+
+    [JsonPropertyName("key")]
+    public int Key { get; set; }
+
+    [JsonPropertyName("mode")]
+    public int Mode { get; set; }
+
+    [JsonPropertyName("acousticness")]
+    public double Acousticness { get; set; }
+
+    [JsonPropertyName("instrumentalness")]
+    public double Instrumentalness { get; set; }
+
+    [JsonPropertyName("liveness")]
+    public double Liveness { get; set; }
+
+    [JsonPropertyName("speechiness")]
+    public double Speechiness { get; set; }
+}
+
+internal sealed class SpotifyAudioFeaturesResponseDto
+{
+    [JsonPropertyName("audio_features")]
+    public List<SpotifyAudioFeaturesDto?>? AudioFeatures { get; set; }
+}
+

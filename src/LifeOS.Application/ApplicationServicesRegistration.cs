@@ -93,6 +93,7 @@ using LifeOS.Application.Features.Music.GetSavedTracks;
 using LifeOS.Application.Features.Music.SaveTrack;
 using LifeOS.Application.Features.Music.DeleteSavedTrack;
 using LifeOS.Application.Features.Music.GetListeningStats;
+using LifeOS.Application.Features.Music.GenerateMoodPlaylist;
 
 
 namespace LifeOS.Application
@@ -139,6 +140,7 @@ namespace LifeOS.Application
             services.AddScoped<SaveTrackHandler>();
             services.AddScoped<DeleteSavedTrackHandler>();
             services.AddScoped<GetListeningStatsHandler>();
+            services.AddScoped<GenerateMoodPlaylistHandler>();
 
             // Register Auths feature handlers (Vertical Slice Architecture)
             services.AddScoped<RegisterHandler>();

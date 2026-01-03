@@ -361,6 +361,153 @@ public sealed class SpotifyApiService : ISpotifyApiService
         return MapToTrackResponse(data);
     }
 
+    public async Task<SpotifyRecommendationsResponse> GetRecommendationsAsync(
+        string accessToken,
+        List<string>? seedTracks = null,
+        List<string>? seedArtists = null,
+        List<string>? seedGenres = null,
+        double? targetValence = null,
+        double? targetEnergy = null,
+        double? targetDanceability = null,
+        double? minTempo = null,
+        double? maxTempo = null,
+        string? market = null,
+        int limit = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var httpClient = _httpClientFactory.CreateClient(SpotifyApiClientName);
+        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        // Query parametrelerini oluştur
+        var queryParams = new List<string>();
+
+        if (seedTracks != null && seedTracks.Any())
+        {
+            queryParams.Add($"seed_tracks={string.Join(",", seedTracks.Take(5))}"); // Max 5 seed track
+        }
+
+        if (seedArtists != null && seedArtists.Any())
+        {
+            queryParams.Add($"seed_artists={string.Join(",", seedArtists.Take(5))}"); // Max 5 seed artist
+        }
+
+        if (seedGenres != null && seedGenres.Any())
+        {
+            queryParams.Add($"seed_genres={string.Join(",", seedGenres.Take(5))}"); // Max 5 seed genre
+        }
+
+        if (targetValence.HasValue)
+        {
+            queryParams.Add($"target_valence={targetValence.Value:F2}");
+        }
+
+        if (targetEnergy.HasValue)
+        {
+            queryParams.Add($"target_energy={targetEnergy.Value:F2}");
+        }
+
+        if (targetDanceability.HasValue)
+        {
+            queryParams.Add($"target_danceability={targetDanceability.Value:F2}");
+        }
+
+        if (minTempo.HasValue)
+        {
+            queryParams.Add($"min_tempo={minTempo.Value:F1}");
+        }
+
+        if (maxTempo.HasValue)
+        {
+            queryParams.Add($"max_tempo={maxTempo.Value:F1}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(market))
+        {
+            queryParams.Add($"market={market}");
+        }
+
+        queryParams.Add($"limit={Math.Clamp(limit, 1, 100)}");
+
+        var url = $"/v1/recommendations?{string.Join("&", queryParams)}";
+        var response = await httpClient.GetAsync(url, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError("Spotify recommendations hatası: {StatusCode}, {Response}", response.StatusCode, errorContent);
+            throw new HttpRequestException($"Spotify recommendations hatası: {response.StatusCode}", null, response.StatusCode);
+        }
+
+        var data = await response.Content.ReadFromJsonAsync<SpotifyRecommendationsDto>(cancellationToken: cancellationToken)
+            ?? throw new InvalidOperationException("Recommendations response parse edilemedi");
+
+        return new SpotifyRecommendationsResponse
+        {
+            Tracks = data.Tracks?.Select(MapToTrackItem).ToList() ?? new List<SpotifyTrackItem>()
+        };
+    }
+
+    public async Task<List<SpotifyAudioFeaturesResponse>> GetAudioFeaturesAsync(
+        string accessToken,
+        List<string> trackIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (trackIds == null || !trackIds.Any())
+        {
+            return new List<SpotifyAudioFeaturesResponse>();
+        }
+
+        var httpClient = _httpClientFactory.CreateClient(SpotifyApiClientName);
+        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        // Spotify API maksimum 100 track ID kabul eder
+        var allFeatures = new List<SpotifyAudioFeaturesResponse>();
+        var batches = trackIds.Chunk(100);
+
+        foreach (var batch in batches)
+        {
+            var ids = string.Join(",", batch);
+            var url = $"/v1/audio-features?ids={ids}";
+            var response = await httpClient.GetAsync(url, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogError("Spotify audio features hatası: {StatusCode}, {Response}", response.StatusCode, errorContent);
+                throw new HttpRequestException($"Spotify audio features hatası: {response.StatusCode}", null, response.StatusCode);
+            }
+
+            var data = await response.Content.ReadFromJsonAsync<SpotifyAudioFeaturesResponseDto>(cancellationToken: cancellationToken)
+                ?? throw new InvalidOperationException("Audio features response parse edilemedi");
+
+            if (data.AudioFeatures != null)
+            {
+                foreach (var feature in data.AudioFeatures)
+                {
+                    if (feature != null)
+                    {
+                        allFeatures.Add(new SpotifyAudioFeaturesResponse
+                        {
+                            Id = feature.Id ?? string.Empty,
+                            Valence = feature.Valence,
+                            Energy = feature.Energy,
+                            Danceability = feature.Danceability,
+                            Tempo = feature.Tempo,
+                            Key = feature.Key,
+                            Mode = feature.Mode,
+                            Acousticness = feature.Acousticness,
+                            Instrumentalness = feature.Instrumentalness,
+                            Liveness = feature.Liveness,
+                            Speechiness = feature.Speechiness
+                        });
+                    }
+                }
+            }
+        }
+
+        return allFeatures;
+    }
+
     #region Mapping Methods
 
     private SpotifyCurrentlyPlayingResponse MapToCurrentlyPlayingResponse(SpotifyCurrentlyPlayingDto dto)

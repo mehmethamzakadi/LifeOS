@@ -7,7 +7,8 @@ import {
   CurrentlyPlayingTrack,
   SavedTrack,
   Playlist,
-  ListeningStats
+  ListeningStats,
+  MoodPlaylist
 } from './types';
 
 export async function getConnectionStatus(): Promise<MusicConnectionStatus> {
@@ -107,5 +108,22 @@ export async function getListeningStats(period: 'daily' | 'weekly' | 'monthly' =
     totalListeningTime: result.data.totalListeningTime || 0,
     mostListenedGenre: result.data.mostListenedGenre
   };
+}
+
+export async function generateMoodPlaylist(
+  mood: string,
+  languagePreference: 'turkish' | 'foreign' | 'mixed' = 'mixed',
+  limit: number = 30
+): Promise<MoodPlaylist> {
+  const response = await api.post<ApiResult<MoodPlaylist>>('/music/generate-mood-playlist', {
+    mood,
+    languagePreference,
+    limit
+  });
+  const result = normalizeApiResult<MoodPlaylist>(response.data);
+  if (!result.success || !result.data) {
+    throw new Error(result.message || 'Playlist oluşturulamadı');
+  }
+  return result.data;
 }
 
