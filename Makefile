@@ -5,12 +5,13 @@
 # Yardım: make help
 # ============================================
 
-.PHONY: help dev prod stop down clean rebuild logs ps shell-api shell-db pull-ollama migrate migrate-up migrate-down migrate-list status health
+.PHONY: help dev prod stop down clean rebuild logs ps shell-api shell-db pull-ollama migrate migrate-up migrate-down migrate-list status health prod-deploy prod-update
 
-# Renkler (opsiyonel - terminal desteği varsa)
+# Renkler
 GREEN  := \033[0;32m
 YELLOW := \033[0;33m
 RED    := \033[0;31m
+BLUE   := \033[0;34m
 NC     := \033[0m # No Color
 
 # Docker Compose dosyaları
@@ -20,6 +21,8 @@ COMPOSE_PROD := docker-compose -f docker-compose.yml -f docker-compose.prod.yml
 # Container isimleri
 API_CONTAINER_DEV  := lifeos_api_dev
 API_CONTAINER_PROD := lifeos_api_prod
+CLIENT_CONTAINER_DEV := lifeos_client_dev
+CLIENT_CONTAINER_PROD := lifeos_client_prod
 DB_CONTAINER_DEV   := lifeos_postgres_dev
 DB_CONTAINER_PROD  := lifeos_postgres_prod
 
@@ -27,58 +30,82 @@ DB_CONTAINER_PROD  := lifeos_postgres_prod
 # Yardım Menüsü
 # ============================================
 help:
-	@echo "$(GREEN)LifeOS - Makefile Komutları$(NC)"
+	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(GREEN)║          LifeOS - Makefile Komutları                      ║$(NC)"
+	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
-	@echo "$(YELLOW)Geliştirme Ortamı:$(NC)"
-	@echo "  make dev          - Development ortamını başlat (build ile)"
-	@echo "  make dev-up        - Development ortamını başlat (build olmadan)"
-	@echo "  make dev-build    - Development servislerini rebuild et"
-	@echo "  make dev-rebuild  - API container'ı rebuild et (hot reload için)"
-	@echo "  make dev-logs     - Development loglarını izle"
-	@echo "  $(GREEN)🔥 Hot Reload:$(NC) Kod değişiklikleri otomatik algılanır!"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)  Geliştirme Ortamı (Development)$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "  $(GREEN)make dev$(NC)          - Development ortamını başlat (build ile)"
+	@echo "  $(GREEN)make dev-up$(NC)        - Development ortamını başlat (build olmadan)"
+	@echo "  $(GREEN)make dev-build$(NC)     - Development servislerini rebuild et"
+	@echo "  $(GREEN)make dev-rebuild$(NC)   - API container'ı rebuild et (hot reload için)"
+	@echo "  $(GREEN)make dev-logs$(NC)     - Development loglarını izle"
+	@echo "  $(GREEN)make dev-stop$(NC)     - Development servislerini durdur"
+	@echo "  $(BLUE)🔥 Hot Reload:$(NC) Kod değişiklikleri otomatik algılanır!"
 	@echo ""
-	@echo "$(YELLOW)Production Ortamı:$(NC)"
-	@echo "  make prod         - Production ortamını başlat (build ile)"
-	@echo "  make prod-up      - Production ortamını başlat (build olmadan)"
-	@echo "  make prod-build   - Production servislerini rebuild et"
-	@echo "  make prod-logs    - Production loglarını izle"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)  Production Ortamı$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "  $(GREEN)make prod$(NC)         - Production ortamını başlat (build ile)"
+	@echo "  $(GREEN)make prod-up$(NC)     - Production ortamını başlat (build olmadan)"
+	@echo "  $(GREEN)make prod-build$(NC)   - Production servislerini rebuild et"
+	@echo "  $(GREEN)make prod-logs$(NC)    - Production loglarını izle"
+	@echo "  $(GREEN)make prod-stop$(NC)    - Production servislerini durdur"
+	@echo "  $(GREEN)make prod-restart$(NC) - Production servislerini yeniden başlat"
 	@echo ""
-	@echo "$(YELLOW)Servis Yönetimi:$(NC)"
-	@echo "  make stop         - Tüm servisleri durdur (volume'lar korunur)"
-	@echo "  make down         - Tüm servisleri durdur ve volume'ları sil $(RED)(DİKKAT!)$(NC)"
-	@echo "  make restart      - Tüm servisleri yeniden başlat"
-	@echo "  make ps           - Çalışan servisleri listele"
-	@echo "  make status       - Servis durumlarını göster"
-	@echo "  make health       - Health check sonuçlarını göster"
+	@echo "  $(RED)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "  $(RED)║  PRODUCTION DEPLOYMENT (Volume'lar korunur)              ║$(NC)"
+	@echo "  $(RED)╚════════════════════════════════════════════════════════════╝$(NC)"
+	@echo "  $(GREEN)make prod-deploy$(NC)   - Git pull + Rebuild + Restart (Volume'lar korunur)"
+	@echo "  $(GREEN)make prod-update$(NC)   - Sadece rebuild + restart (Volume'lar korunur)"
+	@echo "  $(YELLOW)Not:$(NC) prod-deploy komutu git pull yapar, rebuild eder ve restart eder"
+	@echo "  $(YELLOW)Not:$(NC) Volume'lar (veritabanı, redis, uploads) asla silinmez!"
 	@echo ""
-	@echo "$(YELLOW)Migration İşlemleri:$(NC)"
-	@echo "  make migrate NAME=<migration-name>  - Yeni migration oluştur"
-	@echo "  make migrate-up                     - Migration'ları uygula"
-	@echo "  make migrate-down                   - Son migration'ı geri al"
-	@echo "  make migrate-list                   - Migration listesini göster"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)  Servis Yönetimi$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "  $(GREEN)make stop$(NC)         - Tüm servisleri durdur (volume'lar korunur)"
+	@echo "  $(GREEN)make down$(NC)         - Tüm servisleri durdur ve volume'ları sil $(RED)(DİKKAT!)$(NC)"
+	@echo "  $(GREEN)make ps$(NC)           - Çalışan servisleri listele"
+	@echo "  $(GREEN)make status$(NC)       - Servis durumlarını göster"
+	@echo "  $(GREEN)make health$(NC)       - Health check sonuçlarını göster"
 	@echo ""
-	@echo "$(YELLOW)Log ve Debug:$(NC)"
-	@echo "  make logs         - Tüm servislerin loglarını izle"
-	@echo "  make logs-api     - API loglarını izle"
-	@echo "  make logs-client  - Client loglarını izle"
-	@echo "  make logs-db      - Database loglarını izle"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)  Migration İşlemleri$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "  $(GREEN)make migrate NAME=<name>$(NC)  - Yeni migration oluştur"
+	@echo "  $(GREEN)make migrate-up$(NC)           - Migration'ları uygula"
+	@echo "  $(GREEN)make migrate-down$(NC)         - Son migration'ı geri al"
+	@echo "  $(GREEN)make migrate-list$(NC)         - Migration listesini göster"
 	@echo ""
-	@echo "$(YELLOW)Container İşlemleri:$(NC)"
-	@echo "  make shell-api    - API container'ına shell aç (dev)"
-	@echo "  make shell-db     - Database container'ına shell aç (dev)"
-	@echo "  make shell-client - Client container'ına shell aç (dev)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)  Log ve Debug$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "  $(GREEN)make logs$(NC)         - Tüm servislerin loglarını izle"
+	@echo "  $(GREEN)make logs-api$(NC)     - API loglarını izle"
+	@echo "  $(GREEN)make logs-client$(NC)  - Client loglarını izle"
+	@echo "  $(GREEN)make logs-db$(NC)      - Database loglarını izle"
 	@echo ""
-	@echo "$(YELLOW)Ollama AI:$(NC)"
-	@echo "  make pull-ollama MODEL=<model-name>  - Ollama modelini yükle (varsayılan: qwen2.5:1.5b)"
-	@echo "  make list-ollama                     - Yüklü Ollama modellerini listele"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)  Container İşlemleri$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "  $(GREEN)make shell-api$(NC)    - API container'ına shell aç (dev)"
+	@echo "  $(GREEN)make shell-db$(NC)     - Database container'ına shell aç (dev)"
+	@echo "  $(GREEN)make shell-client$(NC) - Client container'ına shell aç (dev)"
 	@echo ""
-	@echo "$(YELLOW)Temizleme:$(NC)"
-	@echo "  make clean        - Build cache'leri ve unused image'ları temizle"
-	@echo "  make clean-all    - Tüm Docker kaynaklarını temizle $(RED)(DİKKAT!)$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)  Ollama AI$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "  $(GREEN)make pull-ollama MODEL=<model>$(NC)  - Ollama modelini yükle"
+	@echo "  $(GREEN)make list-ollama$(NC)                - Yüklü Ollama modellerini listele"
 	@echo ""
-	@echo "$(YELLOW)Özel İşlemler:$(NC)"
-	@echo "  make seed         - Database seed işlemini çalıştır (dev)"
-	@echo "  make test         - Testleri çalıştır"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)  Temizleme$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "  $(GREEN)make clean$(NC)       - Build cache'leri ve unused image'ları temizle"
+	@echo "  $(GREEN)make clean-all$(NC)   - Tüm Docker kaynaklarını temizle $(RED)(DİKKAT!)$(NC)"
 	@echo ""
 
 # ============================================
@@ -90,6 +117,7 @@ dev: dev-build dev-up
 	@echo "$(YELLOW)Backend API:$(NC) http://localhost:6060"
 	@echo "$(YELLOW)API Docs:$(NC) http://localhost:6060/scalar/v1"
 	@echo "$(YELLOW)Seq Logs:$(NC) http://localhost:5341"
+	@echo "$(BLUE)🔥 Hot Reload aktif - kod değişiklikleri otomatik algılanacak!$(NC)"
 
 dev-up:
 	@echo "$(YELLOW)Development ortamı başlatılıyor...$(NC)"
@@ -98,9 +126,9 @@ dev-up:
 
 dev-build:
 	@echo "$(YELLOW)Development servisleri build ediliyor...$(NC)"
-	$(COMPOSE_DEV) build --no-cache
+	$(COMPOSE_DEV) build
 	@echo "$(GREEN)✓ Build tamamlandı$(NC)"
-	@echo "$(YELLOW)Not:$(NC) Hot reload aktif - kod değişiklikleri otomatik algılanacak"
+	@echo "$(BLUE)Not:$(NC) Hot reload aktif - kod değişiklikleri otomatik algılanacak"
 
 dev-rebuild:
 	@echo "$(YELLOW)API container'ı rebuild ediliyor (hot reload için)...$(NC)"
@@ -109,7 +137,13 @@ dev-rebuild:
 	@echo "$(GREEN)✓ API container yeniden başlatıldı$(NC)"
 
 dev-logs:
+	@echo "$(YELLOW)Development logları izleniyor...$(NC)"
 	$(COMPOSE_DEV) logs -f
+
+dev-stop:
+	@echo "$(YELLOW)Development servisleri durduruluyor...$(NC)"
+	$(COMPOSE_DEV) down
+	@echo "$(GREEN)✓ Development servisleri durduruldu (volume'lar korundu)$(NC)"
 
 dev-restart:
 	@echo "$(YELLOW)Development servisleri yeniden başlatılıyor...$(NC)"
@@ -121,7 +155,7 @@ dev-restart:
 # ============================================
 prod: prod-build prod-up
 	@echo "$(GREEN)✓ Production ortamı başlatıldı!$(NC)"
-	@echo "$(YELLOW)ÖNEMLİ: Production ortamı için .env dosyasını kontrol edin!$(NC)"
+	@echo "$(RED)ÖNEMLİ: Production ortamı için .env dosyasını kontrol edin!$(NC)"
 
 prod-up:
 	@echo "$(YELLOW)Production ortamı başlatılıyor...$(NC)"
@@ -132,6 +166,7 @@ prod-up:
 	fi
 	$(COMPOSE_PROD) up -d
 	@echo "$(GREEN)✓ Production servisleri başlatıldı$(NC)"
+	@echo "$(YELLOW)Volume'lar korundu:$(NC) postgres_prod_data, redis_prod_data, seq_prod_data, uploads_prod_data"
 
 prod-build:
 	@echo "$(YELLOW)Production servisleri build ediliyor...$(NC)"
@@ -144,12 +179,72 @@ prod-build:
 	@echo "$(GREEN)✓ Build tamamlandı$(NC)"
 
 prod-logs:
+	@echo "$(YELLOW)Production logları izleniyor...$(NC)"
 	$(COMPOSE_PROD) logs -f
+
+prod-stop:
+	@echo "$(YELLOW)Production servisleri durduruluyor...$(NC)"
+	$(COMPOSE_PROD) down
+	@echo "$(GREEN)✓ Production servisleri durduruldu (volume'lar korundu)$(NC)"
 
 prod-restart:
 	@echo "$(YELLOW)Production servisleri yeniden başlatılıyor...$(NC)"
 	$(COMPOSE_PROD) restart
 	@echo "$(GREEN)✓ Servisler yeniden başlatıldı$(NC)"
+
+# ============================================
+# Production Deployment (Volume'lar korunur)
+# ============================================
+prod-deploy:
+	@echo "$(RED)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(RED)║     PRODUCTION DEPLOYMENT (Volume'lar korunur)            ║$(NC)"
+	@echo "$(RED)╚════════════════════════════════════════════════════════════╝$(NC)"
+	@echo ""
+	@if [ ! -f .env ]; then \
+		echo "$(RED)✗ HATA: .env dosyası bulunamadı!$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)1. Git pull yapılıyor...$(NC)"
+	@git pull origin || (echo "$(RED)✗ Git pull başarısız!$(NC)" && exit 1)
+	@echo "$(GREEN)✓ Git pull tamamlandı$(NC)"
+	@echo ""
+	@echo "$(YELLOW)2. Production servisleri rebuild ediliyor...$(NC)"
+	@$(COMPOSE_PROD) build --no-cache lifeos.api lifeos.client
+	@echo "$(GREEN)✓ Build tamamlandı$(NC)"
+	@echo ""
+	@echo "$(YELLOW)3. Container'lar yeniden başlatılıyor (volume'lar korunuyor)...$(NC)"
+	@$(COMPOSE_PROD) up -d --no-deps lifeos.api lifeos.client
+	@echo "$(GREEN)✓ Container'lar yeniden başlatıldı$(NC)"
+	@echo ""
+	@echo "$(YELLOW)4. Migration kontrolü yapılıyor...$(NC)"
+	@echo "$(BLUE)Migration uygulamak için: make migrate-up-prod$(NC)"
+	@echo ""
+	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(GREEN)║  ✓ Production deployment tamamlandı!                      ║$(NC)"
+	@echo "$(GREEN)║  ✓ Volume'lar korundu (veritabanı, redis, uploads)        ║$(NC)"
+	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
+
+prod-update:
+	@echo "$(RED)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(RED)║     PRODUCTION UPDATE (Volume'lar korunur)                 ║$(NC)"
+	@echo "$(RED)╚════════════════════════════════════════════════════════════╝$(NC)"
+	@echo ""
+	@if [ ! -f .env ]; then \
+		echo "$(RED)✗ HATA: .env dosyası bulunamadı!$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)1. Production servisleri rebuild ediliyor...$(NC)"
+	@$(COMPOSE_PROD) build --no-cache lifeos.api lifeos.client
+	@echo "$(GREEN)✓ Build tamamlandı$(NC)"
+	@echo ""
+	@echo "$(YELLOW)2. Container'lar yeniden başlatılıyor (volume'lar korunuyor)...$(NC)"
+	@$(COMPOSE_PROD) up -d --no-deps lifeos.api lifeos.client
+	@echo "$(GREEN)✓ Container'lar yeniden başlatıldı$(NC)"
+	@echo ""
+	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(GREEN)║  ✓ Production update tamamlandı!                          ║$(NC)"
+	@echo "$(GREEN)║  ✓ Volume'lar korundu (veritabanı, redis, uploads)        ║$(NC)"
+	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
 
 # ============================================
 # Servis Yönetimi
@@ -165,7 +260,9 @@ stop:
 	fi
 
 down:
-	@echo "$(RED)DİKKAT: Tüm servisler ve volume'lar silinecek!$(NC)"
+	@echo "$(RED)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(RED)║  DİKKAT: Tüm servisler ve volume'lar silinecek!          ║$(NC)"
+	@echo "$(RED)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@read -p "Devam etmek istediğinize emin misiniz? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo "$(YELLOW)Servisler ve volume'lar siliniyor...$(NC)"
 	$(COMPOSE_DEV) down -v 2>/dev/null || true
@@ -204,19 +301,28 @@ migrate:
 		exit 1; \
 	fi
 	@echo "$(YELLOW)Migration oluşturuluyor: $(NAME)$(NC)"
-	@echo "$(YELLOW)Not: Migration dosyaları container içinde oluşturulur. Host'a kopyalamak için volume mount gerekir.$(NC)"
 	@docker exec -it $(API_CONTAINER_DEV) dotnet ef migrations add $(NAME) \
-		--project /app/LifeOS.Persistence.csproj \
+		--project /src/src/LifeOS.Persistence/LifeOS.Persistence.csproj \
+		--startup-project /src/src/LifeOS.API/LifeOS.API.csproj \
 		--output-dir Migrations/PostgreSql \
 		--context LifeOSDbContext || \
 		(echo "$(RED)Migration oluşturulamadı. Container çalışıyor mu?$(NC)" && exit 1)
 	@echo "$(GREEN)✓ Migration oluşturuldu: $(NAME)$(NC)"
-	@echo "$(YELLOW)Not: Migration dosyalarını görmek için: docker exec -it $(API_CONTAINER_DEV) ls -la /app/Migrations/PostgreSql$(NC)"
 
 migrate-up:
-	@echo "$(YELLOW)Migration'lar uygulanıyor...$(NC)"
+	@echo "$(YELLOW)Migration'lar uygulanıyor (dev)...$(NC)"
 	@docker exec -it $(API_CONTAINER_DEV) dotnet ef database update \
+		--project /src/src/LifeOS.Persistence/LifeOS.Persistence.csproj \
+		--startup-project /src/src/LifeOS.API/LifeOS.API.csproj \
+		--context LifeOSDbContext || \
+		(echo "$(RED)Migration'lar uygulanamadı. Container çalışıyor mu?$(NC)" && exit 1)
+	@echo "$(GREEN)✓ Migration'lar uygulandı$(NC)"
+
+migrate-up-prod:
+	@echo "$(YELLOW)Migration'lar uygulanıyor (prod)...$(NC)"
+	@docker exec -it $(API_CONTAINER_PROD) dotnet ef database update \
 		--project /app/LifeOS.Persistence.csproj \
+		--startup-project /app/LifeOS.API.csproj \
 		--context LifeOSDbContext || \
 		(echo "$(RED)Migration'lar uygulanamadı. Container çalışıyor mu?$(NC)" && exit 1)
 	@echo "$(GREEN)✓ Migration'lar uygulandı$(NC)"
@@ -226,7 +332,8 @@ migrate-down:
 	@read -p "Devam etmek istediğinize emin misiniz? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo "$(YELLOW)Son migration geri alınıyor...$(NC)"
 	@docker exec -it $(API_CONTAINER_DEV) dotnet ef migrations remove \
-		--project /app/LifeOS.Persistence.csproj \
+		--project /src/src/LifeOS.Persistence/LifeOS.Persistence.csproj \
+		--startup-project /src/src/LifeOS.API/LifeOS.API.csproj \
 		--context LifeOSDbContext || \
 		(echo "$(RED)Migration geri alınamadı. Container çalışıyor mu?$(NC)" && exit 1)
 	@echo "$(GREEN)✓ Migration geri alındı$(NC)"
@@ -234,7 +341,8 @@ migrate-down:
 migrate-list:
 	@echo "$(YELLOW)Migration Listesi:$(NC)"
 	@docker exec -it $(API_CONTAINER_DEV) dotnet ef migrations list \
-		--project /app/LifeOS.Persistence.csproj \
+		--project /src/src/LifeOS.Persistence/LifeOS.Persistence.csproj \
+		--startup-project /src/src/LifeOS.API/LifeOS.API.csproj \
 		--context LifeOSDbContext || \
 		(echo "$(RED)Migration listesi alınamadı. Container çalışıyor mu?$(NC)" && exit 1)
 
@@ -242,38 +350,62 @@ migrate-list:
 # Log İşlemleri
 # ============================================
 logs:
+	@echo "$(YELLOW)Tüm servis logları izleniyor...$(NC)"
 	$(COMPOSE_DEV) logs -f
 
 logs-api:
+	@echo "$(YELLOW)API logları izleniyor...$(NC)"
 	$(COMPOSE_DEV) logs -f lifeos.api
 
 logs-client:
+	@echo "$(YELLOW)Client logları izleniyor...$(NC)"
 	$(COMPOSE_DEV) logs -f lifeos.client
 
 logs-db:
+	@echo "$(YELLOW)Database logları izleniyor...$(NC)"
 	$(COMPOSE_DEV) logs -f postgresdb
 
-logs-all:
-	@echo "$(YELLOW)Tüm servis logları:$(NC)"
-	@docker logs -f $(API_CONTAINER_DEV) 2>/dev/null || echo "API container çalışmıyor"
+logs-prod:
+	@echo "$(YELLOW)Production logları izleniyor...$(NC)"
+	$(COMPOSE_PROD) logs -f
+
+logs-prod-api:
+	@echo "$(YELLOW)Production API logları izleniyor...$(NC)"
+	$(COMPOSE_PROD) logs -f lifeos.api
 
 # ============================================
 # Container Shell İşlemleri
 # ============================================
 shell-api:
-	@echo "$(YELLOW)API container'ına bağlanılıyor...$(NC)"
+	@echo "$(YELLOW)API container'ına bağlanılıyor (dev)...$(NC)"
 	@docker exec -it $(API_CONTAINER_DEV) /bin/sh || \
 		docker exec -it $(API_CONTAINER_DEV) /bin/bash || \
 		echo "$(RED)Container çalışmıyor veya shell bulunamadı$(NC)"
 
+shell-api-prod:
+	@echo "$(YELLOW)API container'ına bağlanılıyor (prod)...$(NC)"
+	@docker exec -it $(API_CONTAINER_PROD) /bin/sh || \
+		docker exec -it $(API_CONTAINER_PROD) /bin/bash || \
+		echo "$(RED)Container çalışmıyor veya shell bulunamadı$(NC)"
+
 shell-db:
-	@echo "$(YELLOW)Database container'ına bağlanılıyor...$(NC)"
+	@echo "$(YELLOW)Database container'ına bağlanılıyor (dev)...$(NC)"
 	@docker exec -it $(DB_CONTAINER_DEV) psql -U postgres -d LifeOSDb || \
 		echo "$(RED)Database container çalışmıyor$(NC)"
 
+shell-db-prod:
+	@echo "$(YELLOW)Database container'ına bağlanılıyor (prod)...$(NC)"
+	@docker exec -it $(DB_CONTAINER_PROD) psql -U postgres -d $$(grep POSTGRES_DB .env | cut -d '=' -f2) || \
+		echo "$(RED)Database container çalışmıyor$(NC)"
+
 shell-client:
-	@echo "$(YELLOW)Client container'ına bağlanılıyor...$(NC)"
-	@docker exec -it lifeos_client_dev /bin/sh || \
+	@echo "$(YELLOW)Client container'ına bağlanılıyor (dev)...$(NC)"
+	@docker exec -it $(CLIENT_CONTAINER_DEV) /bin/sh || \
+		echo "$(RED)Client container çalışmıyor$(NC)"
+
+shell-client-prod:
+	@echo "$(YELLOW)Client container'ına bağlanılıyor (prod)...$(NC)"
+	@docker exec -it $(CLIENT_CONTAINER_PROD) /bin/sh || \
 		echo "$(RED)Client container çalışmıyor$(NC)"
 
 # ============================================
@@ -300,7 +432,9 @@ clean:
 	@echo "$(GREEN)✓ Temizleme tamamlandı$(NC)"
 
 clean-all:
-	@echo "$(RED)DİKKAT: Tüm Docker kaynakları silinecek!$(NC)"
+	@echo "$(RED)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(RED)║  DİKKAT: Tüm Docker kaynakları silinecek!                 ║$(NC)"
+	@echo "$(RED)╚════════════════════════════════════════════════════════════╝$(NC)"
 	@read -p "Devam etmek istediğinize emin misiniz? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo "$(YELLOW)Tüm Docker kaynakları temizleniyor...$(NC)"
 	@docker system prune -a --volumes -f
@@ -312,7 +446,7 @@ clean-all:
 seed:
 	@echo "$(YELLOW)Database seed işlemi çalıştırılıyor...$(NC)"
 	@echo "$(YELLOW)Not: Seed işlemi API başlatıldığında otomatik çalışır$(NC)"
-	@docker exec -it $(API_CONTAINER_DEV) dotnet run --project /app/LifeOS.API.csproj || \
+	@docker exec -it $(API_CONTAINER_DEV) dotnet run --project /src/src/LifeOS.API/LifeOS.API.csproj || \
 		echo "$(RED)Seed işlemi çalıştırılamadı$(NC)"
 
 test:
@@ -334,4 +468,3 @@ quick-stop: stop
 
 # Varsayılan komut
 .DEFAULT_GOAL := help
-
