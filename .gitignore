@@ -398,8 +398,8 @@ ServiceDependencies/
 !ServiceDependencies/.gitkeep
 
 # SSL Certificates and Keys (Production)
-#deploy/nginx/ssl/
-#deploy/nginx/certbot/
+deploy/nginx/ssl/
+deploy/nginx/certbot/
 *.pem
 *.key
 *.crt
