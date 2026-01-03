@@ -95,6 +95,7 @@ public static class ResponseMessages
         public const string Updated = "Kitap bilgisi başarıyla güncellendi.";
         public const string Deleted = "Kitap bilgisi başarıyla silindi.";
         public const string NotFound = "Kitap bilgisi bulunamadı!";
+        public const string Retrieved = "Kitap bilgisi başarıyla getirildi.";
     }
     
     #endregion

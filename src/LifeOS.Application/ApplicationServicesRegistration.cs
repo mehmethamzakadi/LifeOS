@@ -9,6 +9,7 @@ using LifeOS.Application.Features.Books.CreateBook;
 using LifeOS.Application.Features.Books.UpdateBook;
 using LifeOS.Application.Features.Books.DeleteBook;
 using LifeOS.Application.Features.Books.GetBookById;
+using LifeOS.Application.Features.Books.GetBookByIsbn;
 using LifeOS.Application.Features.Books.SearchBooks;
 using LifeOS.Application.Features.Categories.CreateCategory;
 using LifeOS.Application.Features.Categories.UpdateCategory;
@@ -116,6 +117,7 @@ namespace LifeOS.Application
             services.AddScoped<UpdateBookHandler>();
             services.AddScoped<DeleteBookHandler>();
             services.AddScoped<GetBookByIdHandler>();
+            services.AddScoped<GetBookByIsbnHandler>();
             services.AddScoped<SearchBooksHandler>();
 
             // Register Auths feature handlers (Vertical Slice Architecture)

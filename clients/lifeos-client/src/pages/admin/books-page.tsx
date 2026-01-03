@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { PlusCircle, Pencil, Trash2, BookOpen, BookMarked } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, BookOpen, BookMarked, Search, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { createBook, updateBook, deleteBook, fetchBooks } from '../../features/books/api';
+import { createBook, updateBook, deleteBook, fetchBooks, getBookByIsbn, BookInfoFromIsbn } from '../../features/books/api';
 import { Book, BookFormValues, BookStatus, BookStatusLabels } from '../../features/books/types';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -37,6 +37,15 @@ const bookSchema = z.object({
 }).refine((data) => data.currentPage <= data.totalPages, {
   message: 'Mevcut sayfa sayısı toplam sayfa sayısından büyük olamaz',
   path: ['currentPage']
+}).refine((data) => {
+  // Durum "Tamamlandı" ise değerlendirme zorunlu
+  if (data.status === BookStatus.Completed) {
+    return data.rating !== undefined && data.rating !== null && data.rating !== '';
+  }
+  return true;
+}, {
+  message: 'Durum "Tamamlandı" ise değerlendirme zorunludur',
+  path: ['rating']
 });
 
 type BookFormSchema = z.infer<typeof bookSchema>;
@@ -50,6 +59,7 @@ export function BooksPage() {
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [isbnSearch, setIsbnSearch] = useState('');
 
   const { data, isLoading, } = useQuery({
     queryKey: ['books', pageIndex, pageSize, searchTerm],
@@ -70,7 +80,7 @@ export function BooksPage() {
       totalPages: 0,
       currentPage: 0,
       status: BookStatus.ToRead,
-      rating: undefined,
+      rating: 1, // Default 1 (durum Completed değilse)
       startDate: '',
       endDate: ''
     }
@@ -113,7 +123,7 @@ export function BooksPage() {
         totalPages: 0,
         currentPage: 0,
         status: BookStatus.ToRead,
-        rating: undefined,
+        rating: 1, // Default 1 (durum Completed değilse)
         startDate: '',
         endDate: ''
       });
@@ -137,7 +147,7 @@ export function BooksPage() {
         totalPages: 0,
         currentPage: 0,
         status: BookStatus.ToRead,
-        rating: undefined,
+        rating: 1, // Default 1 (durum Completed değilse)
         startDate: '',
         endDate: ''
       });
@@ -174,6 +184,38 @@ export function BooksPage() {
     },
     onError: (error) => handleApiError(error, 'Kitap silinemedi')
   });
+
+  const isbnSearchMutation = useMutation({
+    mutationFn: (isbn: string) => getBookByIsbn(isbn),
+    onSuccess: (bookInfo: BookInfoFromIsbn) => {
+      // Formu ISBN'den gelen bilgilerle doldur
+      formMethods.reset({
+        title: bookInfo.title || '',
+        author: bookInfo.author || '',
+        coverUrl: bookInfo.coverUrl || '',
+        totalPages: bookInfo.pageCount || 0,
+        currentPage: 0,
+        status: BookStatus.ToRead,
+        rating: 1, // Default 1 (durum Completed değilse)
+        startDate: bookInfo.publishedDate ? formatDateForInput(bookInfo.publishedDate) : '',
+        endDate: ''
+      });
+      setIsbnSearch('');
+      toast.success('Kitap bilgileri başarıyla yüklendi');
+    },
+    onError: (error) => {
+      handleApiError(error, 'ISBN ile kitap bulunamadı');
+      setIsbnSearch('');
+    }
+  });
+
+  const handleIsbnSearch = () => {
+    if (!isbnSearch.trim()) {
+      toast.error('Lütfen bir ISBN numarası girin');
+      return;
+    }
+    isbnSearchMutation.mutate(isbnSearch.trim());
+  };
 
   const onSubmit = formMethods.handleSubmit(async (values) => {
     const formData: BookFormValues = {
@@ -244,10 +286,11 @@ export function BooksPage() {
                     totalPages: 0,
                     currentPage: 0,
                     status: BookStatus.ToRead,
-                    rating: undefined,
+                    rating: 1, // Default 1 (durum Completed değilse)
                     startDate: '',
                     endDate: ''
                   });
+                  setIsbnSearch('');
                 }
               }}
             >
@@ -259,8 +302,51 @@ export function BooksPage() {
               <DialogContent className="max-w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
                 <DialogHeader>
                   <DialogTitle>Yeni Kitap</DialogTitle>
-                  <DialogDescription>Okuduğunuz kitabı ekleyin.</DialogDescription>
+                  <DialogDescription>Okuduğunuz kitabı ekleyin. ISBN numarası ile otomatik olarak bilgileri çekebilirsiniz.</DialogDescription>
                 </DialogHeader>
+                
+                {/* ISBN Arama Bölümü */}
+                <div className="space-y-2 p-4 bg-muted/50 rounded-lg border">
+                  <Label htmlFor="isbn-search" className="text-sm font-medium">ISBN ile Ara</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="isbn-search"
+                      placeholder="ISBN numarası girin (örn: 978-0-123456-78-9)"
+                      value={isbnSearch}
+                      onChange={(e) => setIsbnSearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleIsbnSearch();
+                        }
+                      }}
+                      disabled={isbnSearchMutation.isPending}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleIsbnSearch}
+                      disabled={isbnSearchMutation.isPending || !isbnSearch.trim()}
+                      className="gap-2"
+                    >
+                      {isbnSearchMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="hidden sm:inline">Aranıyor...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-4 w-4" />
+                          <span className="hidden sm:inline">Ara</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Google Books ve Open Library API'lerini kullanarak kitap bilgilerini otomatik olarak çeker.
+                  </p>
+                </div>
+
                 <form id="create-book-form" onSubmit={onSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">

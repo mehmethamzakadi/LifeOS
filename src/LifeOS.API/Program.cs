@@ -11,6 +11,7 @@ using LifeOS.Application.Features.Books.CreateBook;
 using LifeOS.Application.Features.Books.UpdateBook;
 using LifeOS.Application.Features.Books.DeleteBook;
 using LifeOS.Application.Features.Books.GetBookById;
+using LifeOS.Application.Features.Books.GetBookByIsbn;
 using LifeOS.Application.Features.Books.SearchBooks;
 using LifeOS.Application.Features.Categories.CreateCategory;
 using LifeOS.Application.Features.Categories.UpdateCategory;
@@ -171,6 +172,7 @@ CreateBookEndpoint.MapEndpoint(app);
 UpdateBookEndpoint.MapEndpoint(app);
 DeleteBookEndpoint.MapEndpoint(app);
 GetBookByIdEndpoint.MapEndpoint(app);
+GetBookByIsbnEndpoint.MapEndpoint(app);
 SearchBooksEndpoint.MapEndpoint(app);
 
 // ✅ Categories Endpoints (Vertical Slice Architecture)

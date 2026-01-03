@@ -53,3 +53,25 @@ export async function deleteBook(id: string) {
   return normalizeApiResult(response.data);
 }
 
+export interface BookInfoFromIsbn {
+  title: string;
+  author: string;
+  publisher?: string;
+  publishedDate?: string;
+  pageCount?: number;
+  coverUrl?: string;
+  description?: string;
+  isbn?: string;
+  language?: string;
+  categories: string[];
+}
+
+export async function getBookByIsbn(isbn: string): Promise<BookInfoFromIsbn> {
+  const response = await api.get<ApiResult<{ bookInfo: BookInfoFromIsbn }>>(`/books/isbn/${encodeURIComponent(isbn)}`);
+  const result = normalizeApiResult<{ bookInfo: BookInfoFromIsbn }>(response.data);
+  if (!result.success || !result.data) {
+    throw new Error(result.message || 'ISBN ile kitap bulunamadı');
+  }
+  return result.data.bookInfo;
+}
+

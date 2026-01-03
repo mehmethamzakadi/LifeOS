@@ -34,6 +34,7 @@ namespace LifeOS.Infrastructure
             services.Configure<PasswordResetOptions>(configuration.GetSection(PasswordResetOptions.SectionName));
             services.Configure<ImageStorageOptions>(configuration.GetSection(ImageStorageOptions.SectionName));
             services.Configure<Options.OllamaOptions>(configuration.GetSection(Options.OllamaOptions.SectionName));
+            services.Configure<Options.BookServiceOptions>(configuration.GetSection(Options.BookServiceOptions.SectionName));
 
             // Custom Password Hasher for User entity
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -143,6 +144,28 @@ namespace LifeOS.Infrastructure
 
             services.AddScoped<IAiService, AiService>();
 
+            // Book Service - Best practices: IHttpClientFactory + Polly retry policy
+            var bookServiceOptions = configuration.GetSection(Options.BookServiceOptions.SectionName).Get<Options.BookServiceOptions>()
+                ?? throw new InvalidOperationException("BookService ayarları yapılandırılmalıdır.");
+
+            // Google Books API HttpClient
+            services.AddHttpClient("GoogleBooksClient", client =>
+            {
+                client.BaseAddress = new Uri(bookServiceOptions.GoogleBooksApiEndpoint);
+                client.Timeout = TimeSpan.FromSeconds(bookServiceOptions.TimeoutSeconds);
+            })
+            .AddPolicyHandler(GetBookServiceRetryPolicy(bookServiceOptions));
+
+            // Open Library API HttpClient
+            services.AddHttpClient("OpenLibraryClient", client =>
+            {
+                client.BaseAddress = new Uri(bookServiceOptions.OpenLibraryApiEndpoint);
+                client.Timeout = TimeSpan.FromSeconds(bookServiceOptions.TimeoutSeconds);
+            })
+            .AddPolicyHandler(GetBookServiceRetryPolicy(bookServiceOptions));
+
+            services.AddScoped<Domain.Services.IBookService, BookService>();
+
             // Register log cleanup background service
             services.AddHostedService<LogCleanupService>();
 
@@ -154,6 +177,26 @@ namespace LifeOS.Infrastructure
         /// Best practice: Transient hatalar için exponential backoff retry.
         /// </summary>
         private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy(Options.OllamaOptions options)
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError() // 5xx ve 408 (Request Timeout) hatalarını yakalar
+                .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests) // 429 Rate Limit
+                .WaitAndRetryAsync(
+                    retryCount: options.RetryCount,
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(
+                        Math.Pow(2, retryAttempt) * options.RetryDelaySeconds), // Exponential backoff
+                    onRetry: (outcome, timespan, retryCount, context) =>
+                    {
+                        // Logging için (opsiyonel - ILogger inject edilebilir)
+                        // Burada sadece policy tanımlanıyor, logging servis içinde yapılıyor
+                    });
+        }
+
+        /// <summary>
+        /// Book Service API'leri için retry policy oluşturur.
+        /// Best practice: Transient hatalar için exponential backoff retry.
+        /// </summary>
+        private static IAsyncPolicy<HttpResponseMessage> GetBookServiceRetryPolicy(Options.BookServiceOptions options)
         {
             return HttpPolicyExtensions
                 .HandleTransientHttpError() // 5xx ve 408 (Request Timeout) hatalarını yakalar
