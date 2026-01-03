@@ -171,6 +171,7 @@ public sealed class GenerateMoodPlaylistHandler
             var recommendations = await _spotifyApiService.GetRecommendationsAsync(
                 accessToken,
                 seedTracks: seedTracks.Any() ? seedTracks : null,
+                seedArtists: null,
                 seedGenres: languageMapping.Genres,
                 targetValence: moodFeatures.TargetValence,
                 targetEnergy: moodFeatures.TargetEnergy,
