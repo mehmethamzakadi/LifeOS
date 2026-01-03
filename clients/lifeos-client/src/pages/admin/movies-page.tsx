@@ -358,7 +358,7 @@ export function MoviesPage() {
           {isLoading ? (
             <div className="text-center py-8">Yükleniyor...</div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-1.5 sm:gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
               {filteredMovies.map((movie) => (
                 <Card key={movie.id} className="relative flex flex-col overflow-hidden group">
                   {/* Resim üstte, poster formatı (dikey) */}
@@ -370,88 +370,88 @@ export function MoviesPage() {
                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       />
                       {/* Action buttons overlay */}
-                      <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="secondary"
                           size="icon"
-                          className="h-5 w-5 bg-background/80 backdrop-blur-sm hover:bg-background"
+                          className="h-6 w-6 bg-background/80 backdrop-blur-sm hover:bg-background"
                           onClick={() => setEditingMovie(movie)}
                         >
-                          <Pencil className="h-2.5 w-2.5" />
+                          <Pencil className="h-3 w-3" />
                         </Button>
                         <Button
                           variant="secondary"
                           size="icon"
-                          className="h-5 w-5 bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+                          className="h-6 w-6 bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
                           onClick={() => setMovieToDelete(movie)}
                         >
-                          <Trash2 className="h-2.5 w-2.5" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                       {/* Rating badge overlay */}
                       {movie.rating && (
-                        <div className="absolute bottom-1 left-1 bg-background/90 backdrop-blur-sm rounded-full px-1 py-0.5 text-[9px] sm:text-[10px] font-semibold">
+                        <div className="absolute bottom-1.5 left-1.5 bg-background/90 backdrop-blur-sm rounded-full px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold">
                           ⭐ {movie.rating}
                         </div>
                       )}
                     </div>
                   )}
                   {/* İçerik */}
-                  <CardContent className="p-1.5 sm:p-2 space-y-1 flex-1 flex flex-col">
+                  <CardContent className="p-2 sm:p-3 space-y-1.5 flex-1 flex flex-col">
                     {!movie.coverUrl && (
-                      <div className="flex items-start justify-between gap-1 mb-0.5">
+                      <div className="flex items-start justify-between gap-1.5 mb-1">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-[10px] sm:text-xs font-semibold line-clamp-2 leading-tight">{movie.title}</CardTitle>
+                          <CardTitle className="text-xs sm:text-sm font-semibold line-clamp-2 leading-tight">{movie.title}</CardTitle>
                         </div>
                         <div className="flex gap-0.5 shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-5 w-5 sm:h-6 sm:w-6"
+                            className="h-6 w-6 sm:h-7 sm:w-7"
                             onClick={() => setEditingMovie(movie)}
                           >
-                            <Pencil className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                            <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-5 w-5 sm:h-6 sm:w-6"
+                            className="h-6 w-6 sm:h-7 sm:w-7"
                             onClick={() => setMovieToDelete(movie)}
                           >
-                            <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-destructive" />
+                            <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-destructive" />
                           </Button>
                         </div>
                       </div>
                     )}
                     {movie.coverUrl && (
                       <div className="min-w-0">
-                        <CardTitle className="text-[10px] sm:text-xs font-semibold line-clamp-2 leading-tight">{movie.title}</CardTitle>
+                        <CardTitle className="text-xs sm:text-sm font-semibold line-clamp-2 leading-tight">{movie.title}</CardTitle>
                       </div>
                     )}
-                    <div className="flex items-center gap-0.5 flex-wrap">
+                    <div className="flex items-center gap-1 flex-wrap">
                       {movie.movieSeriesGenreName === 'Film' ? (
-                        <Film className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-primary shrink-0" />
+                        <Film className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary shrink-0" />
                       ) : (
-                        <Tv className="h-2 w-2 sm:h-2.5 sm:w-2.5 text-primary shrink-0" />
+                        <Tv className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary shrink-0" />
                       )}
-                      <Badge variant="secondary" className="text-[9px] px-0.5 py-0">{movie.movieSeriesGenreName}</Badge>
-                      <Badge variant="outline" className="text-[9px] px-0.5 py-0">{MovieSeriesStatusLabels[movie.status]}</Badge>
+                      <Badge variant="secondary" className="text-[10px] px-1 py-0">{movie.movieSeriesGenreName}</Badge>
+                      <Badge variant="outline" className="text-[10px] px-1 py-0">{MovieSeriesStatusLabels[movie.status]}</Badge>
                     </div>
-                    <div className="text-[9px] sm:text-[10px] text-muted-foreground truncate">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       <span>{movie.watchPlatformName}</span>
                     </div>
                     {movie.movieSeriesGenreName === 'Dizi' && (movie.currentSeason || movie.currentEpisode) && (
-                      <div className="text-[9px] sm:text-[10px] font-medium">
+                      <div className="text-[10px] sm:text-xs font-medium">
                         S{movie.currentSeason || '?'} E{movie.currentEpisode || '?'}
                       </div>
                     )}
                     {!movie.coverUrl && movie.rating && (
-                      <div className="text-[9px] sm:text-[10px] font-semibold">
+                      <div className="text-[10px] sm:text-xs font-semibold">
                         ⭐ {movie.rating}/10
                       </div>
                     )}
                     {movie.personalNote && (
-                      <p className="text-[9px] sm:text-[10px] text-muted-foreground line-clamp-2">{movie.personalNote}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">{movie.personalNote}</p>
                     )}
                   </CardContent>
                 </Card>
