@@ -18,6 +18,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- SignalR için framework reference (Hub kullanımı için) -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\LifeOS.Application\LifeOS.Application.csproj" />
     <ProjectReference Include="..\LifeOS.Persistence\LifeOS.Persistence.csproj" />
   </ItemGroup>

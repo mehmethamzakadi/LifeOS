@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-namespace LifeOS.API.Hubs;
+namespace LifeOS.Infrastructure.Hubs;
 
 /// <summary>
 /// Müzik ile ilgili real-time güncellemeler için SignalR hub

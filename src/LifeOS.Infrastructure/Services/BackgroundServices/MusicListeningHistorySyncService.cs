@@ -1,5 +1,6 @@
 using LifeOS.Application.Abstractions;
 using LifeOS.Domain.Common;
+using LifeOS.Domain.Constants;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Services;
 using LifeOS.Infrastructure.Constants;

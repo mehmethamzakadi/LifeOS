@@ -90,8 +90,8 @@ using LifeOS.Application.Features.Music.GetSavedTracks;
 using LifeOS.Application.Features.Music.SaveTrack;
 using LifeOS.Application.Features.Music.DeleteSavedTrack;
 using LifeOS.Application.Features.Music.GetListeningStats;
-using LifeOS.API.Hubs;
 using LifeOS.Infrastructure;
+using LifeOS.Infrastructure.Hubs;
 using LifeOS.Persistence;
 using LifeOS.Persistence.DatabaseInitializer;
 

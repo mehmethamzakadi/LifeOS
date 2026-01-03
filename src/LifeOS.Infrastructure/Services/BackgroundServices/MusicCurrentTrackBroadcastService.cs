@@ -1,4 +1,6 @@
+using LifeOS.Application.Abstractions;
 using LifeOS.Application.Features.Music.GetCurrentTrack;
+using LifeOS.Infrastructure.Hubs;
 using LifeOS.Domain.Entities;
 using LifeOS.Domain.Services;
 using LifeOS.Persistence.Contexts;
@@ -69,7 +71,7 @@ public class MusicCurrentTrackBroadcastService : BackgroundService
         {
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<LifeOSDbContext>();
-            var hubContext = scope.ServiceProvider.GetRequiredService<IHubContext<LifeOS.API.Hubs.MusicHub>>();
+            var hubContext = scope.ServiceProvider.GetRequiredService<IHubContext<MusicHub>>();
 
             // Aktif Spotify bağlantıları olan tüm kullanıcıları bul
             var activeConnections = await context.MusicConnections
@@ -109,7 +111,7 @@ public class MusicCurrentTrackBroadcastService : BackgroundService
 
     private async Task BroadcastCurrentTrackForUserAsync(
         LifeOSDbContext context,
-        IHubContext<LifeOS.API.Hubs.MusicHub> hubContext,
+        IHubContext<MusicHub> hubContext,
         MusicConnection connection,
         CancellationToken cancellationToken)
     {
