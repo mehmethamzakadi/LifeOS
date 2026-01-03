@@ -381,19 +381,48 @@ public sealed class SpotifyApiService : ISpotifyApiService
         // Query parametrelerini oluştur
         var queryParams = new List<string>();
 
-        if (seedTracks != null && seedTracks.Any())
+        // Spotify API kuralı: En az 1 seed olmalı (track, artist veya genre)
+        // Toplam seed sayısı 5'i geçmemeli
+        // Not: Spotify ID'leri zaten URL-safe karakterlerden oluşur, virgül encode edilmemeli
+        var totalSeeds = 0;
+
+        if (seedTracks != null && seedTracks.Any() && totalSeeds < 5)
         {
-            queryParams.Add($"seed_tracks={string.Join(",", seedTracks.Take(5))}"); // Max 5 seed track
+            var tracks = seedTracks.Take(5 - totalSeeds).Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
+            if (tracks.Any())
+            {
+                var tracksValue = string.Join(",", tracks);
+                queryParams.Add($"seed_tracks={tracksValue}"); // Virgül encode edilmez
+                totalSeeds += tracks.Count;
+            }
         }
 
-        if (seedArtists != null && seedArtists.Any())
+        if (seedArtists != null && seedArtists.Any() && totalSeeds < 5)
         {
-            queryParams.Add($"seed_artists={string.Join(",", seedArtists.Take(5))}"); // Max 5 seed artist
+            var artists = seedArtists.Take(5 - totalSeeds).Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
+            if (artists.Any())
+            {
+                var artistsValue = string.Join(",", artists);
+                queryParams.Add($"seed_artists={artistsValue}"); // Virgül encode edilmez
+                totalSeeds += artists.Count;
+            }
         }
 
-        if (seedGenres != null && seedGenres.Any())
+        if (seedGenres != null && seedGenres.Any() && totalSeeds < 5)
         {
-            queryParams.Add($"seed_genres={string.Join(",", seedGenres.Take(5))}"); // Max 5 seed genre
+            var genres = seedGenres.Take(5 - totalSeeds).Where(g => !string.IsNullOrWhiteSpace(g)).ToList();
+            if (genres.Any())
+            {
+                var genresValue = string.Join(",", genres);
+                queryParams.Add($"seed_genres={genresValue}"); // Virgül encode edilmez
+                totalSeeds += genres.Count;
+            }
+        }
+
+        // En az 1 seed garantisi
+        if (totalSeeds == 0)
+        {
+            throw new InvalidOperationException("En az 1 seed (track, artist veya genre) belirtilmelidir.");
         }
 
         if (targetValence.HasValue)

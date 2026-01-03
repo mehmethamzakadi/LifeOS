@@ -104,14 +104,9 @@ public sealed class GenerateMoodPlaylistHandler
                 command.LanguagePreference.ToLowerInvariant(),
                 LanguageMappings["mixed"]);
 
-            // 1. Kullanıcının top tracks'lerinden seed seç (3-5 şarkı)
+            // 1. Kullanıcının top tracks'lerinden seed seç
             var topTracks = await _spotifyApiService.GetTopTracksAsync(
                 accessToken, "medium_term", 20, cancellationToken);
-
-            var seedTracks = topTracks.Items
-                .Take(5)
-                .Select(t => t.Id)
-                .ToList();
 
             // 2. Basit açıklama (AI kullanmadan)
             var moodDescriptions = new Dictionary<string, string>
@@ -125,18 +120,41 @@ public sealed class GenerateMoodPlaylistHandler
             };
             var description = moodDescriptions.GetValueOrDefault(mood, $"{mood} ruh haline özel playlist.");
 
-            // 3. Spotify Recommendations API çağrısı (basit ve direkt)
+            // 3. Seed seçimi: Spotify API kuralı - En az 1 seed olmalı
+            // Öncelik: seedTracks > seedGenres (daha kişiselleştirilmiş)
+            List<string>? seedTracks = null;
+            List<string>? seedGenres = null;
+
+            if (topTracks.Items.Any())
+            {
+                // Top tracks'lerden 3-5 şarkı seç (en güvenilir yöntem)
+                seedTracks = topTracks.Items
+                    .Take(5)
+                    .Select(t => t.Id)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .ToList();
+            }
+
+            // Eğer seedTracks yoksa veya yetersizse, seedGenres ekle
+            if (seedTracks == null || seedTracks.Count < 2)
+            {
+                // Genre'leri kullan (market parametresi olmadan - daha güvenli)
+                seedGenres = genres.Take(2).ToList();
+            }
+
+            // 4. Spotify Recommendations API çağrısı
+            // Market parametresi: seedTracks ile kullanılabilir, seedGenres ile sorunlu olabilir
             var recommendations = await _spotifyApiService.GetRecommendationsAsync(
                 accessToken,
-                seedTracks: seedTracks.Any() ? seedTracks : null,
+                seedTracks: seedTracks,
                 seedArtists: null,
-                seedGenres: genres,
+                seedGenres: seedGenres,
                 targetValence: targetValence,
                 targetEnergy: targetEnergy,
                 targetDanceability: null,
                 minTempo: null,
                 maxTempo: null,
-                market: market,
+                market: seedTracks != null && seedTracks.Any() ? market : null, // Market sadece seedTracks ile
                 limit: Math.Clamp(command.Limit, 10, 50),
                 cancellationToken);
 
