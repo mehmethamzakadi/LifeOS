@@ -7,6 +7,8 @@ export default defineConfig(({ mode }) => {
   
   return {
     plugins: [react()],
+    // Build sırasında zararsız uyarıları bastır
+    logLevel: isProduction ? 'warn' : 'info',
     server: {
       port: 5173,
       host: '0.0.0.0', // Docker container'dan erişim için
@@ -26,50 +28,50 @@ export default defineConfig(({ mode }) => {
       minify: isProduction ? 'esbuild' : false,
       sourcemap: !isProduction,
       rollupOptions: {
+        // Rollup uyarılarını filtrele - SignalR paketindeki zararsız uyarıları bastır
+        onwarn(warning, warn) {
+          // SignalR paketindeki PURE comment uyarılarını bastır (zararsız - Rollup plugin uyarısı)
+          if (
+            warning.message?.includes('/*#__PURE__*/') &&
+            warning.message?.includes('@microsoft/signalr')
+          ) {
+            return; // Bu uyarıyı gösterme
+          }
+          // Diğer uyarıları göster
+          warn(warning);
+        },
         output: {
-          // Code splitting için manual chunks - daha iyi performans için
-          manualChunks: (id) => {
-            // Node modules için vendor chunks
-            if (id.includes('node_modules')) {
-              // React core
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-                return 'react-vendor';
-              }
-              // UI libraries
-              if (id.includes('@radix-ui') || id.includes('lucide-react') || id.includes('framer-motion')) {
-                return 'ui-vendor';
-              }
-              // Data fetching & state
-              if (id.includes('@tanstack/react-query') || id.includes('@tanstack/react-table') || id.includes('zustand')) {
-                return 'query-vendor';
-              }
-              // Forms
-              if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) {
-                return 'form-vendor';
-              }
-              // SignalR
-              if (id.includes('@microsoft/signalr')) {
-                return 'signalr-vendor';
-              }
-              // Charts
-              if (id.includes('recharts')) {
-                return 'charts-vendor';
-              }
-              // QR/Barcode
-              if (id.includes('@ericblade/quagga2') || id.includes('@zxing') || id.includes('html5-qrcode')) {
-                return 'scanner-vendor';
-              }
-              // Date utilities
-              if (id.includes('date-fns')) {
-                return 'date-vendor';
-              }
-              // Axios
-              if (id.includes('axios')) {
-                return 'http-vendor';
-              }
-              // Diğer vendor paketleri
-              return 'vendor';
-            }
+          // Code splitting için manual chunks - React'in bütünlüğünü koruyarak
+          manualChunks: {
+            // React core - TÜM React paketleri birlikte olmalı
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            // UI libraries
+            'ui-vendor': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-label',
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-slot',
+              'lucide-react',
+              'framer-motion'
+            ],
+            // Data fetching & state
+            'query-vendor': [
+              '@tanstack/react-query',
+              '@tanstack/react-table',
+              'zustand'
+            ],
+            // Forms
+            'form-vendor': [
+              'react-hook-form',
+              '@hookform/resolvers',
+              'zod'
+            ],
+            // SignalR
+            'signalr-vendor': ['@microsoft/signalr'],
+            // Charts
+            'charts-vendor': ['recharts'],
+            // HTTP client
+            'http-vendor': ['axios']
           },
           // Chunk dosya isimlendirme
           chunkFileNames: 'assets/[name]-[hash].js',

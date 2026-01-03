@@ -10,6 +10,9 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 
+# Update npm to latest version to avoid version warnings
+RUN npm install -g npm@latest
+
 # Install dependencies (including devDependencies for build)
 RUN npm ci || npm install
 
