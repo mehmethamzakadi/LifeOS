@@ -69,8 +69,13 @@ public sealed class AiService : IAiService
                 // ✅ Model bulunamadı hatası için kullanıcı dostu mesaj
                 if (response.StatusCode == HttpStatusCode.NotFound && errorContent.Contains("not found"))
                 {
+                    var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+                    var containerName = string.Equals(environment, "Production", StringComparison.OrdinalIgnoreCase) 
+                        ? "ollama" 
+                        : "lifeos_ollama_dev";
+                    
                     var friendlyMessage = $"Ollama modeli '{options.ModelId}' bulunamadı. " +
-                        $"Lütfen modeli yükleyin: docker exec lifeos_ollama_dev ollama pull {options.ModelId}";
+                        $"Lütfen modeli yükleyin: docker exec {containerName} ollama pull {options.ModelId}";
 
                     throw new HttpRequestException(
                         friendlyMessage,
