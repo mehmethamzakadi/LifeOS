@@ -147,6 +147,8 @@ services:
         condition: service_healthy
       redis.cache:
         condition: service_healthy
+      ollama:
+        condition: service_started
     networks:
       - lifeos_prod_net
     <<: *logging
@@ -291,6 +293,39 @@ services:
           cpus: "0.25"
           memory: 128M
 
+  # ===========================================
+  # Ollama AI Service - Production
+  # ===========================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: always
+    # ÖNEMLİ: Production'da port dışarıya AÇILMAMALI!
+    # Sadece internal network'ten erişilebilir
+    expose:
+      - "11434"
+    volumes:
+      - ollama_prod_data:/root/.ollama
+    networks:
+      - lifeos_prod_net
+    <<: *logging
+    # Ollama başlatma süresi uzun olabilir (model yükleme)
+    # Healthcheck basit tutuldu - Ollama servisi hazır olmasa bile container çalışmaya devam eder
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s # Ollama başlatma için daha fazla süre
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
 # ===========================================
 # Volumes - Production (Named Volumes)
 # ===========================================
@@ -306,6 +341,9 @@ volumes:
     driver: local
   uploads_prod_data:
     name: lifeos_uploads_prod
+    driver: local
+  ollama_prod_data:
+    name: lifeos_ollama_prod
     driver: local
 # ===========================================
 # Networks - Production (Isolated Network)

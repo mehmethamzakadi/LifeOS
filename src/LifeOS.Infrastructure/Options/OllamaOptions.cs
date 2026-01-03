@@ -5,7 +5,7 @@ public sealed class OllamaOptions
     public const string SectionName = "OllamaOptions";
 
     public string Endpoint { get; set; } = "http://localhost:11434";
-    public string ModelId { get; set; } = "qwen2.5:3b";
+    public string ModelId { get; set; } = "qwen2.5:7b";
     public string ApiKey { get; set; } = "ollama";
 
     /// <summary>

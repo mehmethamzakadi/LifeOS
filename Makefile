@@ -422,7 +422,7 @@ shell-client-prod:
 # Ollama AI İşlemleri
 # ============================================
 pull-ollama:
-	@MODEL=$${MODEL:-qwen2.5:1.5b}; \
+	@MODEL=$${MODEL:-qwen2.5:7b}; \
 	echo "$(YELLOW)Ollama modeli yükleniyor: $$MODEL$(NC)"; \
 	docker exec -it lifeos_ollama_dev ollama pull $$MODEL || \
 		echo "$(RED)Model yüklenemedi. Ollama container çalışıyor mu?$(NC)"
