@@ -23,7 +23,6 @@ import { Badge } from '../../components/ui/badge';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { handleApiError, showApiResponseError } from '../../lib/api-error';
-import { cn } from '../../lib/utils';
 
 const bookSchema = z.object({
   title: z.string().min(2, 'Kitap adı en az 2 karakter olmalıdır').max(200, 'Kitap adı en fazla 200 karakter olabilir'),
@@ -52,7 +51,7 @@ export function BooksPage() {
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, } = useQuery({
     queryKey: ['books', pageIndex, pageSize, searchTerm],
     queryFn: () => fetchBooks({
       search: searchTerm || undefined,
@@ -210,15 +209,16 @@ export function BooksPage() {
       <Card>
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>Kitap Kütüphanesi</CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <CardTitle className="text-lg sm:text-2xl">Kitap Kütüphanesi</CardTitle>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Okuduğunuz kitapları takip edin ve ilerlemenizi görüntüleyin.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
               size="sm"
+              className="text-xs sm:text-sm"
               onClick={() => setViewMode('grid')}
             >
               Grid
@@ -226,6 +226,7 @@ export function BooksPage() {
             <Button
               variant={viewMode === 'table' ? 'default' : 'outline'}
               size="sm"
+              className="text-xs sm:text-sm"
               onClick={() => setViewMode('table')}
             >
               Tablo
@@ -251,17 +252,17 @@ export function BooksPage() {
               }}
             >
               <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <PlusCircle className="h-4 w-4" /> Yeni Kitap
+                <Button className="gap-2 text-xs sm:text-sm">
+                  <PlusCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Yeni Kitap</span><span className="sm:hidden">Ekle</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
                 <DialogHeader>
                   <DialogTitle>Yeni Kitap</DialogTitle>
                   <DialogDescription>Okuduğunuz kitabı ekleyin.</DialogDescription>
                 </DialogHeader>
                 <form id="create-book-form" onSubmit={onSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="book-title">Kitap Adı *</Label>
                       <Input id="book-title" placeholder="Kitap adı" {...formMethods.register('title')} />
@@ -284,7 +285,7 @@ export function BooksPage() {
                       <p className="text-sm text-destructive">{formMethods.formState.errors.coverUrl.message}</p>
                     )}
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="book-total-pages">Toplam Sayfa</Label>
                       <Input
@@ -318,7 +319,7 @@ export function BooksPage() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="book-status">Durum</Label>
                       <select
@@ -343,11 +344,11 @@ export function BooksPage() {
                     <Input id="book-end-date" type="date" {...formMethods.register('endDate')} />
                   </div>
                 </form>
-                <DialogFooter>
-                  <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)}>
+                <DialogFooter className="flex-col sm:flex-row gap-2">
+                  <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)} className="w-full sm:w-auto">
                     İptal
                   </Button>
-                  <Button type="submit" form="create-book-form" disabled={createMutation.isPending}>
+                  <Button type="submit" form="create-book-form" disabled={createMutation.isPending} className="w-full sm:w-auto">
                     {createMutation.isPending ? 'Kaydediliyor...' : 'Kaydet'}
                   </Button>
                 </DialogFooter>
@@ -363,71 +364,73 @@ export function BooksPage() {
               setSearchTerm(e.target.value);
               setPageIndex(0);
             }}
-            className="max-w-sm"
+            className="w-full sm:max-w-sm"
           />
           {isLoading ? (
             <div className="text-center py-8">Yükleniyor...</div>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
               {filteredBooks.map((book) => {
                 const progress = getProgressPercentage(book);
                 return (
-                  <Card key={book.id} className="relative">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg">{book.title}</CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1">{book.author}</p>
+                  <Card key={book.id} className="relative flex flex-col">
+                    <CardHeader className="p-3 sm:p-4 pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-sm sm:text-base font-semibold line-clamp-2 leading-tight">{book.title}</CardTitle>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{book.author}</p>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-0.5 shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-7 w-7 sm:h-8 sm:w-8"
                             onClick={() => setEditingBook(book)}
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-7 w-7 sm:h-8 sm:w-8"
                             onClick={() => setBookToDelete(book)}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" />
                           </Button>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="p-3 sm:p-4 pt-0 space-y-2 flex-1 flex flex-col">
                       {book.coverUrl && (
                         <img
                           src={book.coverUrl}
                           alt={book.title}
-                          className="w-full h-48 object-cover rounded-md"
+                          className="w-full h-24 sm:h-32 object-cover rounded-md"
                         />
                       )}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center justify-between text-xs">
                           <span className="text-muted-foreground">İlerleme</span>
                           <span className="font-medium">{progress}%</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-2">
+                        <div className="w-full bg-muted rounded-full h-1.5">
                           <div
-                            className="bg-primary h-2 rounded-full transition-all"
+                            className="bg-primary h-1.5 rounded-full transition-all"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{book.currentPage} / {book.totalPages} sayfa</span>
-                          {book.rating && <span>⭐ {book.rating}/10</span>}
+                          <span className="truncate">{book.currentPage}/{book.totalPages}</span>
+                          {book.rating && <span className="shrink-0">⭐ {book.rating}</span>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">{BookStatusLabels[book.status]}</Badge>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0">{BookStatusLabels[book.status]}</Badge>
                         {book.status === BookStatus.Reading && (
-                          <BookOpen className="h-4 w-4 text-primary" />
+                          <BookOpen className="h-3 w-3 text-primary shrink-0" />
                         )}
                         {book.status === BookStatus.Completed && (
-                          <BookMarked className="h-4 w-4 text-green-500" />
+                          <BookMarked className="h-3 w-3 text-green-500 shrink-0" />
                         )}
                       </div>
                     </CardContent>
@@ -491,13 +494,13 @@ export function BooksPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingBook} onOpenChange={(open) => !open && setEditingBook(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
           <DialogHeader>
             <DialogTitle>Kitabı Düzenle</DialogTitle>
             <DialogDescription>Kitap bilgilerini güncelleyin.</DialogDescription>
           </DialogHeader>
           <form id="edit-book-form" onSubmit={onSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-book-title">Kitap Adı *</Label>
                 <Input id="edit-book-title" {...formMethods.register('title')} />
@@ -517,7 +520,7 @@ export function BooksPage() {
               <Label htmlFor="edit-book-cover">Kapak URL</Label>
               <Input id="edit-book-cover" {...formMethods.register('coverUrl')} />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-book-total-pages">Toplam Sayfa</Label>
                 <Input
@@ -545,7 +548,7 @@ export function BooksPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-book-status">Durum</Label>
                 <select
@@ -570,11 +573,11 @@ export function BooksPage() {
               <Input id="edit-book-end-date" type="date" {...formMethods.register('endDate')} />
             </div>
           </form>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setEditingBook(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="ghost" onClick={() => setEditingBook(null)} className="w-full sm:w-auto">
               İptal
             </Button>
-            <Button type="submit" form="edit-book-form" disabled={updateMutation.isPending}>
+            <Button type="submit" form="edit-book-form" disabled={updateMutation.isPending} className="w-full sm:w-auto">
               {updateMutation.isPending ? 'Güncelleniyor...' : 'Güncelle'}
             </Button>
           </DialogFooter>
@@ -583,7 +586,7 @@ export function BooksPage() {
 
       {/* Delete Dialog */}
       <Dialog open={!!bookToDelete} onOpenChange={(open) => !open && setBookToDelete(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-full sm:max-w-md mx-4">
           <DialogHeader>
             <DialogTitle>Kitabı Sil</DialogTitle>
             <DialogDescription>
@@ -593,8 +596,8 @@ export function BooksPage() {
           <p className="text-sm text-muted-foreground">
             Silinecek kitap: <span className="font-medium">{bookToDelete?.title}</span>
           </p>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setBookToDelete(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="ghost" onClick={() => setBookToDelete(null)} className="w-full sm:w-auto">
               İptal
             </Button>
             <Button
@@ -602,6 +605,7 @@ export function BooksPage() {
               variant="destructive"
               disabled={deleteMutation.isPending}
               onClick={() => bookToDelete && deleteMutation.mutate(bookToDelete.id)}
+              className="w-full sm:w-auto"
             >
               {deleteMutation.isPending ? 'Siliniyor...' : 'Sil'}
             </Button>

@@ -8,8 +8,6 @@ import { createMovieSeries, updateMovieSeries, deleteMovieSeries, fetchMovieSeri
 import { MovieSeries, MovieSeriesFormValues, MovieSeriesStatus, MovieSeriesStatusLabels } from '../../features/movieseries/types';
 import { getAllWatchPlatforms } from '../../features/watchplatforms/api';
 import { getAllMovieSeriesGenres } from '../../features/movieseriesgenres/api';
-import { WatchPlatform } from '../../features/watchplatforms/types';
-import { MovieSeriesGenre } from '../../features/movieseriesgenres/types';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -189,8 +187,8 @@ export function MoviesPage() {
       <Card>
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>Film & Dizi Kütüphanesi</CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <CardTitle className="text-lg sm:text-2xl">Film & Dizi Kütüphanesi</CardTitle>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               İzlediğiniz film ve dizileri takip edin.
             </p>
           </div>
@@ -204,11 +202,11 @@ export function MoviesPage() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-2">
-                <PlusCircle className="h-4 w-4" /> Yeni Ekle
+              <Button className="gap-2 text-xs sm:text-sm">
+                <PlusCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Yeni Ekle</span><span className="sm:hidden">Ekle</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
               <DialogHeader>
                 <DialogTitle>Yeni Film/Dizi</DialogTitle>
                 <DialogDescription>İzlediğiniz film veya diziyi ekleyin.</DialogDescription>
@@ -225,7 +223,7 @@ export function MoviesPage() {
                     <p className="text-sm text-destructive">{formMethods.formState.errors.coverUrl.message}</p>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="movie-genre">Tür</Label>
                     <select
@@ -255,7 +253,7 @@ export function MoviesPage() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="movie-status">Durum</Label>
                     <select
@@ -272,7 +270,7 @@ export function MoviesPage() {
                   </div>
                 </div>
                 {movieSeriesGenres?.find(g => g.id === formMethods.watch('movieSeriesGenreId'))?.name === 'Dizi' && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="movie-season">Sezon</Label>
                       <Input
@@ -293,7 +291,7 @@ export function MoviesPage() {
                     </div>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="movie-rating">Değerlendirme (1-10)</Label>
                     <Input
@@ -314,11 +312,11 @@ export function MoviesPage() {
                   />
                 </div>
               </form>
-              <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)}>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)} className="w-full sm:w-auto">
                   İptal
                 </Button>
-                <Button type="submit" form="create-movie-form" disabled={createMutation.isPending}>
+                <Button type="submit" form="create-movie-form" disabled={createMutation.isPending} className="w-full sm:w-auto">
                   {createMutation.isPending ? 'Kaydediliyor...' : 'Kaydet'}
                 </Button>
               </DialogFooter>
@@ -354,70 +352,72 @@ export function MoviesPage() {
                 setSearchTerm(e.target.value);
                 setPageIndex(0);
               }}
-              className="max-w-sm"
+              className="w-full sm:max-w-sm"
             />
           </div>
           {isLoading ? (
             <div className="text-center py-8">Yükleniyor...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
               {filteredMovies.map((movie) => (
-                <Card key={movie.id} className="relative">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{movie.title}</CardTitle>
-                        <div className="flex items-center gap-2 mt-2">
+                <Card key={movie.id} className="relative flex flex-col">
+                  <CardHeader className="p-3 sm:p-4 pb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-sm sm:text-base font-semibold line-clamp-2 leading-tight">{movie.title}</CardTitle>
+                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                           {movie.movieSeriesGenreName === 'Film' ? (
-                            <Film className="h-4 w-4 text-primary" />
+                            <Film className="h-3 w-3 sm:h-4 sm:w-4 text-primary shrink-0" />
                           ) : (
-                            <Tv className="h-4 w-4 text-primary" />
+                            <Tv className="h-3 w-3 sm:h-4 sm:w-4 text-primary shrink-0" />
                           )}
-                          <Badge variant="secondary">{movie.movieSeriesGenreName}</Badge>
-                          <Badge variant="outline">{MovieSeriesStatusLabels[movie.status]}</Badge>
+                          <Badge variant="secondary" className="text-xs px-1.5 py-0">{movie.movieSeriesGenreName}</Badge>
+                          <Badge variant="outline" className="text-xs px-1.5 py-0">{MovieSeriesStatusLabels[movie.status]}</Badge>
                         </div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-0.5 shrink-0">
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 sm:h-8 sm:w-8"
                           onClick={() => setEditingMovie(movie)}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 sm:h-8 sm:w-8"
                           onClick={() => setMovieToDelete(movie)}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="p-3 sm:p-4 pt-0 space-y-2 flex-1 flex flex-col">
                     {movie.coverUrl && (
                       <img
                         src={movie.coverUrl}
                         alt={movie.title}
-                        className="w-full h-48 object-cover rounded-md mb-2"
+                        className="w-full h-24 sm:h-32 object-cover rounded-md mb-2"
                       />
                     )}
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs text-muted-foreground truncate">
                       <span>{movie.watchPlatformName}</span>
                     </div>
                     {movie.movieSeriesGenreName === 'Dizi' && (movie.currentSeason || movie.currentEpisode) && (
-                      <div className="text-sm">
-                        Sezon {movie.currentSeason || '?'}, Bölüm {movie.currentEpisode || '?'}
+                      <div className="text-xs">
+                        S{movie.currentSeason || '?'} E{movie.currentEpisode || '?'}
                       </div>
                     )}
                     {movie.rating && (
-                      <div className="text-sm">
+                      <div className="text-xs">
                         ⭐ {movie.rating}/10
                       </div>
                     )}
                     {movie.personalNote && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">{movie.personalNote}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{movie.personalNote}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -434,7 +434,7 @@ export function MoviesPage() {
 
       {/* Edit Dialog - Similar structure to create */}
       <Dialog open={!!editingMovie} onOpenChange={(open) => !open && setEditingMovie(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
           <DialogHeader>
             <DialogTitle>Film/Diziyi Düzenle</DialogTitle>
             <DialogDescription>Film/Dizi bilgilerini güncelleyin.</DialogDescription>
@@ -451,7 +451,7 @@ export function MoviesPage() {
                 <p className="text-sm text-destructive">{formMethods.formState.errors.coverUrl.message}</p>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-movie-genre">Tür</Label>
                 <select
@@ -481,7 +481,7 @@ export function MoviesPage() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-movie-status">Durum</Label>
                 <select
@@ -498,7 +498,7 @@ export function MoviesPage() {
               </div>
             </div>
             {movieSeriesGenres?.find(g => g.id === formMethods.watch('movieSeriesGenreId'))?.name === 'Dizi' && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-movie-season">Sezon</Label>
                   <Input
@@ -519,7 +519,7 @@ export function MoviesPage() {
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-movie-rating">Değerlendirme</Label>
                 <Input
@@ -540,11 +540,11 @@ export function MoviesPage() {
               />
             </div>
           </form>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setEditingMovie(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="ghost" onClick={() => setEditingMovie(null)} className="w-full sm:w-auto">
               İptal
             </Button>
-            <Button type="submit" form="edit-movie-form" disabled={updateMutation.isPending}>
+            <Button type="submit" form="edit-movie-form" disabled={updateMutation.isPending} className="w-full sm:w-auto">
               {updateMutation.isPending ? 'Güncelleniyor...' : 'Güncelle'}
             </Button>
           </DialogFooter>
@@ -553,7 +553,7 @@ export function MoviesPage() {
 
       {/* Delete Dialog */}
       <Dialog open={!!movieToDelete} onOpenChange={(open) => !open && setMovieToDelete(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-full sm:max-w-md mx-4">
           <DialogHeader>
             <DialogTitle>Film/Diziyi Sil</DialogTitle>
             <DialogDescription>
@@ -563,8 +563,8 @@ export function MoviesPage() {
           <p className="text-sm text-muted-foreground">
             Silinecek: <span className="font-medium">{movieToDelete?.title}</span>
           </p>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setMovieToDelete(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="ghost" onClick={() => setMovieToDelete(null)} className="w-full sm:w-auto">
               İptal
             </Button>
             <Button
@@ -572,6 +572,7 @@ export function MoviesPage() {
               variant="destructive"
               disabled={deleteMutation.isPending}
               onClick={() => movieToDelete && deleteMutation.mutate(movieToDelete.id)}
+              className="w-full sm:w-auto"
             >
               {deleteMutation.isPending ? 'Siliniyor...' : 'Sil'}
             </Button>

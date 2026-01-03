@@ -185,8 +185,8 @@ export function NotesPage() {
       <Card>
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>Kişisel Notlar</CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <CardTitle className="text-lg sm:text-2xl">Kişisel Notlar</CardTitle>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Notlarınızı organize edin ve yönetin. Pinterest tarzı masonry layout.
             </p>
           </div>
@@ -206,11 +206,11 @@ export function NotesPage() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-2">
-                <PlusCircle className="h-4 w-4" /> Yeni Not
+              <Button className="gap-2 text-xs sm:text-sm">
+                <PlusCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Yeni Not</span><span className="sm:hidden">Ekle</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-full sm:max-w-3xl max-h-[90vh] overflow-y-auto mx-4">
               <DialogHeader>
                 <DialogTitle>Yeni Not</DialogTitle>
                 <DialogDescription>Yeni bir kişisel not oluşturun.</DialogDescription>
@@ -233,7 +233,7 @@ export function NotesPage() {
                     <p className="text-sm text-destructive">{formMethods.formState.errors.content.message}</p>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="note-category">Kategori</Label>
                     <Input id="note-category" placeholder="Kategori" {...formMethods.register('category')} />
@@ -255,11 +255,11 @@ export function NotesPage() {
                   </Label>
                 </div>
               </form>
-              <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)}>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)} className="w-full sm:w-auto">
                   İptal
                 </Button>
-                <Button type="submit" form="create-note-form" disabled={createMutation.isPending}>
+                <Button type="submit" form="create-note-form" disabled={createMutation.isPending} className="w-full sm:w-auto">
                   {createMutation.isPending ? 'Kaydediliyor...' : 'Kaydet'}
                 </Button>
               </DialogFooter>
@@ -294,46 +294,46 @@ export function NotesPage() {
                 setSearchTerm(e.target.value);
                 setPageIndex(0);
               }}
-              className="max-w-sm"
+              className="w-full sm:max-w-sm"
             />
           </div>
           {isLoading ? (
             <div className="text-center py-8">Yükleniyor...</div>
           ) : (
-            <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-2 sm:gap-4 space-y-2 sm:space-y-4">
               {filteredNotes.map((note) => {
                 const tags = parseTags(note.tags);
                 return (
                   <Card
                     key={note.id}
                     className={cn(
-                      'break-inside-avoid mb-4 relative',
+                      'break-inside-avoid mb-2 sm:mb-4 relative',
                       note.isPinned && 'ring-2 ring-primary'
                     )}
                   >
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="text-base leading-tight">{note.title}</CardTitle>
+                        <CardTitle className="text-sm sm:text-base leading-tight line-clamp-2">{note.title}</CardTitle>
                         {note.isPinned && (
-                          <Pin className="h-4 w-4 text-primary shrink-0" fill="currentColor" />
+                          <Pin className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" fill="currentColor" />
                         )}
                       </div>
                       {note.category && (
-                        <Badge variant="secondary" className="mt-2">
+                        <Badge variant="secondary" className="mt-2 text-xs px-1.5 py-0">
                           {note.category}
                         </Badge>
                       )}
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-4 pt-0">
                       <div
-                        className="text-sm prose prose-sm max-w-none dark:prose-invert"
+                        className="text-xs sm:text-sm prose prose-xs sm:prose-sm max-w-none dark:prose-invert line-clamp-4"
                         dangerouslySetInnerHTML={{ __html: note.content }}
                       />
                       {tags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {tags.map((tag, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              <Tag className="h-3 w-3 mr-1" />
+                            <Badge key={idx} variant="outline" className="text-xs px-1 py-0">
+                              <Tag className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-0.5" />
                               {tag}
                             </Badge>
                           ))}
@@ -343,11 +343,11 @@ export function NotesPage() {
                         <span className="text-xs text-muted-foreground">
                           {new Date(note.createdDate).toLocaleDateString('tr-TR')}
                         </span>
-                        <div className="flex gap-1">
+                        <div className="flex gap-0.5 sm:gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7"
+                            className="h-6 w-6 sm:h-7 sm:w-7"
                             onClick={() => setEditingNote(note)}
                           >
                             <Pencil className="h-3 w-3" />
@@ -355,7 +355,7 @@ export function NotesPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7"
+                            className="h-6 w-6 sm:h-7 sm:w-7"
                             onClick={() => setNoteToDelete(note)}
                           >
                             <Trash2 className="h-3 w-3 text-destructive" />
@@ -378,7 +378,7 @@ export function NotesPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingNote} onOpenChange={(open) => !open && setEditingNote(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-full sm:max-w-3xl max-h-[90vh] overflow-y-auto mx-4">
           <DialogHeader>
             <DialogTitle>Notu Düzenle</DialogTitle>
             <DialogDescription>Not bilgilerini güncelleyin.</DialogDescription>
@@ -395,7 +395,7 @@ export function NotesPage() {
                 onChange={(value) => formMethods.setValue('content', value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-note-category">Kategori</Label>
                 <Input id="edit-note-category" {...formMethods.register('category')} />
@@ -417,11 +417,11 @@ export function NotesPage() {
               </Label>
             </div>
           </form>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setEditingNote(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="ghost" onClick={() => setEditingNote(null)} className="w-full sm:w-auto">
               İptal
             </Button>
-            <Button type="submit" form="edit-note-form" disabled={updateMutation.isPending}>
+            <Button type="submit" form="edit-note-form" disabled={updateMutation.isPending} className="w-full sm:w-auto">
               {updateMutation.isPending ? 'Güncelleniyor...' : 'Güncelle'}
             </Button>
           </DialogFooter>
@@ -430,7 +430,7 @@ export function NotesPage() {
 
       {/* Delete Dialog */}
       <Dialog open={!!noteToDelete} onOpenChange={(open) => !open && setNoteToDelete(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-full sm:max-w-md mx-4">
           <DialogHeader>
             <DialogTitle>Notu Sil</DialogTitle>
             <DialogDescription>
@@ -440,8 +440,8 @@ export function NotesPage() {
           <p className="text-sm text-muted-foreground">
             Silinecek not: <span className="font-medium">{noteToDelete?.title}</span>
           </p>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setNoteToDelete(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="ghost" onClick={() => setNoteToDelete(null)} className="w-full sm:w-auto">
               İptal
             </Button>
             <Button
@@ -449,6 +449,7 @@ export function NotesPage() {
               variant="destructive"
               disabled={deleteMutation.isPending}
               onClick={() => noteToDelete && deleteMutation.mutate(noteToDelete.id)}
+              className="w-full sm:w-auto"
             >
               {deleteMutation.isPending ? 'Siliniyor...' : 'Sil'}
             </Button>

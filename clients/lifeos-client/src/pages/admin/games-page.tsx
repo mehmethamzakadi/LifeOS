@@ -8,8 +8,6 @@ import { createGame, updateGame, deleteGame, fetchGames } from '../../features/g
 import { Game, GameFormValues, GameStatus, GameStatusLabels } from '../../features/games/types';
 import { getAllGamePlatforms } from '../../features/gameplatforms/api';
 import { getAllGameStores } from '../../features/gamestores/api';
-import { GamePlatform } from '../../features/gameplatforms/types';
-import { GameStore } from '../../features/gamestores/types';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -188,8 +186,8 @@ export function GamesPage() {
       <Card>
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle>Oyun Kütüphanesi</CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <CardTitle className="text-lg sm:text-2xl">Oyun Kütüphanesi</CardTitle>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Oyunlarınızı platform bazında organize edin ve takip edin.
             </p>
           </div>
@@ -211,11 +209,11 @@ export function GamesPage() {
             }}
           >
             <DialogTrigger asChild>
-              <Button className="gap-2">
-                <PlusCircle className="h-4 w-4" /> Yeni Oyun
+              <Button className="gap-2 text-xs sm:text-sm">
+                <PlusCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">Yeni Oyun</span><span className="sm:hidden">Ekle</span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-full sm:max-w-lg max-h-[90vh] overflow-y-auto mx-4">
               <DialogHeader>
                 <DialogTitle>Yeni Oyun</DialogTitle>
                 <DialogDescription>Oyun kütüphanenize yeni bir oyun ekleyin.</DialogDescription>
@@ -232,7 +230,7 @@ export function GamesPage() {
                   <Label htmlFor="game-cover">Kapak URL</Label>
                   <Input id="game-cover" placeholder="https://..." {...formMethods.register('coverUrl')} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="game-platform">Platform</Label>
                     <select
@@ -262,7 +260,7 @@ export function GamesPage() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="game-status">Durum</Label>
                     <select
@@ -293,11 +291,11 @@ export function GamesPage() {
                   </div>
                 </div>
               </form>
-              <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)}>
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)} className="w-full sm:w-auto">
                   İptal
                 </Button>
-                <Button type="submit" form="create-game-form" disabled={createMutation.isPending}>
+                <Button type="submit" form="create-game-form" disabled={createMutation.isPending} className="w-full sm:w-auto">
                   {createMutation.isPending ? 'Kaydediliyor...' : 'Kaydet'}
                 </Button>
               </DialogFooter>
@@ -325,54 +323,56 @@ export function GamesPage() {
                 setSearchTerm(e.target.value);
                 setPageIndex(0);
               }}
-              className="max-w-sm"
+              className="w-full sm:max-w-sm"
             />
           </div>
           {isLoading ? (
             <div className="text-center py-8">Yükleniyor...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
               {filteredGames.map((game) => (
-                <Card key={game.id} className="relative">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{game.title}</CardTitle>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="secondary">{game.gamePlatformName}</Badge>
-                          <Badge variant="outline">{GameStatusLabels[game.status]}</Badge>
-                          {game.isOwned && <Badge variant="default">Sahip</Badge>}
+                <Card key={game.id} className="relative flex flex-col">
+                  <CardHeader className="p-3 sm:p-4 pb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-sm sm:text-base font-semibold line-clamp-2 leading-tight">{game.title}</CardTitle>
+                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs px-1.5 py-0">{game.gamePlatformName}</Badge>
+                          <Badge variant="outline" className="text-xs px-1.5 py-0">{GameStatusLabels[game.status]}</Badge>
+                          {game.isOwned && <Badge variant="default" className="text-xs px-1.5 py-0">Sahip</Badge>}
                         </div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-0.5 shrink-0">
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 sm:h-8 sm:w-8"
                           onClick={() => setEditingGame(game)}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 sm:h-8 sm:w-8"
                           onClick={() => setGameToDelete(game)}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-3 sm:p-4 pt-0">
                     {game.coverUrl && (
                       <img
                         src={game.coverUrl}
                         alt={game.title}
-                        className="w-full h-48 object-cover rounded-md mb-3"
+                        className="w-full h-24 sm:h-32 object-cover rounded-md mb-2"
                       />
                     )}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Gamepad2 className="h-4 w-4" />
-                      <span>{game.gameStoreName}</span>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Gamepad2 className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                      <span className="truncate">{game.gameStoreName}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -389,7 +389,7 @@ export function GamesPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingGame} onOpenChange={(open) => !open && setEditingGame(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-full sm:max-w-lg max-h-[90vh] overflow-y-auto mx-4">
           <DialogHeader>
             <DialogTitle>Oyunu Düzenle</DialogTitle>
             <DialogDescription>Oyun bilgilerini güncelleyin.</DialogDescription>
@@ -403,7 +403,7 @@ export function GamesPage() {
               <Label htmlFor="edit-game-cover">Kapak URL</Label>
               <Input id="edit-game-cover" {...formMethods.register('coverUrl')} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-game-platform">Platform</Label>
                 <select
@@ -433,7 +433,7 @@ export function GamesPage() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-game-status">Durum</Label>
                 <select
@@ -464,11 +464,11 @@ export function GamesPage() {
               </div>
             </div>
           </form>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setEditingGame(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="ghost" onClick={() => setEditingGame(null)} className="w-full sm:w-auto">
               İptal
             </Button>
-            <Button type="submit" form="edit-game-form" disabled={updateMutation.isPending}>
+            <Button type="submit" form="edit-game-form" disabled={updateMutation.isPending} className="w-full sm:w-auto">
               {updateMutation.isPending ? 'Güncelleniyor...' : 'Güncelle'}
             </Button>
           </DialogFooter>
@@ -477,7 +477,7 @@ export function GamesPage() {
 
       {/* Delete Dialog */}
       <Dialog open={!!gameToDelete} onOpenChange={(open) => !open && setGameToDelete(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-full sm:max-w-md mx-4">
           <DialogHeader>
             <DialogTitle>Oyunu Sil</DialogTitle>
             <DialogDescription>
@@ -487,8 +487,8 @@ export function GamesPage() {
           <p className="text-sm text-muted-foreground">
             Silinecek oyun: <span className="font-medium">{gameToDelete?.title}</span>
           </p>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setGameToDelete(null)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="ghost" onClick={() => setGameToDelete(null)} className="w-full sm:w-auto">
               İptal
             </Button>
             <Button
@@ -496,6 +496,7 @@ export function GamesPage() {
               variant="destructive"
               disabled={deleteMutation.isPending}
               onClick={() => gameToDelete && deleteMutation.mutate(gameToDelete.id)}
+              className="w-full sm:w-auto"
             >
               {deleteMutation.isPending ? 'Siliniyor...' : 'Sil'}
             </Button>

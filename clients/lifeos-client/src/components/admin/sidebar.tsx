@@ -130,14 +130,14 @@ export function AdminSidebar({ collapsed }: { collapsed: boolean }) {
   return (
     <aside
       className={cn(
-        'border-r bg-card transition-all duration-300',
+        'border-r bg-card transition-all duration-300 h-full flex flex-col',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
-      <div className="flex h-16 items-center justify-center border-b text-lg font-semibold">
+      <div className="flex h-16 items-center justify-center border-b text-lg font-semibold shrink-0">
         {collapsed ? 'BP' : 'LifeOS'}
       </div>
-      <nav className="space-y-4 p-4 overflow-y-auto">
+      <nav className="flex-1 space-y-4 p-4 overflow-y-auto">
         {visibleGroups.map((group, groupIndex) => (
           <div key={groupIndex} className="space-y-1">
             {!collapsed && (
