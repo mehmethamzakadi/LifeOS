@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Music, Link2, Unlink, Loader2, Play, Pause, Heart, ListMusic, BarChart3 } from 'lucide-react';
+import { Music, Link2, Unlink, Loader2, Play, Pause, Heart, ListMusic, BarChart3, Wifi, WifiOff } from 'lucide-react';
 import { getConnectionStatus, getAuthorizationUrl, connectMusic, disconnectMusic, getCurrentTrack, getSavedTracks, getListeningStats } from '../../features/music/api';
 import { MusicConnectionStatus, CurrentlyPlayingTrack, SavedTrack, ListeningStats } from '../../features/music/types';
+import { useMusicSignalR } from '../../hooks/use-music-signalr';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
@@ -20,12 +21,17 @@ export function MusicPage() {
     retry: 1
   });
 
-  // Currently playing track (polling every 5 seconds)
+  // SignalR bağlantısı (real-time updates için)
+  const { isConnected: isSignalRConnected, connectionError: signalRError } = useMusicSignalR(
+    connectionStatus?.isConnected === true
+  );
+
+  // Currently playing track (SignalR ile real-time güncellenir, fallback olarak polling)
   const { data: currentTrack } = useQuery({
     queryKey: ['music-current-track'],
     queryFn: getCurrentTrack,
     enabled: connectionStatus?.isConnected === true,
-    refetchInterval: 5000
+    refetchInterval: isSignalRConnected ? false : 5000 // SignalR bağlıysa polling yapma
   });
 
   // Saved tracks
@@ -164,9 +170,28 @@ export function MusicPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Müzik</h1>
-          <p className="text-muted-foreground">
-            {connectionStatus.spotifyUserName && `Bağlı: ${connectionStatus.spotifyUserName}`}
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            {connectionStatus.spotifyUserName && (
+              <p className="text-muted-foreground">
+                Bağlı: {connectionStatus.spotifyUserName}
+              </p>
+            )}
+            {connectionStatus?.isConnected && (
+              <div className="flex items-center gap-2">
+                {isSignalRConnected ? (
+                  <Badge variant="outline" className="text-green-600 border-green-600">
+                    <Wifi className="h-3 w-3 mr-1" />
+                    Canlı
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                    <WifiOff className="h-3 w-3 mr-1" />
+                    Yeniden bağlanıyor...
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         <Button
           variant="outline"

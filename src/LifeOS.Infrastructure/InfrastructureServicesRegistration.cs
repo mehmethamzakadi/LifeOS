@@ -70,6 +70,24 @@ namespace LifeOS.Infrastructure
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenOptions.SecurityKey)),
                     ClockSkew = JwtConstants.ClockSkew
                 };
+
+                // SignalR için JWT token'ı query string'den de alabilmesi için
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+
+                        // SignalR hub'ları için query string'den token al
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
             // Authorization - AddAuthentication'dan hemen sonra olmalı
@@ -107,6 +125,8 @@ namespace LifeOS.Infrastructure
 
             // Background Services
             services.AddHostedService<SessionCleanupService>();
+            services.AddHostedService<MusicListeningHistorySyncService>();
+            services.AddHostedService<MusicCurrentTrackBroadcastService>();
 
             // RedisCacheService requires IConnectionMultiplexer - only register if Redis is available
             if (connectionMultiplexer != null)

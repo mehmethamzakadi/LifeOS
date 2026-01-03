@@ -90,6 +90,7 @@ using LifeOS.Application.Features.Music.GetSavedTracks;
 using LifeOS.Application.Features.Music.SaveTrack;
 using LifeOS.Application.Features.Music.DeleteSavedTrack;
 using LifeOS.Application.Features.Music.GetListeningStats;
+using LifeOS.API.Hubs;
 using LifeOS.Infrastructure;
 using LifeOS.Persistence;
 using LifeOS.Persistence.DatabaseInitializer;
@@ -117,6 +118,9 @@ builder.Services.AddResponseOptimization();
 
 // ✅ Rate Limiting
 builder.Services.AddRateLimiting(builder.Configuration);
+
+// ✅ SignalR
+builder.Services.AddSignalR();
 
 // ✅ API Services (OpenAPI, Routing)
 builder.Services.AddApiControllers();
@@ -263,6 +267,9 @@ GetSavedTracksEndpoint.MapEndpoint(app);
 SaveTrackEndpoint.MapEndpoint(app);
 DeleteSavedTrackEndpoint.MapEndpoint(app);
 GetListeningStatsEndpoint.MapEndpoint(app);
+
+// ✅ SignalR Hubs
+app.MapHub<MusicHub>("/hubs/music");
 
 await app.RunAsync();
 
