@@ -316,6 +316,8 @@ cp .env.example .env.production
 | `OllamaOptions__RetryDelaySeconds`                      | Retry gecikmesi (saniye)      | `2`                                                                |
 | `Serilog__SeqUrl`                                       | Seq log server URL            | `http://seq:80` (Docker) / `http://localhost:5341` (Local)         |
 | `Serilog__SeqApiKey`                                    | Seq API key (opsiyonel)       | -                                                                  |
+| `BookServiceOptions__GoogleBooksApiKey`                 | Google Books API key          | - (Opsiyonel, rate limit için önerilir)                             |
+| `BookServiceOptions__PrimaryApiSource`                | Öncelikli API kaynağı         | `OpenLibrary` veya `GoogleBooks`                                   |
 | `VITE_API_URL`                                          | Frontend API URL (build-time) | `http://localhost:6060` (Docker) / `http://localhost:5285` (Local) |
 
 ---

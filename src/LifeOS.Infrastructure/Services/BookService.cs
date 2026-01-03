@@ -162,42 +162,77 @@ public sealed class BookService : IBookService
             var httpClient = httpClientFactory.CreateClient(GoogleBooksClientName);
             
             // Google Books API: ISBN ile arama
-            var apiKeyParam = !string.IsNullOrWhiteSpace(options.GoogleBooksApiKey) 
-                ? $"&key={options.GoogleBooksApiKey}" 
-                : string.Empty;
+            // Dokümantasyon: https://developers.google.com/books/docs/v1/using
+            // API key formatı: key=YOUR_API_KEY (query parameter olarak, kodlama gerekmez)
+            var queryParams = new List<string> { $"q=isbn:{isbn}" };
             
-            var url = $"/volumes?q=isbn:{isbn}{apiKeyParam}";
-            logger.LogDebug("Google Books API isteği: {Url}", url);
+            if (!string.IsNullOrWhiteSpace(options.GoogleBooksApiKey))
+            {
+                // Dokümantasyona göre: "API anahtarı, URL'lere yerleştirmek için güvenlidir; herhangi bir kodlama yapmanız gerekmez."
+                queryParams.Add($"key={options.GoogleBooksApiKey}");
+            }
+            
+            // ÖNEMLİ: Path başında '/' OLMAMALI (BaseAddress sonunda '/' var)
+            var url = $"volumes?{string.Join("&", queryParams)}";
+            var fullUrl = $"{httpClient.BaseAddress}{url}";
+            logger.LogDebug("Google Books API isteği: {FullUrl}", fullUrl);
             var response = await httpClient.GetAsync(url, cancellationToken);
+
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogInformation("Google Books API response - StatusCode: {StatusCode}, ContentLength: {Length}, Content: {Response}", 
+                response.StatusCode, responseContent.Length, responseContent.Length > 500 ? responseContent.Substring(0, 500) + "..." : responseContent);
 
             if (!response.IsSuccessStatusCode)
             {
+                logger.LogWarning(
+                    "Google Books API hatası: StatusCode={StatusCode}, Response={Response}, FullURL={FullUrl}",
+                    response.StatusCode,
+                    responseContent,
+                    fullUrl);
+                
+                // Google Books API genellikle 404 dönmez, 200 döner ama totalItems: 0 olur
+                // Eğer gerçekten 404 dönüyorsa, bu bir yapılandırma hatası olabilir
                 if (response.StatusCode == HttpStatusCode.NotFound)
                 {
-                    logger.LogInformation("Google Books API'de ISBN bulunamadı: {Isbn}", isbn);
+                    logger.LogWarning("Google Books API'de endpoint bulunamadı (404). FullURL kontrol edilmeli: {FullUrl}", fullUrl);
                     return null;
                 }
 
-                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                logger.LogError(
-                    "Google Books API hatası: StatusCode={StatusCode}, Response={Response}",
-                    response.StatusCode,
-                    errorContent);
+                // 403 veya 401 ise API key sorunu olabilir
+                if (response.StatusCode == HttpStatusCode.Forbidden || response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    logger.LogWarning("Google Books API key sorunu olabilir. StatusCode: {StatusCode}, Response: {Response}", 
+                        response.StatusCode, responseContent);
+                }
+
                 throw new HttpRequestException(
-                    $"Google Books API hatası: {response.StatusCode}",
+                    $"Google Books API hatası: {response.StatusCode} - {responseContent}",
                     null,
                     response.StatusCode);
             }
 
-            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            logger.LogDebug("Google Books API response: {Response}", responseContent);
-
-            var googleResponse = await response.Content.ReadFromJsonAsync<GoogleBooksResponse>(cancellationToken: cancellationToken);
-
-            if (googleResponse?.Items == null || googleResponse.Items.Count == 0)
+            // Response'u tekrar okumak yerine, string'den parse edelim
+            GoogleBooksResponse? googleResponse;
+            try
             {
-                logger.LogInformation("Google Books API'de ISBN için sonuç bulunamadı: {Isbn}, TotalItems: {TotalItems}, Response: {Response}", 
-                    isbn, googleResponse?.TotalItems ?? 0, responseContent);
+                googleResponse = System.Text.Json.JsonSerializer.Deserialize<GoogleBooksResponse>(responseContent);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Google Books API response parse edilemedi. Raw response: {Response}", responseContent);
+                return null;
+            }
+
+            if (googleResponse == null)
+            {
+                logger.LogWarning("Google Books API response parse edilemedi. Raw response: {Response}", responseContent);
+                return null;
+            }
+
+            if (googleResponse.Items == null || googleResponse.Items.Count == 0)
+            {
+                logger.LogInformation("Google Books API'de ISBN için sonuç bulunamadı: {Isbn}, TotalItems: {TotalItems}", 
+                    isbn, googleResponse.TotalItems);
                 return null;
             }
 
@@ -269,8 +304,9 @@ public sealed class BookService : IBookService
             var httpClient = httpClientFactory.CreateClient(OpenLibraryClientName);
             
             // Open Library API: ISBN ile arama
-            // Format: /api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data
-            var url = $"/api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data";
+            // Format: api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data
+            // ÖNEMLİ: Path başında '/' OLMAMALI (BaseAddress sonunda '/' var)
+            var url = $"api/books?bibkeys=ISBN:{isbn}&format=json&jscmd=data";
             var response = await httpClient.GetAsync(url, cancellationToken);
 
             if (!response.IsSuccessStatusCode)

@@ -142,6 +142,14 @@ services:
       OllamaOptions__TimeoutMinutes: 5
       OllamaOptions__RetryCount: 5
       OllamaOptions__RetryDelaySeconds: 3
+      # Book Service - Production ayarları
+      BookServiceOptions__GoogleBooksApiEndpoint: https://www.googleapis.com/books/v1
+      BookServiceOptions__GoogleBooksApiKey: ${GOOGLE_BOOKS_API_KEY}
+      BookServiceOptions__OpenLibraryApiEndpoint: https://openlibrary.org
+      BookServiceOptions__TimeoutSeconds: "10"
+      BookServiceOptions__RetryCount: "2"
+      BookServiceOptions__RetryDelaySeconds: "1"
+      BookServiceOptions__PrimaryApiSource: OpenLibrary
       # CORS Policy (Production'da sadece kendi domaininden gelen isteklere izin ver)
       # .NET Core array format: Cors:AllowedOrigins:0 -> Cors__AllowedOrigins__0
       Cors__AllowedOrigins__0: "${APP_URL:-http://45.143.4.244}"

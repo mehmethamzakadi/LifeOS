@@ -149,17 +149,21 @@ namespace LifeOS.Infrastructure
                 ?? throw new InvalidOperationException("BookService ayarları yapılandırılmalıdır.");
 
             // Google Books API HttpClient
+            // ÖNEMLİ: BaseAddress sonunda '/' olmalı, path başında '/' olmamalı
+            var googleBooksBaseAddress = bookServiceOptions.GoogleBooksApiEndpoint.TrimEnd('/') + "/";
             services.AddHttpClient("GoogleBooksClient", client =>
             {
-                client.BaseAddress = new Uri(bookServiceOptions.GoogleBooksApiEndpoint);
+                client.BaseAddress = new Uri(googleBooksBaseAddress);
                 client.Timeout = TimeSpan.FromSeconds(bookServiceOptions.TimeoutSeconds);
             })
             .AddPolicyHandler(GetBookServiceRetryPolicy(bookServiceOptions));
 
             // Open Library API HttpClient
+            // ÖNEMLİ: BaseAddress sonunda '/' olmalı, path başında '/' olmamalı
+            var openLibraryBaseAddress = bookServiceOptions.OpenLibraryApiEndpoint.TrimEnd('/') + "/";
             services.AddHttpClient("OpenLibraryClient", client =>
             {
-                client.BaseAddress = new Uri(bookServiceOptions.OpenLibraryApiEndpoint);
+                client.BaseAddress = new Uri(openLibraryBaseAddress);
                 client.Timeout = TimeSpan.FromSeconds(bookServiceOptions.TimeoutSeconds);
             })
             .AddPolicyHandler(GetBookServiceRetryPolicy(bookServiceOptions));
