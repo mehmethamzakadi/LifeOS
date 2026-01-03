@@ -212,11 +212,16 @@ prod-deploy:
 	@$(COMPOSE_PROD) build --no-cache lifeos.api lifeos.client
 	@echo "$(GREEN)✓ Build tamamlandı$(NC)"
 	@echo ""
-	@echo "$(YELLOW)3. Container'lar yeniden başlatılıyor (volume'lar korunuyor)...$(NC)"
-	@$(COMPOSE_PROD) up -d --no-deps lifeos.api lifeos.client
+	@echo "$(YELLOW)3. Eski container'lar durduruluyor ve siliniyor...$(NC)"
+	@$(COMPOSE_PROD) stop lifeos.api lifeos.client 2>/dev/null || true
+	@$(COMPOSE_PROD) rm -f lifeos.api lifeos.client 2>/dev/null || true
+	@echo "$(GREEN)✓ Eski container'lar temizlendi$(NC)"
+	@echo ""
+	@echo "$(YELLOW)4. Container'lar yeniden oluşturuluyor (volume'lar korunuyor)...$(NC)"
+	@$(COMPOSE_PROD) up -d --no-deps --force-recreate lifeos.api lifeos.client
 	@echo "$(GREEN)✓ Container'lar yeniden başlatıldı$(NC)"
 	@echo ""
-	@echo "$(YELLOW)4. Migration kontrolü yapılıyor...$(NC)"
+	@echo "$(YELLOW)5. Migration kontrolü yapılıyor...$(NC)"
 	@echo "$(BLUE)Migration uygulamak için: make migrate-up-prod$(NC)"
 	@echo ""
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
@@ -237,8 +242,13 @@ prod-update:
 	@$(COMPOSE_PROD) build --no-cache lifeos.api lifeos.client
 	@echo "$(GREEN)✓ Build tamamlandı$(NC)"
 	@echo ""
-	@echo "$(YELLOW)2. Container'lar yeniden başlatılıyor (volume'lar korunuyor)...$(NC)"
-	@$(COMPOSE_PROD) up -d --no-deps lifeos.api lifeos.client
+	@echo "$(YELLOW)2. Eski container'lar durduruluyor ve siliniyor...$(NC)"
+	@$(COMPOSE_PROD) stop lifeos.api lifeos.client 2>/dev/null || true
+	@$(COMPOSE_PROD) rm -f lifeos.api lifeos.client 2>/dev/null || true
+	@echo "$(GREEN)✓ Eski container'lar temizlendi$(NC)"
+	@echo ""
+	@echo "$(YELLOW)3. Container'lar yeniden oluşturuluyor (volume'lar korunuyor)...$(NC)"
+	@$(COMPOSE_PROD) up -d --no-deps --force-recreate lifeos.api lifeos.client
 	@echo "$(GREEN)✓ Container'lar yeniden başlatıldı$(NC)"
 	@echo ""
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
