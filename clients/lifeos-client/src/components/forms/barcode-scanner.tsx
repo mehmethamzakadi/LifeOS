@@ -11,130 +11,216 @@ interface BarcodeScannerProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Native BarcodeDetector tip tanımı
+declare global {
+  interface Window {
+    BarcodeDetector?: {
+      new (options?: { formats: string[] }): {
+        detect(image: ImageBitmap): Promise<Array<{ rawValue: string }>>;
+      };
+    };
+  }
+}
+
 export function BarcodeScanner({ onScan, isOpen, onOpenChange }: BarcodeScannerProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Ref'ler
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const codeReader = useRef<BrowserMultiFormatReader | null>(null);
 
-  // Reader'ı sadece component mount olduğunda bir kez oluştur
   useEffect(() => {
+    // ZXing hazırlığı
     const hints = new Map();
-    hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.EAN_13]);
+    // ISBN ve olası diğer formatları ekleyelim
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.EAN_13, 
+      BarcodeFormat.CODE_128
+    ]);
     hints.set(DecodeHintType.TRY_HARDER, true);
     
     codeReader.current = new BrowserMultiFormatReader(hints);
 
     return () => {
-      // Cleanup
       codeReader.current = null;
     };
   }, []);
 
+  // Yardımcı: Resmi Canvas'a çizme (Grayscale + Rotation desteği)
+  const drawToCanvas = (
+    img: ImageBitmap, 
+    canvas: HTMLCanvasElement, 
+    rotate: boolean = false
+  ): void => {
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) throw new Error("Canvas context oluşturulamadı");
+
+    // Boyutlandırma (Max 1000px)
+    const MAX_DIMENSION = 1000;
+    let width = img.width;
+    let height = img.height;
+    
+    const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height));
+    width *= scale;
+    height *= scale;
+
+    if (rotate) {
+      // 90 derece döndür
+      canvas.width = height;
+      canvas.height = width;
+      ctx.save();
+      ctx.translate(height / 2, width / 2);
+      ctx.rotate(90 * Math.PI / 180);
+      ctx.drawImage(img, -width / 2, -height / 2, width, height);
+      ctx.restore();
+    } else {
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+    }
+
+    // Görüntü İyileştirme: Grayscale (Siyah-Beyaz) - Kontrastı artırır
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      data[i] = avg;     // Red
+      data[i + 1] = avg; // Green
+      data[i + 2] = avg; // Blue
+      // Alpha (data[i + 3]) değişmez
+    }
+    ctx.putImageData(imageData, 0, 0);
+  };
+
+  // Canvas'ı Image elementine çevirme
+  const canvasToImage = (canvas: HTMLCanvasElement): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Image oluşturulamadı"));
+      img.src = canvas.toDataURL('image/jpeg', 0.85);
+    });
+  };
+
+  const validateAndComplete = (text: string) => {
+    // ISBN Temizleme ve Kontrol
+    const cleanText = text.replace(/[^0-9]/g, ''); // Sadece rakamları al
+    
+    if (cleanText.length === 13 && (cleanText.startsWith('978') || cleanText.startsWith('979'))) {
+      onScan(cleanText);
+      onOpenChange(false);
+    } else {
+      setError(`Okunan kod (${text}) geçerli bir kitap ISBN numarası değil.`);
+    }
+  };
+
   const processImage = async (file: File) => {
-    if (!file || !codeReader.current) return;
+    if (!file) return;
 
     let imageBitmap: ImageBitmap | null = null;
-    let imageUrl: string | null = null;
 
     try {
       setIsProcessing(true);
       setError(null);
       console.log("1. Dosya alındı:", file.size, "bytes, type:", file.type);
 
-      // Timeout koruması (8 saniye)
+      // Timeout koruması (10 saniye)
       const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error("İşlem çok uzun sürdü (Zaman aşımı).")), 8000)
+        setTimeout(() => reject(new Error("İşlem çok uzun sürdü (Zaman aşımı).")), 10000)
       );
 
       // İşlem mantığı
       const processPromise = async (): Promise<string> => {
-        // 1. Modern yöntemle resmi yükle (createImageBitmap - Promise tabanlı, daha hızlı)
-        console.log("2. Resim yükleniyor...");
         imageBitmap = await createImageBitmap(file);
-        console.log("3. Resim yüklendi, boyut:", imageBitmap.width, "x", imageBitmap.height);
+        console.log("2. Resim yüklendi, boyut:", imageBitmap.width, "x", imageBitmap.height);
 
-        // 2. Canvas oluştur ve resmi küçült (800px genişlik yeterli)
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        const scale = Math.min(1, MAX_WIDTH / imageBitmap.width);
-        
-        canvas.width = imageBitmap.width * scale;
-        canvas.height = imageBitmap.height * scale;
+        // --- YÖNTEM 1: Native BarcodeDetector (Android/Chrome için Işık Hızında) ---
+        if (window.BarcodeDetector) {
+          try {
+            console.log("3. Native BarcodeDetector deneniyor...");
+            const nativeDetector = new window.BarcodeDetector({ 
+              formats: ['ean_13', 'code_128'] 
+            });
+            const barcodes = await nativeDetector.detect(imageBitmap);
+            
+            if (barcodes.length > 0) {
+              const rawValue = barcodes[0].rawValue;
+              console.log("✅ Native API Buldu:", rawValue);
+              return rawValue;
+            }
+            console.log("Native dedektör barkod bulamadı, ZXing'e geçiliyor...");
+          } catch (e) {
+            console.warn("Native dedektör başarısız, ZXing'e geçiliyor...", e);
+          }
+        }
 
-        const ctx = canvas.getContext('2d', { willReadFrequently: false });
-        if (!ctx) throw new Error("Canvas context oluşturulamadı");
-
-        // Resmi canvas'a çiz (EXIF yönü otomatik düzeltilir)
-        ctx.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
-        console.log("4. Resim canvas'a çizildi, boyut:", canvas.width, "x", canvas.height);
-
-        // 3. Canvas'ı Image elementine çevir (Base64'e çevirmeden, bellek dostu)
-        const img = new Image();
-        imageUrl = canvas.toDataURL('image/jpeg', 0.85);
-        img.src = imageUrl;
-
-        // Image yüklenene kadar bekle
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = () => reject(new Error("Image yüklenemedi"));
-          // Eğer zaten yüklüyse (cache'den)
-          if (img.complete) resolve();
-        });
-
-        console.log("5. Image element hazır, barkod okunuyor...");
-
-        // 4. ZXing ile Image elementinden oku (Base64 string yerine Image element - daha hızlı)
+        // --- YÖNTEM 2: ZXing (Yedek Güç) ---
         if (!codeReader.current) {
           throw new Error("Barkod okuyucu hazır değil");
         }
-        const result = await codeReader.current.decodeFromImageElement(img);
-        const text = result.getText();
-        
-        console.log("6. Barkod okundu:", text);
 
-        return text;
+        const canvas = document.createElement('canvas');
+        let foundCode: string | null = null;
+
+        // Deneme 1: Normal Yön
+        try {
+          console.log("4. ZXing ile normal yönde okuma deneniyor...");
+          drawToCanvas(imageBitmap, canvas, false);
+          const img = await canvasToImage(canvas);
+          const result = await codeReader.current.decodeFromImageElement(img);
+          foundCode = result.getText();
+          console.log("✅ Normal yönde bulundu:", foundCode);
+        } catch {
+          console.log("Normal okuma başarısız, döndürüp deneniyor...");
+        }
+
+        // Deneme 2: Eğer bulunamadıysa 90 derece çevirip dene (Dikey fotoğraflar için)
+        if (!foundCode) {
+          try {
+            console.log("5. ZXing ile 90 derece döndürülmüş yönde okuma deneniyor...");
+            drawToCanvas(imageBitmap, canvas, true); // Rotate = true
+            const img = await canvasToImage(canvas);
+            const result = await codeReader.current.decodeFromImageElement(img);
+            foundCode = result.getText();
+            console.log("✅ Döndürülmüş yönde bulundu:", foundCode);
+          } catch {
+            console.log("Döndürülmüş okuma da başarısız.");
+          }
+        }
+
+        if (!foundCode) {
+          throw new Error("Barkod bulunamadı");
+        }
+
+        return foundCode;
       };
 
       // Yarıştır: Hangisi önce biterse (İşlem mi, Timeout mu?)
       const text = await Promise.race([processPromise(), timeoutPromise]);
 
-      // ISBN Kontrolü
-      if (text.length === 13 && (text.startsWith('978') || text.startsWith('979'))) {
-        onScan(text);
-        onOpenChange(false);
-      } else {
-        setError(`Barkod okundu (${text}) ancak bir kitap ISBN numarası (978 veya 979 ile başlamalı) değil.`);
-      }
+      // ISBN Kontrolü ve Tamamlama
+      validateAndComplete(text);
 
     } catch (err: any) {
       console.error("HATA:", err);
       
       // Hata mesajını kullanıcı dostu yap
-      if (err.message?.includes("NotFound") || err.message?.includes("not found")) {
+      if (err.message?.includes("NotFound") || err.message?.includes("not found") || err.message?.includes("bulunamadı")) {
         setError("Fotoğrafta barkod bulunamadı. Lütfen barkodun net, düz ve iyi aydınlatılmış olduğundan emin olun.");
       } else if (err.message?.includes("Zaman aşımı") || err.message?.includes("uzun sürdü")) {
         setError("İşlem çok uzun sürdü. Lütfen daha küçük veya net bir fotoğraf deneyin.");
       } else {
-        setError("Bir hata oluştu: " + (err.message || "Bilinmeyen hata"));
+        setError("Barkod okunamadı. Lütfen fotoğrafın net olduğundan ve barkodun parlamadığından emin olun.");
       }
     } finally {
       // Bellek temizliği
-      if (imageBitmap) {
+      if (imageBitmap && 'close' in imageBitmap) {
         try {
           (imageBitmap as ImageBitmap).close();
         } catch {
           // ImageBitmap.close() desteklenmiyorsa sessizce geç
         }
-      }
-      if (imageUrl) {
-        // Image URL'i temizle (memory leak önleme)
-        const img = new Image();
-        img.src = imageUrl;
-        img.src = ''; // URL'i temizle
       }
       
       setIsProcessing(false);
@@ -160,7 +246,6 @@ export function BarcodeScanner({ onScan, isOpen, onOpenChange }: BarcodeScannerP
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Gizli Inputlar */}
           <input
             ref={cameraInputRef}
             type="file"
@@ -169,7 +254,6 @@ export function BarcodeScanner({ onScan, isOpen, onOpenChange }: BarcodeScannerP
             className="hidden"
             onChange={handleFileChange}
           />
-
           <input
             ref={galleryInputRef}
             type="file"
@@ -179,15 +263,13 @@ export function BarcodeScanner({ onScan, isOpen, onOpenChange }: BarcodeScannerP
           />
 
           <div className="flex flex-col gap-3">
-            <div className="text-center mb-2 px-2">
-               <p className="text-sm text-muted-foreground">
-                Kitabın arkasındaki barkodun fotoğrafını çekin. 
-                <br/><span className="text-xs opacity-70">(Fotoğraf net ve yatay olmalıdır)</span>
-              </p>
-            </div>
+            <p className="text-center text-sm text-muted-foreground mb-2 px-2">
+              Kitabın arkasındaki barkodu çekin. <br/>
+              <span className="text-xs opacity-75">(Dikey veya yatay fark etmez, biz hallederiz)</span>
+            </p>
 
             {error && (
-              <div className="bg-destructive/10 p-3 rounded-md flex items-start gap-3 border border-destructive/20">
+              <div className="bg-destructive/10 p-3 rounded-lg flex items-start gap-3 border border-destructive/20 animate-in slide-in-from-top-2">
                 <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
                 <div className="flex-1 space-y-2">
                   <p className="text-sm text-destructive font-medium">{error}</p>
@@ -207,28 +289,28 @@ export function BarcodeScanner({ onScan, isOpen, onOpenChange }: BarcodeScannerP
               <div className="flex flex-col items-center justify-center py-8 gap-3 bg-muted/30 rounded-lg border-2 border-dashed">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <div className="text-center">
-                    <p className="font-medium">Fotoğraf Analiz Ediliyor...</p>
-                    <p className="text-xs text-muted-foreground">Lütfen bekleyin...</p>
+                  <p className="font-medium">Analiz Ediliyor...</p>
+                  <p className="text-xs text-muted-foreground">Lütfen bekleyin...</p>
                 </div>
               </div>
             ) : (
               <>
                 <Button 
                   size="lg" 
-                  className="w-full h-14 text-lg gap-2 shadow-sm"
+                  className="w-full h-14 text-lg gap-2 shadow-md"
                   onClick={() => cameraInputRef.current?.click()}
                 >
                   <Camera className="h-6 w-6" />
                   Fotoğraf Çek
                 </Button>
-
+                
                 <div className="relative py-1">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">veya</span>
-                    </div>
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">veya</span>
+                  </div>
                 </div>
 
                 <Button 
@@ -237,14 +319,14 @@ export function BarcodeScanner({ onScan, isOpen, onOpenChange }: BarcodeScannerP
                   onClick={() => galleryInputRef.current?.click()}
                 >
                   <ImageIcon className="h-5 w-5" />
-                  Galeriden Seç
+                  Galeriden Yükle
                 </Button>
               </>
             )}
 
             <div className="text-xs text-muted-foreground space-y-1 w-full pt-2 border-t">
               <p>• Mobilde: "Fotoğraf Çek" kamerayı başlatır</p>
-              <p>• "Galeriden Seç" ile daha önce çektiğiniz fotoğrafları kullanabilirsiniz</p>
+              <p>• "Galeriden Yükle" ile daha önce çektiğiniz fotoğrafları kullanabilirsiniz</p>
               <p>• Barkod net, düz ve iyi aydınlatılmış olmalıdır</p>
               <p>• Konsolda (F12) işlem adımlarını görebilirsiniz</p>
             </div>
