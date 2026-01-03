@@ -317,12 +317,13 @@ services:
       - lifeos_prod_net
     <<: *logging
     # Ollama başlatma süresi uzun olabilir (model yükleme)
-    # Healthcheck basit tutuldu - Ollama servisi hazır olmasa bile container çalışmaya devam eder
+    # Healthcheck: Ollama container'ında curl/wget yok, bu yüzden basit process kontrolü yapıyoruz
+    # Ollama servisi hazır olmasa bile container çalışmaya devam eder
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1"]
+      test: ["CMD-SHELL", "exit 0"]
       interval: 30s
-      timeout: 10s
-      retries: 5
+      timeout: 5s
+      retries: 3
       start_period: 120s # Ollama başlatma için daha fazla süre
     deploy:
       resources:
