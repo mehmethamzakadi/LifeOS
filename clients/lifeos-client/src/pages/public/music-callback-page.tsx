@@ -5,14 +5,40 @@ import { connectMusic } from '../../features/music/api';
 import { Card, CardContent } from '../../components/ui/card';
 import toast from 'react-hot-toast';
 import { handleApiError } from '../../lib/api-error';
+import { useAuth } from '../../hooks/use-auth';
 
 export function MusicCallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, hydrated, ensureSession } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
+  // Önce authentication kontrolü yap
   useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      // Session restore dene
+      ensureSession().then((restored) => {
+        if (!restored) {
+          setStatus('error');
+          setMessage('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+          toast.error('Oturum süresi dolmuş');
+          setTimeout(() => navigate('/login'), 2000);
+        }
+      });
+    }
+  }, [hydrated, isAuthenticated, ensureSession, navigate]);
+
+  useEffect(() => {
+    // Authentication kontrolü tamamlanmadan devam etme
+    if (!hydrated || !isAuthenticated) {
+      return;
+    }
+
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     const error = searchParams.get('error');
@@ -82,7 +108,7 @@ export function MusicCallbackPage() {
         localStorage.removeItem('spotify_oauth_state');
         setTimeout(() => navigate('/admin/music'), 3000);
       });
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, hydrated, isAuthenticated]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
