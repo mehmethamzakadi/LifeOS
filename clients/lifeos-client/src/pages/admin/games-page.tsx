@@ -329,49 +329,77 @@ export function GamesPage() {
           {isLoading ? (
             <div className="text-center py-8">Yükleniyor...</div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-1.5 sm:gap-2">
               {filteredGames.map((game) => (
-                <Card key={game.id} className="relative flex flex-col">
-                  <CardHeader className="p-3 sm:p-4 pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-sm sm:text-base font-semibold line-clamp-2 leading-tight">{game.title}</CardTitle>
-                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                          <Badge variant="secondary" className="text-xs px-1.5 py-0">{game.gamePlatformName}</Badge>
-                          <Badge variant="outline" className="text-xs px-1.5 py-0">{GameStatusLabels[game.status]}</Badge>
-                          {game.isOwned && <Badge variant="default" className="text-xs px-1.5 py-0">Sahip</Badge>}
-                        </div>
-                      </div>
-                      <div className="flex gap-0.5 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 sm:h-8 sm:w-8"
-                          onClick={() => setEditingGame(game)}
-                        >
-                          <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 sm:h-8 sm:w-8"
-                          onClick={() => setGameToDelete(game)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-3 sm:p-4 pt-0">
-                    {game.coverUrl && (
+                <Card key={game.id} className="relative flex flex-col overflow-hidden group">
+                  {/* Resim üstte, dikey format */}
+                  {game.coverUrl && (
+                    <div className="relative w-full aspect-[3/4] overflow-hidden bg-muted">
                       <img
                         src={game.coverUrl}
                         alt={game.title}
-                        className="w-full h-24 sm:h-32 object-cover rounded-md mb-2"
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       />
+                      {/* Action buttons overlay */}
+                      <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-5 w-5 bg-background/80 backdrop-blur-sm hover:bg-background"
+                          onClick={() => setEditingGame(game)}
+                        >
+                          <Pencil className="h-2.5 w-2.5" />
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-5 w-5 bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => setGameToDelete(game)}
+                        >
+                          <Trash2 className="h-2.5 w-2.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {/* İçerik */}
+                  <CardContent className="p-1.5 sm:p-2 space-y-1 flex-1 flex flex-col">
+                    {!game.coverUrl && (
+                      <div className="flex items-start justify-between gap-1 mb-0.5">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-[10px] sm:text-xs font-semibold line-clamp-2 leading-tight">{game.title}</CardTitle>
+                        </div>
+                        <div className="flex gap-0.5 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 sm:h-6 sm:w-6"
+                            onClick={() => setEditingGame(game)}
+                          >
+                            <Pencil className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 sm:h-6 sm:w-6"
+                            onClick={() => setGameToDelete(game)}
+                          >
+                            <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Gamepad2 className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                    {game.coverUrl && (
+                      <div className="min-w-0">
+                        <CardTitle className="text-[10px] sm:text-xs font-semibold line-clamp-2 leading-tight">{game.title}</CardTitle>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-0.5 flex-wrap">
+                      <Badge variant="secondary" className="text-[9px] px-0.5 py-0">{game.gamePlatformName}</Badge>
+                      <Badge variant="outline" className="text-[9px] px-0.5 py-0">{GameStatusLabels[game.status]}</Badge>
+                      {game.isOwned && <Badge variant="default" className="text-[9px] px-0.5 py-0">Sahip</Badge>}
+                    </div>
+                    <div className="flex items-center gap-0.5 text-[9px] sm:text-[10px] text-muted-foreground pt-0.5">
+                      <Gamepad2 className="h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0" />
                       <span className="truncate">{game.gameStoreName}</span>
                     </div>
                   </CardContent>

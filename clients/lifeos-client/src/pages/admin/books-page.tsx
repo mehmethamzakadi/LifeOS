@@ -369,68 +369,99 @@ export function BooksPage() {
           {isLoading ? (
             <div className="text-center py-8">Yükleniyor...</div>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-1.5 sm:gap-2">
               {filteredBooks.map((book) => {
                 const progress = getProgressPercentage(book);
                 return (
-                  <Card key={book.id} className="relative flex flex-col">
-                    <CardHeader className="p-3 sm:p-4 pb-2">
-                      <div className="flex items-start justify-between gap-2">
+                  <Card key={book.id} className="relative flex flex-col overflow-hidden group">
+                    {/* Resim üstte, dikey format */}
+                    {book.coverUrl && (
+                      <div className="relative w-full aspect-[2/3] overflow-hidden bg-muted">
+                        <img
+                          src={book.coverUrl}
+                          alt={book.title}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      {/* Action buttons overlay */}
+                      <div className="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-5 w-5 bg-background/80 backdrop-blur-sm hover:bg-background"
+                          onClick={() => setEditingBook(book)}
+                        >
+                          <Pencil className="h-2.5 w-2.5" />
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-5 w-5 bg-background/80 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => setBookToDelete(book)}
+                        >
+                          <Trash2 className="h-2.5 w-2.5" />
+                        </Button>
+                      </div>
+                      </div>
+                    )}
+                  {/* İçerik */}
+                  <CardContent className="p-1.5 sm:p-2 space-y-1 flex-1 flex flex-col">
+                    {!book.coverUrl && (
+                      <div className="flex items-start justify-between gap-1 mb-0.5">
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-sm sm:text-base font-semibold line-clamp-2 leading-tight">{book.title}</CardTitle>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{book.author}</p>
+                          <CardTitle className="text-[10px] sm:text-xs font-semibold line-clamp-2 leading-tight">{book.title}</CardTitle>
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{book.author}</p>
                         </div>
                         <div className="flex gap-0.5 shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 sm:h-8 sm:w-8"
+                            className="h-5 w-5 sm:h-6 sm:w-6"
                             onClick={() => setEditingBook(book)}
                           >
-                            <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <Pencil className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 sm:h-8 sm:w-8"
+                            className="h-5 w-5 sm:h-6 sm:w-6"
                             onClick={() => setBookToDelete(book)}
                           >
-                            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" />
+                            <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-destructive" />
                           </Button>
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent className="p-3 sm:p-4 pt-0 space-y-2 flex-1 flex flex-col">
-                      {book.coverUrl && (
-                        <img
-                          src={book.coverUrl}
-                          alt={book.title}
-                          className="w-full h-24 sm:h-32 object-cover rounded-md"
-                        />
-                      )}
-                      <div className="space-y-1.5 flex-1">
-                        <div className="flex items-center justify-between text-xs">
+                    )}
+                    {book.coverUrl && (
+                      <>
+                        <div className="min-w-0">
+                          <CardTitle className="text-[10px] sm:text-xs font-semibold line-clamp-2 leading-tight">{book.title}</CardTitle>
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{book.author}</p>
+                        </div>
+                      </>
+                    )}
+                    <div className="space-y-0.5 flex-1">
+                        <div className="flex items-center justify-between text-[9px] sm:text-[10px]">
                           <span className="text-muted-foreground">İlerleme</span>
                           <span className="font-medium">{progress}%</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-1.5">
+                        <div className="w-full bg-muted rounded-full h-0.5 sm:h-1">
                           <div
-                            className="bg-primary h-1.5 rounded-full transition-all"
+                            className="bg-primary h-0.5 sm:h-1 rounded-full transition-all"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-muted-foreground">
                           <span className="truncate">{book.currentPage}/{book.totalPages}</span>
                           {book.rating && <span className="shrink-0">⭐ {book.rating}</span>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <Badge variant="secondary" className="text-xs px-1.5 py-0">{BookStatusLabels[book.status]}</Badge>
+                      <div className="flex items-center gap-0.5 flex-wrap pt-0.5">
+                        <Badge variant="secondary" className="text-[9px] px-0.5 py-0">{BookStatusLabels[book.status]}</Badge>
                         {book.status === BookStatus.Reading && (
-                          <BookOpen className="h-3 w-3 text-primary shrink-0" />
+                          <BookOpen className="h-2 w-2 text-primary shrink-0" />
                         )}
                         {book.status === BookStatus.Completed && (
-                          <BookMarked className="h-3 w-3 text-green-500 shrink-0" />
+                          <BookMarked className="h-2 w-2 text-green-500 shrink-0" />
                         )}
                       </div>
                     </CardContent>
