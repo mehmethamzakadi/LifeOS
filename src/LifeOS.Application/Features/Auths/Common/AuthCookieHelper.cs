@@ -41,9 +41,17 @@ public static class AuthCookieHelper
         var host = httpContext.Request.Host.Host;
         string? cookieDomain = null;
 
-        if (!string.IsNullOrWhiteSpace(host) && host.Contains('.'))
+        // Development ortamında IP adresleri (127.0.0.1, localhost) için domain set etme
+        // Domain null olduğunda cookie sadece o host için geçerli olur
+        // Production'da gerçek domain'ler için domain set edilir
+        if (!isDevelopment && !string.IsNullOrWhiteSpace(host) && host.Contains('.'))
         {
-            cookieDomain = host;
+            // IP adresi kontrolü (basit - sadece sayılardan oluşuyorsa IP'dir)
+            var isIpAddress = System.Net.IPAddress.TryParse(host, out _);
+            if (!isIpAddress)
+            {
+                cookieDomain = host;
+            }
         }
 
         var requestIsHttps = httpContext.Request.IsHttps;
@@ -51,14 +59,27 @@ public static class AuthCookieHelper
         var sameSite = SameSiteMode.Strict;
         var secure = requestIsHttps;
 
+        // Cross-origin istek kontrolü
+        bool isCrossOrigin = false;
         if (httpContext.Request.Headers.TryGetValue("Origin", out var originHeader) &&
-            Uri.TryCreate(originHeader.ToString(), UriKind.Absolute, out var originUri) &&
-            !string.Equals(originUri.Host, host, StringComparison.OrdinalIgnoreCase))
+            Uri.TryCreate(originHeader.ToString(), UriKind.Absolute, out var originUri))
+        {
+            isCrossOrigin = !string.Equals(originUri.Host, host, StringComparison.OrdinalIgnoreCase) ||
+                           originUri.Port != httpContext.Request.Host.Port;
+        }
+
+        if (isCrossOrigin)
         {
             if (requestIsHttps)
             {
                 sameSite = SameSiteMode.None;
                 secure = true;
+            }
+            else if (isDevelopment)
+            {
+                // Development'ta HTTP cross-origin için Lax kullan (None Secure olmadan çalışmaz)
+                sameSite = SameSiteMode.Lax;
+                secure = false;
             }
             else
             {

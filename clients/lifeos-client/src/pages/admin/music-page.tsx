@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Music, Link2, Unlink, Loader2, Play, Pause, Heart, BarChart3, Wifi, WifiOff, XCircle, TrendingUp } from 'lucide-react';
-import { getConnectionStatus, getAuthorizationUrl, disconnectMusic, getCurrentTrack, getSavedTracks, getListeningStats, saveTrack, deleteSavedTrack, analyzeVibe } from '../../features/music/api';
+import { Music, Link2, Unlink, Loader2, Play, Pause, Heart, BarChart3, Wifi, WifiOff, XCircle } from 'lucide-react';
+import { getConnectionStatus, getAuthorizationUrl, disconnectMusic, getCurrentTrack, getSavedTracks, getListeningStats, saveTrack, deleteSavedTrack } from '../../features/music/api';
 import { useMusicSignalR } from '../../hooks/use-music-signalr';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
@@ -12,7 +12,6 @@ import { handleApiError } from '../../lib/api-error';
 export function MusicPage() {
   const queryClient = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-  const [vibeTimeRange, setVibeTimeRange] = useState<'short_term' | 'medium_term' | 'long_term'>('short_term');
 
   // Connection status
   const { data: connectionStatus, isLoading: isLoadingStatus } = useQuery({
@@ -91,14 +90,6 @@ export function MusicPage() {
     queryKey: ['music-stats', selectedPeriod],
     queryFn: () => getListeningStats(selectedPeriod),
     enabled: connectionStatus?.isConnected === true
-  });
-
-  // Vibe analysis
-  const { data: vibeAnalysis, isLoading: isLoadingVibe } = useQuery({
-    queryKey: ['music-vibe', vibeTimeRange],
-    queryFn: () => analyzeVibe(vibeTimeRange),
-    enabled: connectionStatus?.isConnected === true,
-    retry: 1
   });
 
   // Connect mutation
@@ -314,103 +305,6 @@ export function MusicPage() {
         </Card>
       )}
 
-      {/* Vibe Check - Ruh Hali Analizi */}
-      {connectionStatus?.isConnected && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Ruh Hali Analizi
-            </CardTitle>
-            <CardDescription>
-              Dinlediğiniz müziklere göre ruh halinizi analiz ediyoruz
-              <div className="flex gap-2 mt-2">
-                {(['short_term', 'medium_term', 'long_term'] as const).map((range) => (
-                  <Button
-                    key={range}
-                    variant={vibeTimeRange === range ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setVibeTimeRange(range)}
-                    disabled={isLoadingVibe}
-                  >
-                    {range === 'short_term' ? 'Son 4 Hafta' : range === 'medium_term' ? 'Son 6 Ay' : 'Tüm Zamanlar'}
-                  </Button>
-                ))}
-              </div>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingVibe ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : vibeAnalysis ? (
-              <div className="space-y-6">
-                {/* Mood Title & Icon */}
-                <div className="text-center py-4 bg-muted rounded-lg">
-                  <div className="text-4xl mb-2">{vibeAnalysis.moodIcon}</div>
-                  <h3 className="text-lg font-semibold">{vibeAnalysis.moodTitle}</h3>
-                  {vibeAnalysis.topGenre && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      En çok dinlenen: {vibeAnalysis.topGenre}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {vibeAnalysis.analyzedTracksCount} şarkı analiz edildi
-                  </p>
-                </div>
-
-                {/* Progress Bars */}
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium">Enerji Seviyesi</span>
-                      <span className="text-sm text-muted-foreground">{vibeAnalysis.energyLevel}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div
-                        className="bg-red-500 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${vibeAnalysis.energyLevel}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium">Mutluluk Seviyesi</span>
-                      <span className="text-sm text-muted-foreground">{vibeAnalysis.happinessLevel}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div
-                        className="bg-yellow-500 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${vibeAnalysis.happinessLevel}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium">Dans Edilebilirlik</span>
-                      <span className="text-sm text-muted-foreground">{vibeAnalysis.danceabilityLevel}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div
-                        className="bg-purple-500 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${vibeAnalysis.danceabilityLevel}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Analiz yapılamadı. Biraz daha müzik dinleyin.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       {/* Stats */}
       {stats && (
         <div className="grid gap-4 md:grid-cols-2">
@@ -421,19 +315,20 @@ export function MusicPage() {
                 İstatistikler
               </CardTitle>
               <CardDescription>
-                <div className="flex gap-2 mt-2">
-                  {(['daily', 'weekly', 'monthly'] as const).map((period) => (
-                    <Button
-                      key={period}
-                      variant={selectedPeriod === period ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedPeriod(period)}
-                    >
-                      {period === 'daily' ? 'Günlük' : period === 'weekly' ? 'Haftalık' : 'Aylık'}
-                    </Button>
-                  ))}
-                </div>
+                Zaman aralığı seçin
               </CardDescription>
+              <div className="flex gap-2 mt-2 px-6 pb-2">
+                {(['daily', 'weekly', 'monthly'] as const).map((period) => (
+                  <Button
+                    key={period}
+                    variant={selectedPeriod === period ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedPeriod(period)}
+                  >
+                    {period === 'daily' ? 'Günlük' : period === 'weekly' ? 'Haftalık' : 'Aylık'}
+                  </Button>
+                ))}
+              </div>
             </CardHeader>
             <CardContent>
               {isLoadingStats ? (

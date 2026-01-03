@@ -82,13 +82,3 @@ export interface ListeningStats {
   mostListenedGenre?: string;
 }
 
-export interface VibeAnalysis {
-  moodTitle: string;
-  moodIcon: string;
-  energyLevel: number; // 0-100
-  happinessLevel: number; // 0-100
-  danceabilityLevel: number; // 0-100
-  topGenre?: string;
-  analyzedTracksCount: number;
-}
-

@@ -11,15 +11,17 @@ export default defineConfig(({ mode }) => {
     logLevel: isProduction ? 'warn' : 'info',
     server: {
       port: 5173,
-      host: '0.0.0.0', // Docker container'dan erişim için
+      // Docker container içinde çalışırken 0.0.0.0 kullanmalıyız (port mapping için)
+      // Local development'ta da 0.0.0.0 kullanıyoruz, böylece hem localhost hem 127.0.0.1 çalışır
+      host: '0.0.0.0',
       watch: {
         // Docker volume mount için polling kullan
         usePolling: true,
         interval: 1000
       },
       hmr: {
-        // Docker container içinde HMR için client port
-        // Tarayıcı host'tan bağlanacağı için localhost kullanılır
+        // HMR için client host'u belirtmiyoruz (otomatik algılansın)
+        // Docker container içinde çalışırken otomatik olarak doğru host'u kullanır
         clientPort: 5173
       }
     },

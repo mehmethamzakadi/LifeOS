@@ -490,47 +490,82 @@ public sealed class SpotifyApiService : ISpotifyApiService
         httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
         // Spotify API maksimum 100 track ID kabul eder
+        // Spotify dokümantasyonu: https://developer.spotify.com/documentation/web-api/reference/get-several-audio-features
         var allFeatures = new List<SpotifyAudioFeaturesResponse>();
         var batches = trackIds.Chunk(100);
 
         foreach (var batch in batches)
         {
-            var ids = string.Join(",", batch);
-            var url = $"/v1/audio-features?ids={ids}";
-            var response = await httpClient.GetAsync(url, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("Spotify audio features hatası: {StatusCode}, {Response}", response.StatusCode, errorContent);
-                throw new HttpRequestException($"Spotify audio features hatası: {response.StatusCode}", null, response.StatusCode);
-            }
-
-            var data = await response.Content.ReadFromJsonAsync<SpotifyAudioFeaturesResponseDto>(cancellationToken: cancellationToken)
-                ?? throw new InvalidOperationException("Audio features response parse edilemedi");
-
-            if (data.AudioFeatures != null)
-            {
-                foreach (var feature in data.AudioFeatures)
+                // Track ID'leri virgülle ayırarak query parameter olarak gönder
+                // Spotify API dokümantasyonuna göre: ids parameter is a comma-separated list
+                var ids = string.Join(",", batch.Where(id => !string.IsNullOrWhiteSpace(id)));
+                if (string.IsNullOrWhiteSpace(ids))
                 {
-                    if (feature != null)
+                    continue;
+                }
+
+                var url = $"/v1/audio-features?ids={Uri.EscapeDataString(ids)}";
+                var response = await httpClient.GetAsync(url, cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                    
+                    // 403 Forbidden - Spotify'nin yeni kısıtlamaları nedeniyle erişim reddedilmiş olabilir
+                    // 404 Not Found - Bazı track'ler bulunamadı (local files, podcast episodes, vb.)
+                    // Bu durumlarda batch'i atla ama diğer batch'leri denemeye devam et
+                    if (response.StatusCode == HttpStatusCode.Forbidden || response.StatusCode == HttpStatusCode.NotFound)
                     {
-                        allFeatures.Add(new SpotifyAudioFeaturesResponse
+                        _logger.LogWarning("Spotify audio features erişim hatası: {StatusCode}, Batch atlanıyor. {Response}", 
+                            response.StatusCode, errorContent?.Substring(0, Math.Min(200, errorContent?.Length ?? 0)));
+                        continue; // Bu batch'i atla, diğerlerini dene
+                    }
+
+                    // Diğer hatalar için exception fırlat
+                    _logger.LogError("Spotify audio features hatası: {StatusCode}, {Response}", response.StatusCode, errorContent);
+                    throw new HttpRequestException($"Spotify audio features hatası: {response.StatusCode}", null, response.StatusCode);
+                }
+
+                var data = await response.Content.ReadFromJsonAsync<SpotifyAudioFeaturesResponseDto>(cancellationToken: cancellationToken);
+                
+                if (data?.AudioFeatures != null)
+                {
+                    // Spotify API bazı track'ler için null dönebilir (local files, podcast episodes, vb.)
+                    // Sadece geçerli feature'ları ekle
+                    foreach (var feature in data.AudioFeatures)
+                    {
+                        if (feature != null && !string.IsNullOrWhiteSpace(feature.Id))
                         {
-                            Id = feature.Id ?? string.Empty,
-                            Valence = feature.Valence,
-                            Energy = feature.Energy,
-                            Danceability = feature.Danceability,
-                            Tempo = feature.Tempo,
-                            Key = feature.Key,
-                            Mode = feature.Mode,
-                            Acousticness = feature.Acousticness,
-                            Instrumentalness = feature.Instrumentalness,
-                            Liveness = feature.Liveness,
-                            Speechiness = feature.Speechiness
-                        });
+                            allFeatures.Add(new SpotifyAudioFeaturesResponse
+                            {
+                                Id = feature.Id,
+                                Valence = feature.Valence,
+                                Energy = feature.Energy,
+                                Danceability = feature.Danceability,
+                                Tempo = feature.Tempo,
+                                Key = feature.Key,
+                                Mode = feature.Mode,
+                                Acousticness = feature.Acousticness,
+                                Instrumentalness = feature.Instrumentalness,
+                                Liveness = feature.Liveness,
+                                Speechiness = feature.Speechiness
+                            });
+                        }
                     }
                 }
+            }
+            catch (HttpRequestException)
+            {
+                // HttpRequestException zaten yukarıda handle edildi, tekrar fırlat
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Beklenmeyen hatalar için log kaydet ama batch'i atla
+                _logger.LogWarning(ex, "Spotify audio features batch işlenirken beklenmeyen hata. Batch atlanıyor.");
+                continue; // Bu batch'i atla, diğerlerini dene
             }
         }
 

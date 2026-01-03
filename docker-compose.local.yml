@@ -24,8 +24,8 @@ services:
     container_name: lifeos_client_dev
     restart: unless-stopped
     environment:
-      # Vite dev server için API URL
-      VITE_API_URL: http://localhost:6060
+      # Vite dev server için API URL (127.0.0.1 kullanıyoruz - Spotify callback için)
+      VITE_API_URL: http://127.0.0.1:6060
     ports:
       - "5173:5173" # Vite Dev Server
     volumes:

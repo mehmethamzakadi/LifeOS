@@ -90,7 +90,6 @@ using LifeOS.Application.Features.Music.GetSavedTracks;
 using LifeOS.Application.Features.Music.SaveTrack;
 using LifeOS.Application.Features.Music.DeleteSavedTrack;
 using LifeOS.Application.Features.Music.GetListeningStats;
-using LifeOS.Application.Features.Music.AnalyzeVibe;
 using LifeOS.Infrastructure;
 using LifeOS.Infrastructure.Hubs;
 using LifeOS.Persistence;
@@ -268,7 +267,6 @@ GetSavedTracksEndpoint.MapEndpoint(app);
 SaveTrackEndpoint.MapEndpoint(app);
 DeleteSavedTrackEndpoint.MapEndpoint(app);
 GetListeningStatsEndpoint.MapEndpoint(app);
-AnalyzeVibeEndpoint.MapEndpoint(app);
 
 // ✅ SignalR Hubs
 app.MapHub<MusicHub>("/hubs/music");

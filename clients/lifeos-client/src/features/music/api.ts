@@ -7,8 +7,7 @@ import {
   CurrentlyPlayingTrack,
   SavedTrack,
   Playlist,
-  ListeningStats,
-  VibeAnalysis
+  ListeningStats
 } from './types';
 
 export async function getConnectionStatus(): Promise<MusicConnectionStatus> {
@@ -108,15 +107,5 @@ export async function getListeningStats(period: 'daily' | 'weekly' | 'monthly' =
     totalListeningTime: result.data.totalListeningTime || 0,
     mostListenedGenre: result.data.mostListenedGenre
   };
-}
-
-
-export async function analyzeVibe(timeRange: 'short_term' | 'medium_term' | 'long_term' = 'short_term'): Promise<VibeAnalysis> {
-  const response = await api.get<ApiResult<VibeAnalysis>>(`/music/analyze-vibe?timeRange=${timeRange}`);
-  const result = normalizeApiResult<VibeAnalysis>(response.data);
-  if (!result.success || !result.data) {
-    throw new Error(result.message || 'Ruh hali analizi yapılamadı');
-  }
-  return result.data;
 }
 
