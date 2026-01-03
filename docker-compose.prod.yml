@@ -329,10 +329,10 @@ services:
       resources:
         limits:
           cpus: "2"
-          memory: 2G
+          memory: 6G  # Qwen2.5:7b için yeterli bellek (4.3 GiB model + overhead)
         reservations:
           cpus: "0.5"
-          memory: 512M
+          memory: 1G
 
 # ===========================================
 # Volumes - Production (Named Volumes)
