@@ -25,11 +25,13 @@ public sealed class GenerateMoodPlaylistHandler
     };
 
     // Dil tercihi → Market/Genre mapping
+    // ÖNEMLİ: Spotify API'de "turkish-pop" gibi birleşik genre isimleri geçersizdir
+    // Geçerli genre'ler: "turkish", "pop", "rock", "electronic" vb. (ayrı ayrı)
     private static readonly Dictionary<string, (string? Market, List<string> Genres)> LanguageMappings = new()
     {
-        ["turkish"] = ("TR", new List<string> { "turkish-pop", "turkish-rock" }),
+        ["turkish"] = ("TR", new List<string> { "turkish", "pop" }), // "turkish-pop" yerine "turkish" ve "pop" ayrı
         ["foreign"] = ("US", new List<string> { "pop", "rock", "electronic" }),
-        ["mixed"] = (null, new List<string> { "pop", "rock", "turkish-pop" })
+        ["mixed"] = (null, new List<string> { "pop", "rock", "turkish" })
     };
 
     public GenerateMoodPlaylistHandler(
@@ -55,7 +57,8 @@ public sealed class GenerateMoodPlaylistHandler
         }
 
         // Ruh hali kontrolü
-        if (!MoodMappings.ContainsKey(command.Mood.ToLowerInvariant()))
+        var mood = command.Mood.ToLowerInvariant();
+        if (!MoodMappings.TryGetValue(mood, out var moodTargets))
         {
             return ApiResultExtensions.Failure<GenerateMoodPlaylistResponse>(
                 $"Geçersiz ruh hali. Desteklenenler: {string.Join(", ", MoodMappings.Keys)}");
@@ -92,69 +95,65 @@ public sealed class GenerateMoodPlaylistHandler
             }
             catch
             {
-                return ApiResultExtensions.Failure<GenerateMoodPlaylistResponse>("Token yenilenemedi");
+                return ApiResultExtensions.Failure<GenerateMoodPlaylistResponse>("Token yenilenemedi. Lütfen tekrar giriş yapın.");
             }
         }
 
         try
         {
-            var mood = command.Mood.ToLowerInvariant();
-            var (targetValence, targetEnergy) = MoodMappings[mood];
-            var (market, genres) = LanguageMappings.GetValueOrDefault(
+            var (market, availableGenres) = LanguageMappings.GetValueOrDefault(
                 command.LanguagePreference.ToLowerInvariant(),
                 LanguageMappings["mixed"]);
 
-            // 1. Kullanıcının top tracks'lerinden seed seç
-            var topTracks = await _spotifyApiService.GetTopTracksAsync(
-                accessToken, "medium_term", 20, cancellationToken);
+            // 1. Kullanıcının top tracks'lerini al
+            var topTracksResponse = await _spotifyApiService.GetTopTracksAsync(
+                accessToken, "medium_term", 10, cancellationToken); // 20 yerine 10 yeterli
 
-            // 2. Basit açıklama (AI kullanmadan)
-            var moodDescriptions = new Dictionary<string, string>
+            // 2. Seed Seçim Mantığı (Toplamda tam 5 adet olacak şekilde)
+            // Spotify kuralı: seed_artists + seed_genres + seed_tracks <= 5
+            List<string> seedTracks = new();
+            List<string> seedGenres = new();
+
+            if (topTracksResponse.Items != null && topTracksResponse.Items.Any())
             {
-                ["mutlu"] = "Mutlu anlarınız için özel olarak hazırlanmış neşeli şarkılar.",
-                ["üzgün"] = "Hüzünlü ruh halinize eşlik edecek sakin ve duygusal şarkılar.",
-                ["enerjik"] = "Enerjinizi yükseltecek, hareketli ve dinamik şarkılar.",
-                ["sakin"] = "Sakinleşmek ve rahatlamak için huzur verici şarkılar.",
-                ["romantik"] = "Romantik anlarınız için özel olarak seçilmiş şarkılar.",
-                ["nostaljik"] = "Geçmişe yolculuk yapmanızı sağlayacak nostaljik şarkılar."
-            };
-            var description = moodDescriptions.GetValueOrDefault(mood, $"{mood} ruh haline özel playlist.");
-
-            // 3. Seed seçimi: Spotify API kuralı - En az 1 seed olmalı
-            // Öncelik: seedTracks > seedGenres (daha kişiselleştirilmiş)
-            List<string>? seedTracks = null;
-            List<string>? seedGenres = null;
-
-            if (topTracks.Items.Any())
-            {
-                // Top tracks'lerden 3-5 şarkı seç (en güvenilir yöntem)
-                seedTracks = topTracks.Items
-                    .Take(5)
+                // En fazla 3 track alalım ki genre'lara yer kalsın
+                seedTracks = topTracksResponse.Items
+                    .Take(3)
                     .Select(t => t.Id)
                     .Where(id => !string.IsNullOrWhiteSpace(id))
                     .ToList();
             }
 
-            // Eğer seedTracks yoksa veya yetersizse, seedGenres ekle
-            if (seedTracks == null || seedTracks.Count < 2)
+            // Kalan kontenjanı genre ile doldur (Max 5 - track sayısı)
+            int remainingSlots = 5 - seedTracks.Count;
+            if (remainingSlots > 0)
             {
-                // Genre'leri kullan (market parametresi olmadan - daha güvenli)
-                seedGenres = genres.Take(2).ToList();
+                seedGenres = availableGenres.Take(remainingSlots).ToList();
             }
 
+            // Eğer hiç seed yoksa fallback genre ata
+            if (!seedTracks.Any() && !seedGenres.Any())
+            {
+                seedGenres = new List<string> { "pop" }; // Fallback
+            }
+
+            // 3. Market parametresi
+            // Eğer seed_tracks kullanıyorsak market parametresini 'null' göndermek bazen daha güvenlidir
+            // çünkü seed track o markette yoksa hata verir. Spotify'ın user marketini kullanmasına izin veririz.
+            string? targetMarket = seedTracks.Any() ? null : market;
+
             // 4. Spotify Recommendations API çağrısı
-            // Market parametresi: seedTracks ile kullanılabilir, seedGenres ile sorunlu olabilir
             var recommendations = await _spotifyApiService.GetRecommendationsAsync(
                 accessToken,
-                seedTracks: seedTracks,
-                seedArtists: null,
-                seedGenres: seedGenres,
-                targetValence: targetValence,
-                targetEnergy: targetEnergy,
+                seedTracks: seedTracks.Any() ? seedTracks : null,
+                seedArtists: null, // Artist yerine Track/Genre karışımı daha iyi sonuç verir
+                seedGenres: seedGenres.Any() ? seedGenres : null,
+                targetValence: moodTargets.TargetValence,
+                targetEnergy: moodTargets.TargetEnergy,
                 targetDanceability: null,
                 minTempo: null,
                 maxTempo: null,
-                market: seedTracks != null && seedTracks.Any() ? market : null, // Market sadece seedTracks ile
+                market: targetMarket,
                 limit: Math.Clamp(command.Limit, 10, 50),
                 cancellationToken);
 
@@ -172,18 +171,21 @@ public sealed class GenerateMoodPlaylistHandler
                 t.ExternalUrl
             )).ToList();
 
+            // Basit açıklama
+            var description = $"{mood} modunda, {(command.LanguagePreference == "turkish" ? "Türkçe" : command.LanguagePreference == "foreign" ? "yabancı" : "karışık")} parçalar.";
+
             var response = new GenerateMoodPlaylistResponse(
                 tracks,
                 mood,
                 description
             );
 
-            return ApiResultExtensions.Success(response, "Playlist başarıyla oluşturuldu");
+            return ApiResultExtensions.Success(response, "Playlist önerileri başarıyla oluşturuldu");
         }
         catch (Exception ex)
         {
             return ApiResultExtensions.Failure<GenerateMoodPlaylistResponse>(
-                $"Playlist oluşturulamadı: {ex.Message}");
+                $"Spotify hatası: {ex.Message}");
         }
     }
 }
