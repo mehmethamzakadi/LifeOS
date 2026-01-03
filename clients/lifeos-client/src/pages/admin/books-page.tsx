@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { PlusCircle, Pencil, Trash2, BookOpen, BookMarked, Search, Loader2 } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, BookOpen, BookMarked, Search, Loader2, Camera } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -23,6 +23,7 @@ import { Badge } from '../../components/ui/badge';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { handleApiError, showApiResponseError } from '../../lib/api-error';
+import { BarcodeScanner } from '../../components/forms/barcode-scanner';
 
 const bookSchema = z.object({
   title: z.string().min(2, 'Kitap adı en az 2 karakter olmalıdır').max(200, 'Kitap adı en fazla 200 karakter olabilir'),
@@ -60,6 +61,7 @@ export function BooksPage() {
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [isbnSearch, setIsbnSearch] = useState('');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const { data, isLoading, } = useQuery({
     queryKey: ['books', pageIndex, pageSize, searchTerm],
@@ -217,6 +219,12 @@ export function BooksPage() {
     isbnSearchMutation.mutate(isbnSearch.trim());
   };
 
+  const handleBarcodeScan = (isbn: string) => {
+    // Barcode scanner'dan gelen ISBN'i input'a yaz ve ara
+    setIsbnSearch(isbn);
+    isbnSearchMutation.mutate(isbn);
+  };
+
   const onSubmit = formMethods.handleSubmit(async (values) => {
     const formData: BookFormValues = {
       title: values.title,
@@ -325,6 +333,16 @@ export function BooksPage() {
                     />
                     <Button
                       type="button"
+                      variant="outline"
+                      onClick={() => setIsScannerOpen(true)}
+                      className="gap-2 shrink-0"
+                      title="Kamera ile ISBN tara"
+                    >
+                      <Camera className="h-4 w-4" />
+                      <span className="hidden sm:inline">Tara</span>
+                    </Button>
+                    <Button
+                      type="button"
                       onClick={handleIsbnSearch}
                       disabled={isbnSearchMutation.isPending || !isbnSearch.trim()}
                       className="gap-2"
@@ -343,7 +361,10 @@ export function BooksPage() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Google Books ve Open Library API'lerini kullanarak kitap bilgilerini otomatik olarak çeker.
+                    Google Books ve Open Library API'lerini kullanarak kitap bilgilerini otomatik olarak çeker. 
+                    <span className="block mt-1">
+                      📷 Kamera butonuna tıklayarak kitabın arkasındaki barcode'u tarayabilirsiniz.
+                    </span>
                   </p>
                 </div>
 
@@ -729,6 +750,13 @@ export function BooksPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Barcode Scanner */}
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onOpenChange={setIsScannerOpen}
+        onScan={handleBarcodeScan}
+      />
     </div>
   );
 }
