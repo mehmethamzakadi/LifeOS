@@ -84,5 +84,13 @@ public sealed class MusicConnection : AggregateRoot
         IsActive = false;
         AddDomainEvent(new MusicConnectionDeletedEvent(Id, UserId));
     }
+
+    public void Restore()
+    {
+        IsDeleted = false;
+        DeletedDate = null;
+        IsActive = true;
+        UpdatedDate = DateTime.UtcNow;
+    }
 }
 

@@ -57,21 +57,32 @@ public sealed class ConnectMusicHandler
             _logger.LogInformation("ConnectMusic: User profile alındı. SpotifyUserId: {SpotifyUserId}, UserId: {UserId}", 
                 userProfile.Id, userId);
 
-            // Mevcut bağlantıyı kontrol et
+            // Mevcut bağlantıyı kontrol et - IsDeleted durumundan bağımsız (unique constraint için)
             var existingConnection = await _context.MusicConnections
-                .FirstOrDefaultAsync(c => c.UserId == userId.Value && !c.IsDeleted, cancellationToken);
+                .FirstOrDefaultAsync(c => c.UserId == userId.Value, cancellationToken);
 
             var expiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
 
             if (existingConnection != null)
             {
-                _logger.LogInformation("ConnectMusic: Mevcut bağlantı güncelleniyor. UserId: {UserId}", userId);
+                if (existingConnection.IsDeleted)
+                {
+                    _logger.LogInformation("ConnectMusic: Silinmiş bağlantı bulundu, restore ediliyor. UserId: {UserId}", userId);
+                    // Silinmiş bağlantıyı restore et
+                    existingConnection.Restore();
+                }
+                else
+                {
+                    _logger.LogInformation("ConnectMusic: Mevcut bağlantı güncelleniyor. UserId: {UserId}", userId);
+                }
+                
                 // Mevcut bağlantıyı güncelle
                 existingConnection.UpdateTokens(
                     _tokenEncryptionService.Encrypt(tokenResponse.AccessToken),
                     _tokenEncryptionService.Encrypt(tokenResponse.RefreshToken),
                     expiresAt);
                 existingConnection.Activate();
+                
                 _context.MusicConnections.Update(existingConnection);
             }
             else
