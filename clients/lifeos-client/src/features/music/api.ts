@@ -7,7 +7,8 @@ import {
   CurrentlyPlayingTrack,
   SavedTrack,
   Playlist,
-  ListeningStats
+  ListeningStats,
+  AnalyzeArtistResponse
 } from './types';
 
 export async function getConnectionStatus(): Promise<MusicConnectionStatus> {
@@ -107,5 +108,14 @@ export async function getListeningStats(period: 'daily' | 'weekly' | 'monthly' =
     totalListeningTime: result.data.totalListeningTime || 0,
     mostListenedGenre: result.data.mostListenedGenre
   };
+}
+
+export async function analyzeArtist(artistName: string): Promise<AnalyzeArtistResponse> {
+  const response = await api.get<ApiResult<AnalyzeArtistResponse>>(`/music/analyze-artist?artistName=${encodeURIComponent(artistName)}`);
+  const result = normalizeApiResult<AnalyzeArtistResponse>(response.data);
+  if (!result.success || !result.data) {
+    throw new Error(result.message || 'Sanatçı analizi yapılamadı');
+  }
+  return result.data;
 }
 

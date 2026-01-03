@@ -84,6 +84,29 @@ public interface ISpotifyApiService
         string accessToken,
         List<string> trackIds,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Client Credentials Flow ile access token alır (kullanıcı login gerekmez)
+    /// </summary>
+    Task<string> GetClientCredentialsTokenAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sanatçı arama yapar
+    /// </summary>
+    Task<SpotifySearchResponse> SearchArtistsAsync(
+        string accessToken,
+        string query,
+        int limit = 20,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sanatçının popüler şarkılarını getirir
+    /// </summary>
+    Task<SpotifyTopTracksResponse> GetArtistTopTracksAsync(
+        string accessToken,
+        string artistId,
+        string market = "TR",
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -291,5 +314,34 @@ public sealed record SpotifyAudioFeaturesResponse
     public double Instrumentalness { get; init; } // 0.0-1.0
     public double Liveness { get; init; } // 0.0-1.0
     public double Speechiness { get; init; } // 0.0-1.0
+}
+
+/// <summary>
+/// Spotify search response
+/// </summary>
+public sealed record SpotifySearchResponse
+{
+    public SpotifySearchArtistsResponse Artists { get; init; } = new();
+}
+
+/// <summary>
+/// Spotify search artists response
+/// </summary>
+public sealed record SpotifySearchArtistsResponse
+{
+    public List<SpotifyArtistItem> Items { get; init; } = new();
+    public int Total { get; init; }
+}
+
+/// <summary>
+/// Spotify artist item (search result)
+/// </summary>
+public sealed record SpotifyArtistItem
+{
+    public string Id { get; init; } = default!;
+    public string Name { get; init; } = default!;
+    public List<SpotifyImage> Images { get; init; } = new();
+    public int Popularity { get; init; }
+    public List<string> Genres { get; init; } = new();
 }
 

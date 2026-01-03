@@ -69,6 +69,15 @@ internal sealed class SpotifyArtistDto
 
     [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    [JsonPropertyName("images")]
+    public List<SpotifyImageDto>? Images { get; set; }
+
+    [JsonPropertyName("popularity")]
+    public int? Popularity { get; set; }
+
+    [JsonPropertyName("genres")]
+    public List<string>? Genres { get; set; }
 }
 
 internal sealed class SpotifyAlbumDto
@@ -300,5 +309,46 @@ internal sealed class SpotifyAudioFeaturesResponseDto
 {
     [JsonPropertyName("audio_features")]
     public List<SpotifyAudioFeaturesDto?>? AudioFeatures { get; set; }
+}
+
+// Search DTOs
+internal sealed class SpotifySearchDto
+{
+    [JsonPropertyName("artists")]
+    public SpotifySearchArtistsDto? Artists { get; set; }
+}
+
+internal sealed class SpotifySearchArtistsDto
+{
+    [JsonPropertyName("items")]
+    public List<SpotifyArtistSearchDto>? Items { get; set; }
+
+    [JsonPropertyName("total")]
+    public int Total { get; set; }
+}
+
+internal sealed class SpotifyArtistSearchDto
+{
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("images")]
+    public List<SpotifyImageDto>? Images { get; set; }
+
+    [JsonPropertyName("popularity")]
+    public int? Popularity { get; set; }
+
+    [JsonPropertyName("genres")]
+    public List<string>? Genres { get; set; }
+}
+
+// Artist Top Tracks DTOs
+internal sealed class SpotifyArtistTopTracksDto
+{
+    [JsonPropertyName("tracks")]
+    public List<SpotifyTrackItemDto>? Tracks { get; set; }
 }
 

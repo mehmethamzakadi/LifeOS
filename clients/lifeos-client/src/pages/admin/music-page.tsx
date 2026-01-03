@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Music, Link2, Unlink, Loader2, Play, Pause, Heart, BarChart3, Wifi, WifiOff, XCircle } from 'lucide-react';
-import { getConnectionStatus, getAuthorizationUrl, disconnectMusic, getCurrentTrack, getSavedTracks, getListeningStats, saveTrack, deleteSavedTrack } from '../../features/music/api';
+import { Music, Link2, Unlink, Loader2, Play, Pause, Heart, BarChart3, Wifi, WifiOff, XCircle, Search } from 'lucide-react';
+import { getConnectionStatus, getAuthorizationUrl, disconnectMusic, getCurrentTrack, getSavedTracks, getListeningStats, saveTrack, deleteSavedTrack, analyzeArtist } from '../../features/music/api';
 import { useMusicSignalR } from '../../hooks/use-music-signalr';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
@@ -12,6 +12,16 @@ import { handleApiError } from '../../lib/api-error';
 export function MusicPage() {
   const queryClient = useQueryClient();
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  const [artistSearchQuery, setArtistSearchQuery] = useState('');
+  const [searchedArtist, setSearchedArtist] = useState<string>('');
+
+  // Artist analysis
+  const { data: artistAnalysis, isLoading: isLoadingArtist, refetch: refetchArtist } = useQuery({
+    queryKey: ['music-artist-analysis', searchedArtist],
+    queryFn: () => analyzeArtist(searchedArtist),
+    enabled: searchedArtist.length > 0,
+    retry: 1
+  });
 
   // Connection status
   const { data: connectionStatus, isLoading: isLoadingStatus } = useQuery({
@@ -304,6 +314,158 @@ export function MusicPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Artist Analysis - Sanatçı Arama ve Analiz */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Sanatçı Analizi
+          </CardTitle>
+          <CardDescription>
+            Bir sanatçı adı girin, en popüler şarkılarının mutluluk/hüzün skorlarını görün
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              placeholder="Sanatçı adı girin (örn: Tarkan, Dua Lipa)"
+              value={artistSearchQuery}
+              onChange={(e) => setArtistSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && artistSearchQuery.trim()) {
+                  setSearchedArtist(artistSearchQuery.trim());
+                }
+              }}
+              className="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <Button
+              onClick={() => {
+                if (artistSearchQuery.trim()) {
+                  setSearchedArtist(artistSearchQuery.trim());
+                }
+              }}
+              disabled={!artistSearchQuery.trim() || isLoadingArtist}
+            >
+              {isLoadingArtist ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              Ara
+            </Button>
+          </div>
+
+          {isLoadingArtist && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {artistAnalysis && !isLoadingArtist && (
+            <div className="space-y-4">
+              {/* Artist Info */}
+              <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                {artistAnalysis.artistImageUrl && (
+                  <img
+                    src={artistAnalysis.artistImageUrl}
+                    alt={artistAnalysis.artistName}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                )}
+                <div>
+                  <h3 className="text-lg font-semibold">{artistAnalysis.artistName}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {artistAnalysis.tracks.length} şarkı analiz edildi
+                  </p>
+                </div>
+              </div>
+
+              {/* Tracks Analysis */}
+              <div className="space-y-3">
+                {artistAnalysis.tracks.map((track) => (
+                  <div key={track.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{track.name}</h4>
+                        <p className="text-sm text-muted-foreground">{track.artistName}</p>
+                      </div>
+                      {track.valenceDescription && (
+                        <Badge
+                          variant={
+                            track.valenceDescription === 'Mutlu'
+                              ? 'default'
+                              : track.valenceDescription === 'Dengeli'
+                              ? 'secondary'
+                              : 'destructive'
+                          }
+                        >
+                          {track.valenceDescription}
+                        </Badge>
+                      )}
+                    </div>
+
+                    {track.hasAudioFeatures && track.valence != null ? (
+                      <>
+                        {/* Valence Bar */}
+                        <div className="mt-3">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs text-muted-foreground">Mutluluk/Hüzün Skoru</span>
+                            <span className="text-xs font-medium">
+                              {(track.valence * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                track.valence > 0.5
+                                  ? 'bg-green-500'
+                                  : track.valence > 0.3
+                                  ? 'bg-yellow-500'
+                                  : 'bg-blue-500'
+                              }`}
+                              style={{ width: `${track.valence * 100}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Additional Info */}
+                        <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
+                          {track.energy != null && (
+                            <div>
+                              <span className="text-muted-foreground">Enerji: </span>
+                              <span className="font-medium">{(track.energy * 100).toFixed(0)}%</span>
+                            </div>
+                          )}
+                          {track.danceability != null && (
+                            <div>
+                              <span className="text-muted-foreground">Dans: </span>
+                              <span className="font-medium">{(track.danceability * 100).toFixed(0)}%</span>
+                            </div>
+                          )}
+                          {track.tempo != null && (
+                            <div>
+                              <span className="text-muted-foreground">Tempo: </span>
+                              <span className="font-medium">{track.tempo.toFixed(0)} BPM</span>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="mt-3 text-sm text-muted-foreground">
+                        <p>Detaylı analiz verileri mevcut değil. Spotify Audio Features API'sine erişim kısıtlı olabilir.</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {searchedArtist && !artistAnalysis && !isLoadingArtist && (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Sonuç bulunamadı veya bir hata oluştu.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Stats */}
       {stats && (

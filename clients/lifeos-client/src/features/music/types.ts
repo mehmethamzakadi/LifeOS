@@ -82,3 +82,22 @@ export interface ListeningStats {
   mostListenedGenre?: string;
 }
 
+export interface AnalyzeArtistResponse {
+  artistName: string;
+  artistId: string;
+  artistImageUrl?: string;
+  tracks: TrackAnalysis[];
+}
+
+export interface TrackAnalysis {
+  id: string;
+  name: string;
+  artistName: string;
+  valence?: number | null; // 0.0-1.0 (mutluluk/hüzün skoru) - nullable, Audio Features erişilemezse null
+  energy?: number | null; // 0.0-1.0 - nullable
+  danceability?: number | null; // 0.0-1.0 - nullable
+  tempo?: number | null; // BPM - nullable
+  valenceDescription?: string | null; // "Mutlu", "Dengeli" veya "Hüzünlü" - nullable
+  hasAudioFeatures: boolean; // Audio Features verisi mevcut mu?
+}
+

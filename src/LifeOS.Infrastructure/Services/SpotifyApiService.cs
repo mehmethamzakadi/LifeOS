@@ -506,7 +506,11 @@ public sealed class SpotifyApiService : ISpotifyApiService
                     continue;
                 }
 
-                var url = $"/v1/audio-features?ids={Uri.EscapeDataString(ids)}";
+                // Spotify Get Several Tracks' Audio Features API: GET https://api.spotify.com/v1/audio-features
+                // BaseAddress: https://api.spotify.com/v1/ (sonunda / var)
+                // Path başında / OLMAMALI çünkü HttpClient BaseAddress ile birleştirirken / varsa base'i ignore eder
+                var url = $"audio-features?ids={Uri.EscapeDataString(ids)}";
+                _logger.LogDebug("Spotify audio features isteği gönderiliyor: URL={Url}, TrackCount={Count}", url, batch.Count());
                 var response = await httpClient.GetAsync(url, cancellationToken);
 
                 if (!response.IsSuccessStatusCode)
@@ -670,6 +674,127 @@ public sealed class SpotifyApiService : ISpotifyApiService
             PreviewUrl = dto.PreviewUrl,
             ExternalUrl = dto.ExternalUrls?.Spotify,
             Genres = new List<string>() // Track DTO'da genre yok, album'den alınabilir
+        };
+    }
+
+    public async Task<string> GetClientCredentialsTokenAsync(CancellationToken cancellationToken = default)
+    {
+        var httpClient = _httpClientFactory.CreateClient(SpotifyAccountsClientName);
+
+        var requestBody = new Dictionary<string, string>
+        {
+            { "grant_type", "client_credentials" }
+        };
+
+        var content = new FormUrlEncodedContent(requestBody);
+        var authHeader = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/token")
+        {
+            Content = content
+        };
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authHeader);
+
+        _logger.LogDebug("Spotify client credentials token isteği gönderiliyor");
+
+        var response = await httpClient.SendAsync(request, cancellationToken);
+        var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Spotify client credentials token hatası: {StatusCode}, {Response}", response.StatusCode, responseContent);
+            throw new HttpRequestException($"Spotify client credentials token hatası: {response.StatusCode} - {responseContent}", null, response.StatusCode);
+        }
+
+        var tokenData = JsonSerializer.Deserialize<SpotifyTokenResponseDto>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            ?? throw new InvalidOperationException("Client credentials token response parse edilemedi");
+
+        return tokenData.AccessToken;
+    }
+
+    public async Task<SpotifySearchResponse> SearchArtistsAsync(string accessToken, string query, int limit = 20, CancellationToken cancellationToken = default)
+    {
+        var httpClient = _httpClientFactory.CreateClient(SpotifyApiClientName);
+        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        // Query parametrelerini doğru şekilde encode et
+        // Spotify API'si için query string formatı: q=artist:name veya q=name
+        var cleanQuery = query?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(cleanQuery))
+        {
+            throw new ArgumentException("Query boş olamaz", nameof(query));
+        }
+
+        // Spotify Search API: GET https://api.spotify.com/v1/search
+        // BaseAddress: https://api.spotify.com/v1/ (sonunda / var)
+        // Path başında / OLMAMALI çünkü HttpClient BaseAddress ile birleştirirken / varsa base'i ignore eder
+        var encodedQuery = Uri.EscapeDataString(cleanQuery);
+        var url = $"search?q={encodedQuery}&type=artist&limit={limit}";
+
+        _logger.LogDebug("Spotify artist search isteği gönderiliyor: Query={Query}, EncodedQuery={EncodedQuery}, URL={Url}", cleanQuery, encodedQuery, url);
+
+        var response = await httpClient.GetAsync(url, cancellationToken);
+        var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Spotify artist search hatası: {StatusCode}, {Response}", response.StatusCode, responseContent);
+            throw new HttpRequestException($"Spotify artist search hatası: {response.StatusCode} - {responseContent}", null, response.StatusCode);
+        }
+
+        var data = await response.Content.ReadFromJsonAsync<SpotifySearchDto>(cancellationToken: cancellationToken)
+            ?? throw new InvalidOperationException("Search response parse edilemedi");
+
+        return new SpotifySearchResponse
+        {
+            Artists = new SpotifySearchArtistsResponse
+            {
+                Items = data.Artists?.Items?.Select(MapToArtistItemFromSearch).ToList() ?? new List<SpotifyArtistItem>(),
+                Total = data.Artists?.Total ?? 0
+            }
+        };
+    }
+
+    public async Task<SpotifyTopTracksResponse> GetArtistTopTracksAsync(string accessToken, string artistId, string market = "TR", CancellationToken cancellationToken = default)
+    {
+        var httpClient = _httpClientFactory.CreateClient(SpotifyApiClientName);
+        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        // Spotify Get Artist's Top Tracks API: GET https://api.spotify.com/v1/artists/{id}/top-tracks
+        // BaseAddress: https://api.spotify.com/v1/ (sonunda / var)
+        // Path başında / OLMAMALI çünkü HttpClient BaseAddress ile birleştirirken / varsa base'i ignore eder
+        var url = $"artists/{Uri.EscapeDataString(artistId)}/top-tracks?market={Uri.EscapeDataString(market)}";
+
+        _logger.LogDebug("Spotify artist top tracks isteği gönderiliyor: ArtistId={ArtistId}, Market={Market}, URL={Url}", artistId, market, url);
+
+        var response = await httpClient.GetAsync(url, cancellationToken);
+        var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Spotify artist top tracks hatası: {StatusCode}, {Response}", response.StatusCode, responseContent);
+            throw new HttpRequestException($"Spotify artist top tracks hatası: {response.StatusCode} - {responseContent}", null, response.StatusCode);
+        }
+
+        var data = await response.Content.ReadFromJsonAsync<SpotifyArtistTopTracksDto>(cancellationToken: cancellationToken)
+            ?? throw new InvalidOperationException("Artist top tracks response parse edilemedi");
+
+        return new SpotifyTopTracksResponse
+        {
+            Items = data.Tracks?.Select(MapToTrackItem).ToList() ?? new List<SpotifyTrackItem>(),
+            Total = data.Tracks?.Count ?? 0
+        };
+    }
+
+    private SpotifyArtistItem MapToArtistItemFromSearch(SpotifyArtistSearchDto dto)
+    {
+        return new SpotifyArtistItem
+        {
+            Id = dto.Id ?? string.Empty,
+            Name = dto.Name ?? string.Empty,
+            Images = dto.Images?.Select(i => new SpotifyImage { Url = i.Url ?? string.Empty, Height = i.Height, Width = i.Width }).ToList() ?? new List<SpotifyImage>(),
+            Popularity = dto.Popularity ?? 0,
+            Genres = dto.Genres ?? new List<string>()
         };
     }
 
