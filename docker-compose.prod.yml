@@ -135,6 +135,13 @@ services:
       TokenOptions__Issuer: ${APP_URL:-http://45.143.4.244}
       # Seq Logging
       Serilog__WriteTo__1__Args__serverUrl: http://seq:80
+      # Ollama AI - Production ayarları (7b modeli için timeout artırıldı)
+      OllamaOptions__Endpoint: http://ollama:11434
+      OllamaOptions__ModelId: qwen2.5:7b
+      OllamaOptions__ApiKey: ollama
+      OllamaOptions__TimeoutMinutes: 5
+      OllamaOptions__RetryCount: 5
+      OllamaOptions__RetryDelaySeconds: 3
       # CORS Policy (Production'da sadece kendi domaininden gelen isteklere izin ver)
       # .NET Core array format: Cors:AllowedOrigins:0 -> Cors__AllowedOrigins__0
       Cors__AllowedOrigins__0: "${APP_URL:-http://45.143.4.244}"

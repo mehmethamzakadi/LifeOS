@@ -112,17 +112,37 @@ public sealed class AiService : IAiService
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
         {
-            logger.LogError(ex, "Ollama API timeout: {CategoryName}", categoryName);
+            logger.LogError(ex, "Ollama API timeout: {CategoryName}, Endpoint={Endpoint}", categoryName, options.Endpoint);
             throw new TimeoutException("Ollama API'ye istek zaman aşımına uğradı. Lütfen tekrar deneyin.", ex);
         }
         catch (HttpRequestException ex)
         {
-            logger.LogError(ex, "Ollama API HTTP hatası: {CategoryName}", categoryName);
+            logger.LogError(ex, "Ollama API HTTP hatası: {CategoryName}, Endpoint={Endpoint}, Message={Message}", 
+                categoryName, options.Endpoint, ex.Message);
+            
+            // Resource temporarily unavailable veya connection refused hataları için özel mesaj
+            if (ex.Message.Contains("Resource temporarily unavailable") || 
+                ex.Message.Contains("Connection refused") ||
+                ex.Message.Contains("Name or service not known"))
+            {
+                var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+                var containerName = string.Equals(environment, "Production", StringComparison.OrdinalIgnoreCase) 
+                    ? "ollama" 
+                    : "lifeos_ollama_dev";
+                
+                var friendlyMessage = $"Ollama servisine bağlanılamıyor ({options.Endpoint}). " +
+                    $"Lütfen Ollama container'ının çalıştığından ve aynı network'te olduğundan emin olun. " +
+                    $"Kontrol için: docker ps | grep {containerName}";
+                
+                throw new HttpRequestException(friendlyMessage, ex);
+            }
+            
             throw;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Kategori açıklaması üretilirken beklenmeyen hata: {CategoryName}", categoryName);
+            logger.LogError(ex, "Kategori açıklaması üretilirken beklenmeyen hata: {CategoryName}, Endpoint={Endpoint}", 
+                categoryName, options.Endpoint);
             throw;
         }
     }
