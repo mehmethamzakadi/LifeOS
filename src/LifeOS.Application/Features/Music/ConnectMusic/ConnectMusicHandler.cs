@@ -5,6 +5,7 @@ using LifeOS.Domain.Services;
 using LifeOS.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace LifeOS.Application.Features.Music.ConnectMusic;
 
@@ -97,6 +98,62 @@ public sealed class ConnectMusicHandler
                 new ConnectMusicResponse(true, "Spotify hesabı başarıyla bağlandı"),
                 "Spotify hesabı başarıyla bağlandı");
         }
+        catch (DbUpdateException ex)
+        {
+            // Entity Framework hatalarını detaylı logla
+            var errorDetails = new StringBuilder();
+            errorDetails.AppendLine($"DbUpdateException: {ex.Message}");
+            
+            if (ex.InnerException != null)
+            {
+                errorDetails.AppendLine($"Inner Exception: {ex.InnerException.Message}");
+                errorDetails.AppendLine($"Inner Exception Type: {ex.InnerException.GetType().Name}");
+                
+                // PostgreSQL hataları için özel mesaj
+                if (ex.InnerException.Message.Contains("duplicate key"))
+                {
+                    errorDetails.AppendLine("HATA: Aynı kayıt zaten mevcut (duplicate key)");
+                }
+                else if (ex.InnerException.Message.Contains("foreign key"))
+                {
+                    errorDetails.AppendLine("HATA: Foreign key constraint ihlali");
+                }
+                else if (ex.InnerException.Message.Contains("not null"))
+                {
+                    errorDetails.AppendLine("HATA: Zorunlu alan boş (not null constraint)");
+                }
+            }
+            
+            // Entry'leri logla
+            if (ex.Entries != null && ex.Entries.Any())
+            {
+                errorDetails.AppendLine($"Etkilenen Entity Sayısı: {ex.Entries.Count()}");
+                foreach (var entry in ex.Entries)
+                {
+                    errorDetails.AppendLine($"  - Entity Type: {entry.Entity.GetType().Name}, State: {entry.State}");
+                }
+            }
+            
+            var fullError = errorDetails.ToString();
+            _logger.LogError(ex, "ConnectMusic: Database hatası. UserId: {UserId}\n{ErrorDetails}", userId, fullError);
+            
+            // Kullanıcıya daha anlaşılır mesaj döndür
+            var userMessage = ex.InnerException?.Message ?? ex.Message;
+            if (userMessage.Contains("duplicate key"))
+            {
+                userMessage = "Bu Spotify hesabı zaten bağlı. Lütfen önce bağlantıyı kesin.";
+            }
+            else if (userMessage.Contains("foreign key"))
+            {
+                userMessage = "Veritabanı hatası: İlişkili kayıt bulunamadı.";
+            }
+            else if (userMessage.Contains("not null"))
+            {
+                userMessage = "Veritabanı hatası: Zorunlu alan eksik.";
+            }
+            
+            throw new InvalidOperationException($"Veritabanı hatası: {userMessage}", ex);
+        }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "ConnectMusic: Spotify API hatası. UserId: {UserId}, StatusCode: {StatusCode}", 
@@ -110,7 +167,64 @@ public sealed class ConnectMusicHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ConnectMusic: Beklenmeyen hata. UserId: {UserId}", userId);
+            // Tüm exception'ların inner exception'ını logla
+            var errorDetails = new StringBuilder();
+            errorDetails.AppendLine($"=== EXCEPTION DETAILS ===");
+            errorDetails.AppendLine($"Exception Type: {ex.GetType().FullName}");
+            errorDetails.AppendLine($"Message: {ex.Message}");
+            
+            // Inner exception'ı recursive olarak logla
+            Exception? currentEx = ex;
+            int depth = 0;
+            while (currentEx != null && depth < 5) // Maksimum 5 seviye derinlik
+            {
+                errorDetails.AppendLine($"--- Inner Exception Level {depth} ---");
+                errorDetails.AppendLine($"Type: {currentEx.GetType().FullName}");
+                errorDetails.AppendLine($"Message: {currentEx.Message}");
+                
+                // DbUpdateException için özel işlem
+                if (currentEx is DbUpdateException dbEx)
+                {
+                    errorDetails.AppendLine($"DbUpdateException detected!");
+                    if (dbEx.InnerException != null)
+                    {
+                        errorDetails.AppendLine($"  Inner Type: {dbEx.InnerException.GetType().FullName}");
+                        errorDetails.AppendLine($"  Inner Message: {dbEx.InnerException.Message}");
+                        
+                        // PostgreSQL hataları için özel mesaj
+                        if (dbEx.InnerException.Message.Contains("duplicate key"))
+                        {
+                            errorDetails.AppendLine("  HATA TİPİ: Duplicate key (aynı kayıt zaten mevcut)");
+                        }
+                        else if (dbEx.InnerException.Message.Contains("foreign key"))
+                        {
+                            errorDetails.AppendLine("  HATA TİPİ: Foreign key constraint ihlali");
+                        }
+                        else if (dbEx.InnerException.Message.Contains("not null"))
+                        {
+                            errorDetails.AppendLine("  HATA TİPİ: Not null constraint ihlali");
+                        }
+                    }
+                    
+                    if (dbEx.Entries != null && dbEx.Entries.Any())
+                    {
+                        errorDetails.AppendLine($"  Etkilenen Entity Sayısı: {dbEx.Entries.Count()}");
+                        foreach (var entry in dbEx.Entries)
+                        {
+                            errorDetails.AppendLine($"    - Entity: {entry.Entity.GetType().Name}, State: {entry.State}");
+                        }
+                    }
+                }
+                
+                currentEx = currentEx.InnerException;
+                depth++;
+            }
+            
+            errorDetails.AppendLine($"Stack Trace: {ex.StackTrace}");
+            errorDetails.AppendLine($"=== END EXCEPTION DETAILS ===");
+            
+            var fullError = errorDetails.ToString();
+            _logger.LogError(ex, "ConnectMusic: Beklenmeyen hata. UserId: {UserId}\n{ErrorDetails}", userId, fullError);
             throw; // Endpoint'te yakalanacak
         }
     }
